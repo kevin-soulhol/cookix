@@ -1,0 +1,49 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+      - "5555:5555"  # Pour Prisma Studio
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NODE_ENV=development
+      - PORT=3000
+      - REMIX_DEV_ORIGIN=http://localhost:3000
+    command: npm run dev
+    restart: unless-stopped
+
+  db:
+    image: mariadb:10.6
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    restart: unless-stopped
+
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper.Dockerfile
+    volumes:
+      - ./scripts/scraper:/app
+      - ./prisma:/app/prisma
+      - playwright-browsers:/ms-playwright
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  playwright-browsers:

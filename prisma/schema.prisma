@@ -1,0 +1,133 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Recipe {
+  id              Int                @id @default(autoincrement())
+  title           String
+  description     String?            @db.Text
+  preparationTime Int?
+  cookingTime     Int?
+  servings        Int?
+  difficulty      String?
+  note            Decimal?           @db.Decimal(3, 1)
+  imageUrl        String?
+  sourceUrl       String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  favorites       Favorite[]
+  menuItems       MenuItem[]
+  ingredients     RecipeIngredient[]
+  steps           RecipeStep[]
+}
+
+model Ingredient {
+  id                Int                @id @default(autoincrement())
+  name              String             @unique
+  recipeIngredients RecipeIngredient[]
+  shoppingItems     ShoppingItem[]
+}
+
+model RecipeIngredient {
+  id           Int        @id @default(autoincrement())
+  recipeId     Int
+  ingredientId Int
+  quantity     Float?
+  unit         String?
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, ingredientId])
+  @@index([ingredientId], map: "RecipeIngredient_ingredientId_fkey")
+}
+
+model RecipeStep {
+  id          Int    @id @default(autoincrement())
+  recipeId    Int
+  stepNumber  Int
+  instruction String @db.Text
+  recipe      Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, stepNumber])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  recipeId  Int
+  createdAt DateTime @default(now())
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
+  @@index([recipeId], map: "Favorite_recipeId_fkey")
+}
+
+model Menu {
+  id        Int         @id @default(autoincrement())
+  userId    Int
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime    @default(now())
+  menuItems MenuItem[]
+  shares    MenuShare[]
+}
+
+model MenuItem {
+  id       Int    @id @default(autoincrement())
+  menuId   Int
+  recipeId Int
+  menu     Menu   @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+
+  @@index([recipeId], map: "MenuItem_recipeId_fkey")
+}
+
+model MenuShare {
+  id              Int       @id @default(autoincrement())
+  menuId          Int
+  sharedByUserId  Int
+  sharedWithEmail String
+  token           String    @unique
+  isAccepted      Boolean   @default(false)
+  acceptedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  menu            Menu      @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  sharedByUser    User      @relation("SharedByUser", fields: [sharedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([menuId], map: "MenuShare_menuId_fkey")
+  @@index([sharedByUserId], map: "MenuShare_sharedByUserId_fkey")
+}
+
+model ShoppingList {
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  createdAt DateTime       @default(now())
+  items     ShoppingItem[]
+}
+
+model ShoppingItem {
+  id             Int          @id @default(autoincrement())
+  shoppingListId Int
+  ingredientId   Int
+  quantity       Float?
+  unit           String?
+  isChecked      Boolean      @default(false)
+  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
+  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+
+  @@unique([shoppingListId, ingredientId])
+  @@index([ingredientId], map: "ShoppingItem_ingredientId_fkey")
+}
+
+model User {
+  id          Int         @id @default(autoincrement())
+  email       String
+  password    String
+  sharedMenus MenuShare[] @relation("SharedByUser")
+}
