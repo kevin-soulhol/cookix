@@ -27,7 +27,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-
+          
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
@@ -36,7 +36,7 @@ jobs:
           
       - name: Add known hosts
         run: ssh-keyscan -H ${{ secrets.OVH_SERVER_HOST }} >> ~/.ssh/known_hosts
-        
+      
       - name: Create .env file
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
@@ -44,12 +44,34 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          
-      - name: Copy application files
+      
+      - name: Prepare target directories
         run: |
-          rsync -avz --delete app/ public/ build/ prisma/ package*.json ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'mkdir -p /var/www/cookix/prisma /var/www/cookix/scripts/scraper'
+      
+      - name: Copy configuration and build files
+        run: |
+          scp .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          scp package*.json ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          rsync -avz --delete build/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/build/
+          rsync -avz public/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/public/
+      
+      - name: Copy Prisma schema and generated client
+        run: |
+          scp prisma/schema.prisma ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
+          rsync -avz node_modules/.prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/node_modules/.prisma/
+          rsync -avz node_modules/@prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/node_modules/@prisma/
+      
+      - name: Copy scraper files
+        run: |
           rsync -avz scripts/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/scripts/
-          
-      - name: Deploy and restart services
+          scp scraper.Dockerfile ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+      
+      - name: Setup scraper (if using cron on server)
         run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && docker-compose pull && docker-compose down && docker-compose up -d --build'
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix/scripts/scraper && npm install && chmod +x entrypoint.sh'
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && echo "0 2 * * 1 cd /var/www/cookix/scripts/scraper && node index.js >> /var/log/cookix-scraper.log 2>&1" | crontab -'
+      
+      - name: Setup and start application
+        run: |
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && npm ci --production && npx prisma migrate deploy && pm2 restart cookix || pm2 start npm --name "cookix" -- start'
