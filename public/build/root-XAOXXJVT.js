@@ -36,7 +36,7 @@ var cssBundleHref = void 0;
 var import_db = __toESM(require_db(), 1);
 
 // app/tailwind.css
-var tailwind_default = "/build/_assets/tailwind-O2OZ6BOS.css";
+var tailwind_default = "/build/_assets/tailwind-3JT7UPRK.css";
 
 // app/root.tsx
 var import_jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
@@ -156,4 +156,4 @@ export {
   App as default,
   links
 };
-//# sourceMappingURL=/build/root-PFE3MMMU.js.map
+//# sourceMappingURL=/build/root-XAOXXJVT.js.map

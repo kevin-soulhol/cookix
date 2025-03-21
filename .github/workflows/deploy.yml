@@ -1,0 +1,51 @@
+name: Deploy Cookix
+on:
+  push:
+    branches: [ main ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: './package-lock.json'
+          
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        
+      - name: Build project
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.OVH_SSH_KEY }}
+          known_hosts: 'placeholder'
+          
+      - name: Add known hosts
+        run: ssh-keyscan -H ${{ secrets.OVH_SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+      - name: Copy Docker configuration
+        run: |
+          rsync -avz docker-compose.yml Dockerfile scraper.Dockerfile .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          
+      - name: Copy application files
+        run: |
+          rsync -avz --delete app/ public/ build/ prisma/ package*.json ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          rsync -avz scripts/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/scripts/
+          
+      - name: Deploy and restart services
+        run: |
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && docker-compose pull && docker-compose down && docker-compose up -d --build'
