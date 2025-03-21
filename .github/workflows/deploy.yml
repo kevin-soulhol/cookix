@@ -45,10 +45,6 @@ jobs:
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
       
-      - name: Prepare target directories
-        run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'mkdir -p /var/www/cookix/prisma /var/www/cookix/scripts/scraper'
-      
       - name: Copy configuration and build files
         run: |
           scp .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
