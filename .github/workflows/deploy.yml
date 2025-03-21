@@ -51,8 +51,8 @@ jobs:
           
       - name: Copy application files
         run: |
-          rsync -avz --delete app/ public/ build/ prisma/ package*.json ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
-          rsync -avz scripts/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/scripts/
+          rsync -avzO --delete app/ public/ build/ prisma/ package*.json ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          rsync -avzO scripts/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/scripts/
           
       - name: Deploy and restart services
         run: |
