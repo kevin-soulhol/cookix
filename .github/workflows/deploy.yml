@@ -45,23 +45,27 @@ jobs:
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
       
+      - name: Prepare target directories
+        run: |
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'mkdir -p /var/www/cookix/prisma /var/www/cookix/scripts/scraper /var/www/cookix/node_modules/.prisma /var/www/cookix/node_modules/@prisma'
+      
       - name: Copy configuration and build files
         run: |
-          scp .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
-          scp package*.json ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          rsync -avz .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          rsync -avz package*.json ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
           rsync -avz --delete build/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/build/
           rsync -avz public/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/public/
       
       - name: Copy Prisma schema and generated client
         run: |
-          scp prisma/schema.prisma ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
+          rsync -avz prisma/schema.prisma ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
           rsync -avz node_modules/.prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/node_modules/.prisma/
           rsync -avz node_modules/@prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/node_modules/@prisma/
       
       - name: Copy scraper files
         run: |
           rsync -avz scripts/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/scripts/
-          scp scraper.Dockerfile ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          rsync -avz scraper.Dockerfile ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
       
       - name: Setup scraper (if using cron on server)
         run: |
