@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Web scraper for cookix recipes",
   "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node index.js"
   },

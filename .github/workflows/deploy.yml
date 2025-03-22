@@ -59,6 +59,9 @@ jobs:
       - name: Copy Prisma schema and generated client
         run: |
           rsync -avz prisma/schema.prisma ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
+          rsync -avz prisma/schema.prisma ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
+          rsync -avz prisma/index.js ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma
+          rsync -avz prisma/prisma.js ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma
           rsync -avz node_modules/.prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/node_modules/.prisma/
           rsync -avz node_modules/@prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/node_modules/@prisma/
       
