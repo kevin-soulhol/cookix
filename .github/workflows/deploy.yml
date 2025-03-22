@@ -19,6 +19,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Install scraper dependencies
+        run: |
+          cd scripts/scraper
+          npm ci
+          cd ../..
+      
       - name: Generate Prisma Client
         run: npx prisma generate
         
