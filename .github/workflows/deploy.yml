@@ -65,11 +65,6 @@ jobs:
       - name: Copy scraper files
         run: |
           rsync -avz scripts/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/scripts/
-
-      - name: Test
-        run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'ls -la /var/www/cookix' 
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && nvm use 22 && node -v' 
       
       - name: Setup scraper (if using cron on server)
         run: |
