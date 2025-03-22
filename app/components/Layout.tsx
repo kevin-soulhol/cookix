@@ -1,7 +1,7 @@
 import { Link, useOutletContext } from "@remix-run/react";
 import { useState } from "react";
 import Footer from "./Footer";
-import AuthButton from "./AuthButton";
+import AuthButton, { AuthButtonProps } from "./AuthButton";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ type LayoutProps = {
 
 export default function Layout({ children, showHomeLink = false, pageTitle }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, user } = useOutletContext<any>() || { isAuthenticated: false, user: null };
+  const { isAuthenticated, user } = useOutletContext<AuthButtonProps>() || { isAuthenticated: false, user: null };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -36,7 +36,7 @@ export default function Layout({ children, showHomeLink = false, pageTitle }: La
                       d="M10 19l-7-7m0 0l7-7m-7 7h18"
                     />
                   </svg>
-                  Retour à l'accueil
+                  {"Retour à l'accueil"}
                 </Link>
               ) : (
                 <Link to="/" className="text-2xl font-bold text-rose-500">Cookix</Link>
@@ -61,6 +61,12 @@ export default function Layout({ children, showHomeLink = false, pageTitle }: La
                     className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors"
                   >
                     Menu de la semaine
+                  </Link>
+                  <Link
+                    to="/partages"
+                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors"
+                  >
+                    Menu partagé
                   </Link>
                   <Link
                     to="/courses"
@@ -129,12 +135,20 @@ export default function Layout({ children, showHomeLink = false, pageTitle }: La
                   Menu de la semaine
                 </Link>
                 <Link
+                  to="/partages"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Menu partagé
+                </Link>
+                <Link
                   to="/courses"
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Liste de courses
                 </Link>
+
                 <Link
                   to="/profil"
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500"

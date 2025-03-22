@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useFetcher, useNavigate } from "@remix-run/react";
 
-interface AuthButtonProps {
+export type UserType = {
+    id: number;
+    email: string;
+} | null;
+export interface AuthButtonProps {
     isAuthenticated: boolean;
-    user?: {
-        id: number;
-        email: string;
-    } | null;
+    user?: UserType
 }
 
 export default function AuthButton({ isAuthenticated, user }: AuthButtonProps) {

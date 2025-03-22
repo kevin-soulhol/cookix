@@ -11,21 +11,111 @@ export type TypeMenuItem = {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-
-  console.log("------------------------------------- request headers", request.headers);
   const userId = await getUserId(request);
-  console.log("------------------------------------- userId", userId);
+  const url = new URL(request.url);
+  const menuId = url.searchParams.get("id");
 
   if (!userId) {
-    return json({ success: false, message: "Il faut être connecté" }, { status: 400 });
+    return json({ success: false, message: "Il faut être connecté" }, { status: 401 });
   }
 
+  console.log("_____________________________ ", userId, menuId)
   try {
+    // Si un ID de menu spécifique est demandé
+    if (menuId) {
+      // Vérifier si le menu existe et si l'utilisateur a le droit d'y accéder
+      const menu = await prisma.menu.findUnique({
+        where: { id: parseInt(menuId) },
+      });
+
+      if (!menu) {
+        return json({ success: false, message: "Menu non trouvé" }, { status: 404 });
+      }
+
+      // Vérifier si l'utilisateur est propriétaire du menu ou s'il a un partage accepté
+      const hasAccess = menu.userId === userId || await prisma.menuShare.findFirst({
+        where: {
+          menuId: parseInt(menuId),
+          OR: [
+            { sharedWithUserId: userId },
+            { sharedWithEmail: { equals: (await prisma.user.findUnique({ where: { id: userId } }))?.email } }
+          ],
+          isAccepted: true
+        }
+      });
+
+      if (!hasAccess) {
+        return json({ success: false, message: "Vous n'avez pas accès à ce menu" }, { status: 403 });
+      }
+
+      // Récupérer les détails du menu
+      const menuItems = await prisma.menuItem.findMany({
+        where: { menuId: parseInt(menuId) },
+        include: { recipe: true },
+        orderBy: { id: 'asc' }
+      });
+
+      // Trouver la liste de courses associée
+      let shoppingList;
+      const menuShare = await prisma.menuShare.findFirst({
+        where: {
+          menuId: parseInt(menuId),
+          OR: [
+            { sharedWithUserId: userId },
+            { sharedWithEmail: { equals: (await prisma.user.findUnique({ where: { id: userId } }))?.email } }
+          ],
+          isAccepted: true,
+          includeShoppingList: true
+        }
+      });
+
+      if (menuShare?.shoppingListId) {
+        shoppingList = await prisma.shoppingList.findUnique({
+          where: { id: menuShare.shoppingListId },
+          include: {
+            _count: {
+              select: { items: true }
+            }
+          }
+        });
+      } else {
+        // Utiliser la liste de courses de l'utilisateur
+        shoppingList = await prisma.shoppingList.findFirst({
+          where: { userId },
+          include: {
+            _count: {
+              select: { items: true }
+            }
+          }
+        });
+
+        if (!shoppingList) {
+          shoppingList = await prisma.shoppingList.create({
+            data: { userId },
+            include: {
+              _count: {
+                select: { items: true }
+              }
+            }
+          });
+        }
+      }
+
+      return json({
+        menu,
+        menuItems,
+        favoriteRecipes: [], // Pour la vue du menu partagé, pas besoin des favoris
+        shoppingListCount: shoppingList?._count.items || 0,
+        shoppingListId: shoppingList?.id,
+        menuShares: [],
+        isSharedMenu: menu.userId !== userId,
+        canEdit: menu.userId === userId
+      });
+    }
+
     // Récupérer le menu actif de l'utilisateur
     let activeMenu = await prisma.menu.findFirst({
-      where: {
-        userId,
-      }
+      where: { userId },
     });
 
     // Si aucun menu actif n'existe, en créer un nouveau
@@ -42,53 +132,34 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     // Récupérer les éléments du menu avec les détails des recettes
     const menuItems = await prisma.menuItem.findMany({
-      where: {
-        menuId: activeMenu.id
-      },
-      include: {
-        recipe: true
-      },
-      orderBy: {
-        id: 'asc'
-      }
+      where: { menuId: activeMenu.id },
+      include: { recipe: true },
+      orderBy: { id: 'asc' }
     });
 
     // Récupérer les recettes favorites pour suggestions
     const favoriteRecipes = await prisma.favorite.findMany({
-      where: {
-        userId
-      },
-      include: {
-        recipe: true
-      },
+      where: { userId },
+      include: { recipe: true },
       take: 3
     });
 
-    // Compter le nombre d'ingrédients dans la liste de courses pour afficher un badge
+    // Liste de courses
     let shoppingList = await prisma.shoppingList.findFirst({
-      where: {
-        userId,
-      },
+      where: { userId },
       include: {
         _count: {
-          select: {
-            items: true
-          }
+          select: { items: true }
         }
       }
     });
 
-    // Si aucune liste de courses active n'existe, en créer une nouvelle
     if (!shoppingList) {
       shoppingList = await prisma.shoppingList.create({
-        data: {
-          userId,
-        },
+        data: { userId },
         include: {
           _count: {
-            select: {
-              items: true
-            }
+            select: { items: true }
           }
         }
       });
@@ -96,32 +167,32 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     // Vérifier si le menu a été partagé
     const menuShares = await prisma.menuShare.findMany({
-      where: {
-        menuId: activeMenu.id
-      }
+      where: { menuId: activeMenu.id }
     });
 
 
-    return {
+    return json({
       menu: activeMenu,
       menuItems,
       favoriteRecipes: favoriteRecipes.map(fav => fav.recipe),
       shoppingListCount: shoppingList._count.items,
       shoppingListId: shoppingList.id,
-      menuShares
-    };
+      menuShares,
+      isSharedMenu: false,
+      canEdit: true
+    });
   } catch (error) {
-    console.log('Erreur lors du chargement du Menu : ', error)
-
-    return {
-      menu: [],
+    console.error('Erreur lors du chargement du Menu : ', error);
+    return json({
+      success: false,
+      menu: null,
       menuItems: [],
       favoriteRecipes: [],
-      shoppingListCount: 3,
-      shoppingListId: 2,
+      shoppingListCount: 0,
+      shoppingListId: null,
       menuShares: [],
-      error: error
-    };
+      error: "Une erreur est survenue lors du chargement du menu"
+    }, { status: 500 });
   }
 }
 
@@ -183,7 +254,6 @@ async function getMenuByUserId(userId: number) {
     activeMenu = await prisma.menu.create({
       data: {
         userId,
-        name: `Menu du ${currentDate.toLocaleDateString('fr-FR')}`,
         startDate: currentDate,
         endDate: endOfWeek,
       },

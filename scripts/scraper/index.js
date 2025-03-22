@@ -384,7 +384,7 @@ async function runWithRetry(fn, maxRetries = 3, initialDelay = 5000) {
 }
 
 
-/* main().catch(error => {
+main().catch(error => {
   console.error('Unhandled error in main function:', error);
   process.exit(1);
-}); */
+});

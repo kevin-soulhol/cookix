@@ -1,8 +1,8 @@
 import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData, useOutletContext } from "@remix-run/react";
-import { useState } from "react";
 import Layout from "~/components/Layout";
 import BoxRecipe, { RecipeType } from "~/components/BoxRecipe";
+import { AuthButtonProps } from "~/components/AuthButton";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   try {
@@ -22,7 +22,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     return json({
       randomRecipes: data.recipes,
-      totalRecipes: data.pagination.total
+      totalRecipes: data.pagination.total,
+      error: false
     });
 
   } catch (error) {
@@ -44,9 +45,8 @@ export const meta: MetaFunction = () => {
 
 
 export default function Index() {
-  const { isAuthenticated } = useOutletContext<any>() || { isAuthenticated: false };
+  const { isAuthenticated } = useOutletContext<AuthButtonProps>() || { isAuthenticated: false };
   const { randomRecipes, totalRecipes, error } = useLoaderData<typeof loader>();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
 
   return (

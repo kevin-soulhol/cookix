@@ -86,8 +86,18 @@ export async function action() {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  // Appeler l'API menus
+  // Récupérer l'ID du menu depuis les paramètres de requête
+  const url = new URL(request.url);
+  const menuId = url.searchParams.get("id");
+
+  // Construire l'URL de l'API avec l'ID du menu si fourni
   const apiUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/menu`);
+
+  // Ajouter l'ID du menu comme paramètre si présent
+  if (menuId) {
+    apiUrl.searchParams.append("id", menuId);
+  }
+
   const cookies = request.headers.get("Cookie");
   const response = await fetch(apiUrl.toString(), {
     method: "GET",
@@ -97,8 +107,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 
   const data = await response.json();
-  console.log("__________________menuItems", data)
-  return json(data)
+  return json(data);
 }
 
 export default function WeeklyMenu() {
@@ -109,6 +118,8 @@ export default function WeeklyMenu() {
     shoppingListCount,
     shoppingListId,
     menuShares,
+    isSharedMenu,
+    canEdit,
     error
   } = useLoaderData<typeof loader>();
 
@@ -131,6 +142,22 @@ export default function WeeklyMenu() {
   return (
     <Layout pageTitle="Menu de la semaine">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isSharedMenu && (
+          <div className="mb-4 bg-blue-50 border-l-4 border-blue-500 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  Vous visualisez un menu partagé avec vous. {!canEdit && "Vous ne pouvez pas le modifier."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {error ? (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 text-red-700 mb-8">
             {error}
@@ -262,34 +289,36 @@ export default function WeeklyMenu() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 {filteredRecipes.map((recipe: RecipeType) => (
                   <div key={recipe.id} className="relative">
-                    <BoxRecipe recipe={recipe} />
+                    <BoxRecipe recipe={recipe} readOnly={true} />
 
                     {/* Bouton suppression */}
-                    <button
-                      onClick={() => {
-                        removeItemFetcher.submit(
-                          { recipeId: recipe.id },
-                          { method: "delete", action: "/api/menu" }
-                        );
-                      }}
-                      className="absolute top-3 right-3 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
-                      aria-label="Retirer du menu"
-                    >
-                      <svg
-                        className="w-5 h-5 text-red-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
+                    {canEdit && (
+                      <button
+                        onClick={() => {
+                          removeItemFetcher.submit(
+                            { recipeId: recipe.id },
+                            { method: "delete", action: "/api/menu" }
+                          );
+                        }}
+                        className="absolute top-3 right-3 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
+                        aria-label="Retirer du menu"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          className="w-5 h-5 text-red-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -364,9 +393,10 @@ export default function WeeklyMenu() {
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-bold mb-4">Partager votre menu</h2>
 
-            <shareFetcher.Form method="post" onSubmit={() => setShowShareModal(false)}>
-              <input type="hidden" name="_action" value="share" />
+            <shareFetcher.Form method="post" action="/api/share" onSubmit={() => setShowShareModal(false)}>
+              <input type="hidden" name="_action" value="shareMenu" />
               <input type="hidden" name="menuId" value={menu?.id} />
+              <input type="hidden" name="shoppingListId" value={shoppingListId} />
 
               <div className="mb-4">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -382,6 +412,25 @@ export default function WeeklyMenu() {
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500"
                   placeholder="exemple@email.com"
                 />
+              </div>
+
+              <div className="mb-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="includeShoppingList"
+                    name="includeShoppingList"
+                    value="true"
+                    defaultChecked={true}
+                    className="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="includeShoppingList" className="ml-2 block text-sm text-gray-700">
+                    Inclure la liste de courses
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Les ingrédients seront automatiquement ajoutés à la liste de courses de l'autre utilisateur.
+                </p>
               </div>
 
               <div className="flex justify-end space-x-3">

@@ -19,113 +19,73 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const userId = await getUserId(request);
-
   // Récupérer les paramètres de filtrage depuis l'URL
   const url = new URL(request.url);
   const searchQuery = url.searchParams.get("search") || "";
   const difficulty = url.searchParams.get("difficulty") || "";
-  const maxPreparationTime = url.searchParams.get("maxPreparationTime") ?
-    parseInt(url.searchParams.get("maxPreparationTime") as string) : null;
-  const sortBy = (url.searchParams.get("sortBy") as SortOption) || "title";
-  const sortDirection = (url.searchParams.get("sortDirection") as SortDirection) || "asc";
-  const page = parseInt(url.searchParams.get("page") || "1");
-  const perPage = 9; // nombre de recettes par page
+  const maxPreparationTime = url.searchParams.get("maxPreparationTime") || null;
+  const sortBy = url.searchParams.get("sortBy") || "title";
+  const sortDirection = url.searchParams.get("sortDirection") || "asc";
+  const page = url.searchParams.get("page") || "1";
+  const perPage = "9"; // nombre de recettes par page
 
-  // Construire la requête de filtrage
-  const where: any = {};
+  // Construire l'URL de l'API recipes avec tous les paramètres
+  const apiUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/recipes`);
 
-  // Recherche par texte
-  if (searchQuery) {
-    where.OR = [
-      { title: { contains: searchQuery } },
-      { description: { contains: searchQuery } }
-    ];
-  }
+  // Ajouter les paramètres de filtrage à l'URL de l'API
+  if (searchQuery) apiUrl.searchParams.append("search", searchQuery);
+  if (difficulty) apiUrl.searchParams.append("difficulty", difficulty);
+  if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime.toString());
 
-  // Filtrage par difficulté
-  if (difficulty) {
-    where.difficulty = difficulty;
-  }
+  // Ajouter les paramètres de tri
+  apiUrl.searchParams.append("sort", sortBy);
+  apiUrl.searchParams.append("dir", sortDirection);
 
-  // Filtrage par temps de préparation max
-  if (maxPreparationTime) {
-    where.preparationTime = {
-      lte: maxPreparationTime
-    };
-  }
+  // Ajouter les paramètres de pagination
+  apiUrl.searchParams.append("limit", perPage);
+  apiUrl.searchParams.append("offset", ((parseInt(page) - 1) * parseInt(perPage)).toString());
 
+  // Envoyer la requête à l'API
+  const cookies = request.headers.get("Cookie");
   try {
-    // Récupérer les recettes filtrées avec pagination
-    const includeObj = {
-      menuItems: {
-        select: {
-          id: true
-        }
+    const response = await fetch(apiUrl.toString(), {
+      method: "GET",
+      headers: {
+        Cookie: cookies || "", // Transmettre les cookies pour l'authentification
       },
-      _count: {
-        select: {
-          ingredients: true,
-          favorites: true
-        }
-      }
-    }
-
-    if (userId) {
-      includeObj.favorites = {
-        where: {
-          userId
-        },
-        select: {
-          id: true
-        }
-      }
-    }
-    const recipes = await prisma.recipe.findMany({
-      where,
-      orderBy: {
-        [sortBy]: sortDirection
-      },
-      skip: (page - 1) * perPage,
-      take: perPage,
-      include: includeObj
     });
 
-    // Récupérer le nombre total de recettes pour la pagination
-    const totalRecipes = await prisma.recipe.count({ where });
-    const totalPages = Math.ceil(totalRecipes / perPage);
+    const apiResponse = await response.json();
 
-    // Récupérer les différentes difficultés pour le filtre
-    const difficulties = await prisma.recipe.findMany({
-      select: {
-        difficulty: true
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.message || "Erreur lors du chargement des recettes");
+    }
+
+    // Récupérer les différentes difficultés pour le filtre (à faire séparément car l'API ne le fournit pas)
+    const apiUrlForDifficulties = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/recipes/difficulties`);
+    const difficultiesResponse = await fetch(apiUrlForDifficulties.toString(), {
+      headers: {
+        Cookie: cookies || "",
       },
-      distinct: ['difficulty'],
-      where: {
-        difficulty: {
-          not: null
-        }
-      }
     });
 
-    // Préparer les valeurs uniques pour les filtres
-    const difficultyOptions = difficulties
-      .map(d => d.difficulty)
-      .filter(Boolean) as string[];
+    let difficultyOptions = [];
 
-    // Transformer les données pour faciliter leur utilisation côté client
-    const transformedRecipes = recipes.map(recipe => ({
-      ...recipe,
-      isFavorite: recipe.favorites?.length > 0,
-      isInMenu: recipe.menuItems.length > 0,
-    }))
+    // Si notre API spécifique pour les difficultés n'existe pas encore, utiliser un ensemble de valeurs par défaut
+    if (difficultiesResponse.ok) {
+      const difficultiesData = await difficultiesResponse.json();
+      difficultyOptions = difficultiesData.difficulties || ["Facile", "Moyen", "Difficile"];
+    } else {
+      // Valeurs par défaut au cas où nous n'avons pas d'API spécifique
+      difficultyOptions = ["Facile", "Moyen", "Difficile"];
+    }
 
     return json({
-      recipes: transformedRecipes,
+      recipes: apiResponse.recipes,
       pagination: {
-        currentPage: page,
-        totalPages,
-        totalRecipes
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(apiResponse.pagination.total / parseInt(perPage)),
+        totalRecipes: apiResponse.pagination.total
       },
       filters: {
         difficultyOptions,
@@ -134,7 +94,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       appliedFilters: {
         search: searchQuery,
         difficulty,
-        maxPreparationTime,
+        maxPreparationTime: maxPreparationTime ? parseInt(maxPreparationTime) : null,
         sortBy,
         sortDirection
       }
@@ -150,17 +110,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
         totalRecipes: 0
       },
       filters: {
-        difficultyOptions: [],
+        difficultyOptions: ["Facile", "Moyen", "Difficile"],
         preparationTimeMax: 120
       },
       appliedFilters: {
-        search: "",
-        difficulty: "",
-        maxPreparationTime: null,
+        search: searchQuery,
+        difficulty,
+        maxPreparationTime: maxPreparationTime ? parseInt(maxPreparationTime) : null,
         sortBy: "title",
         sortDirection: "asc"
       },
-      error: "Impossible de charger les recettes."
+      error: error instanceof Error ? error.message : "Impossible de charger les recettes."
     });
   }
 }

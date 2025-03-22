@@ -1,5 +1,6 @@
-import { Link, useFetcher, useActionData, useOutletContext } from "@remix-run/react";
+import { Link, useFetcher, useLocation, useOutletContext } from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { AuthButtonProps } from "./AuthButton";
 
 type BoxLayoutProps = {
     recipe: RecipeType;
@@ -20,14 +21,14 @@ export type RecipeType = {
 }
 
 export default function BoxRecipe({ recipe }: BoxLayoutProps) {
-    const { isAuthenticated } = useOutletContext<any>() || { isAuthenticated: false, user: null };
+    const location = useLocation();
+    const { isAuthenticated } = useOutletContext<AuthButtonProps>() || { isAuthenticated: false };
     const [isAddingToMenu, setIsAddingToMenu] = useState(false);
     const [inFavorites, setInFavorites] = useState(recipe.isFavorite);
     const [isAdded, setIsAdded] = useState(recipe.isInMenu);
 
     const menuFetcher = useFetcher();
     const favoriteFetcher = useFetcher();
-    const actionData = useActionData();
 
     // État pour détecter si on est en train de traiter une requête
     const isAddingToMenuInProgress = menuFetcher.state === "submitting";
@@ -188,7 +189,7 @@ export default function BoxRecipe({ recipe }: BoxLayoutProps) {
 
                 <div className="mt-auto space-y-3">
                     {/* Bouton ajouter au menu */}
-                    {!isAdded && isAuthenticated && (
+                    {!isAdded && isAuthenticated && location.pathname !== '/menu' && (
                         <div className="w-full">
                             <button
                                 onClick={handleAddToMenu}

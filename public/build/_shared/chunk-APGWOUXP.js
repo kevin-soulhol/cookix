@@ -1,18 +1,18 @@
 import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
+import {
   Link,
   useFetcher,
   useNavigate,
   useOutletContext
-} from "/build/_shared/chunk-S75R672J.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
-import {
-  require_react
-} from "/build/_shared/chunk-7M6SC7J5.js";
+} from "/build/_shared/chunk-CZSOU3SK.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
+import {
+  require_react
+} from "/build/_shared/chunk-7M6SC7J5.js";
 import {
   __toESM
 } from "/build/_shared/chunk-PNG5AS42.js";
@@ -212,7 +212,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/components/AuthButton.tsx"
   );
-  import.meta.hot.lastModified = "1742566882119.2976";
+  import.meta.hot.lastModified = "1742653190827.848";
 }
 function AuthButton({
   isAuthenticated,
@@ -420,7 +420,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/components/Layout.tsx"
   );
-  import.meta.hot.lastModified = "1742579621619.6345";
+  import.meta.hot.lastModified = "1742653210881.073";
 }
 function Layout({
   children,
@@ -480,9 +480,14 @@ function Layout({
               lineNumber: 61,
               columnNumber: 19
             }, this),
-            /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/courses", className: "px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors", children: "Liste de courses" }, void 0, false, {
+            /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/partages", className: "px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors", children: "Menu partag\xE9" }, void 0, false, {
               fileName: "app/components/Layout.tsx",
               lineNumber: 64,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/courses", className: "px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors", children: "Liste de courses" }, void 0, false, {
+              fileName: "app/components/Layout.tsx",
+              lineNumber: 67,
               columnNumber: 19
             }, this)
           ] }, void 0, true, {
@@ -492,7 +497,7 @@ function Layout({
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(AuthButton, { isAuthenticated, user }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 69,
+            lineNumber: 72,
             columnNumber: 15
           }, this)
         ] }, void 0, true, {
@@ -503,34 +508,34 @@ function Layout({
         /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("div", { className: "md:hidden flex items-center", children: /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("button", { onClick: () => setIsMenuOpen(!isMenuOpen), className: "inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-rose-500 hover:bg-gray-100 focus:outline-none", "aria-expanded": isMenuOpen, children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("span", { className: "sr-only", children: "Ouvrir le menu" }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 74,
+            lineNumber: 77,
             columnNumber: 17
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("svg", { className: `${isMenuOpen ? "hidden" : "block"} h-6 w-6`, xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "2", d: "M4 6h16M4 12h16M4 18h16" }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 77,
+            lineNumber: 80,
             columnNumber: 19
           }, this) }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 76,
+            lineNumber: 79,
             columnNumber: 17
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("svg", { className: `${isMenuOpen ? "block" : "hidden"} h-6 w-6`, xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "2", d: "M6 18L18 6M6 6l12 12" }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 81,
+            lineNumber: 84,
             columnNumber: 19
           }, this) }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 80,
+            lineNumber: 83,
             columnNumber: 17
           }, this)
         ] }, void 0, true, {
           fileName: "app/components/Layout.tsx",
-          lineNumber: 73,
+          lineNumber: 76,
           columnNumber: 15
         }, this) }, void 0, false, {
           fileName: "app/components/Layout.tsx",
-          lineNumber: 72,
+          lineNumber: 75,
           columnNumber: 13
         }, this)
       ] }, void 0, true, {
@@ -545,52 +550,57 @@ function Layout({
       /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("div", { className: `${isMenuOpen ? "block" : "hidden"} md:hidden`, children: /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("div", { className: "px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-md", children: [
         /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/recettes", className: "block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500", onClick: () => setIsMenuOpen(false), children: "Toutes les recettes" }, void 0, false, {
           fileName: "app/components/Layout.tsx",
-          lineNumber: 91,
+          lineNumber: 94,
           columnNumber: 13
         }, this),
         isAuthenticated ? /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(import_jsx_dev_runtime3.Fragment, { children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/menu", className: "block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500", onClick: () => setIsMenuOpen(false), children: "Menu de la semaine" }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 96,
+            lineNumber: 99,
+            columnNumber: 17
+          }, this),
+          /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/partages", className: "block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500", onClick: () => setIsMenuOpen(false), children: "Menu partag\xE9" }, void 0, false, {
+            fileName: "app/components/Layout.tsx",
+            lineNumber: 102,
             columnNumber: 17
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/courses", className: "block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500", onClick: () => setIsMenuOpen(false), children: "Liste de courses" }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 99,
+            lineNumber: 105,
             columnNumber: 17
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/profil", className: "block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500", onClick: () => setIsMenuOpen(false), children: "Mon profil" }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 102,
+            lineNumber: 109,
             columnNumber: 17
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("button", { className: "block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-100", onClick: () => {
             setIsMenuOpen(false);
           }, children: "Se d\xE9connecter" }, void 0, false, {
             fileName: "app/components/Layout.tsx",
-            lineNumber: 105,
+            lineNumber: 112,
             columnNumber: 17
           }, this)
         ] }, void 0, true, {
           fileName: "app/components/Layout.tsx",
-          lineNumber: 95,
+          lineNumber: 98,
           columnNumber: 32
         }, this) : /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(import_jsx_dev_runtime3.Fragment, { children: /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/login", className: "block px-3 py-2 rounded-md text-base font-medium text-rose-600 hover:bg-gray-100", onClick: () => setIsMenuOpen(false), children: "Se connecter" }, void 0, false, {
           fileName: "app/components/Layout.tsx",
-          lineNumber: 112,
+          lineNumber: 119,
           columnNumber: 17
         }, this) }, void 0, false, {
           fileName: "app/components/Layout.tsx",
-          lineNumber: 111,
+          lineNumber: 118,
           columnNumber: 21
         }, this)
       ] }, void 0, true, {
         fileName: "app/components/Layout.tsx",
-        lineNumber: 90,
+        lineNumber: 93,
         columnNumber: 11
       }, this) }, void 0, false, {
         fileName: "app/components/Layout.tsx",
-        lineNumber: 89,
+        lineNumber: 92,
         columnNumber: 9
       }, this)
     ] }, void 0, true, {
@@ -600,12 +610,12 @@ function Layout({
     }, this),
     /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("main", { className: "flex-grow", children }, void 0, false, {
       fileName: "app/components/Layout.tsx",
-      lineNumber: 121,
+      lineNumber: 128,
       columnNumber: 7
     }, this),
     /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Footer, {}, void 0, false, {
       fileName: "app/components/Layout.tsx",
-      lineNumber: 126,
+      lineNumber: 133,
       columnNumber: 7
     }, this)
   ] }, void 0, true, {
@@ -626,4 +636,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   Layout
 };
-//# sourceMappingURL=/build/_shared/chunk-XAMQJL7P.js.map
+//# sourceMappingURL=/build/_shared/chunk-APGWOUXP.js.map

@@ -43,9 +43,7 @@ async function createUserSession(userId: number, redirectTo: string) {
 // Helper pour obtenir l'ID de l'utilisateur actuel
 export async function getUserId(request: Request): Promise<number | null> {
     const session = await getSession(request);
-    console.log("_____________________________ session", session)
     const userId = session.get("userId");
-    console.log("_____________________________ userId from session", userId);
     return userId || null;
 }
 

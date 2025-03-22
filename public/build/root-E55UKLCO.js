@@ -5,6 +5,9 @@ import {
   require_node
 } from "/build/_shared/chunk-G7CHZRZX.js";
 import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
+import {
   Links,
   LiveReload,
   Meta,
@@ -12,31 +15,23 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData
-} from "/build/_shared/chunk-S75R672J.js";
-import "/build/_shared/chunk-U4FRFQSK.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
-import "/build/_shared/chunk-7M6SC7J5.js";
+} from "/build/_shared/chunk-CZSOU3SK.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
 import "/build/_shared/chunk-UWV35TSL.js";
+import "/build/_shared/chunk-U4FRFQSK.js";
+import "/build/_shared/chunk-7M6SC7J5.js";
 import {
   __toESM
 } from "/build/_shared/chunk-PNG5AS42.js";
 
 // app/root.tsx
 var import_node = __toESM(require_node(), 1);
-
-// css-bundle-plugin-ns:@remix-run/css-bundle
-var cssBundleHref = void 0;
-
-// app/root.tsx
 var import_db = __toESM(require_db(), 1);
 
 // app/tailwind.css
-var tailwind_default = "/build/_assets/tailwind-3JT7UPRK.css";
+var tailwind_default = "/build/_assets/tailwind-6ETXPFRH.css";
 
 // app/root.tsx
 var import_jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
@@ -59,10 +54,7 @@ if (import.meta) {
     "app/root.tsx"
   );
 }
-var links = () => [...cssBundleHref ? [{
-  rel: "stylesheet",
-  href: cssBundleHref
-}] : [], {
+var links = () => [{
   rel: "stylesheet",
   href: tailwind_default
 }, {
@@ -86,27 +78,27 @@ function App() {
     /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("head", { children: [
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("meta", { charSet: "utf-8" }, void 0, false, {
         fileName: "app/root.tsx",
-        lineNumber: 86,
+        lineNumber: 82,
         columnNumber: 9
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("meta", { name: "viewport", content: "width=device-width, initial-scale=1" }, void 0, false, {
         fileName: "app/root.tsx",
-        lineNumber: 87,
+        lineNumber: 83,
         columnNumber: 9
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Meta, {}, void 0, false, {
         fileName: "app/root.tsx",
-        lineNumber: 88,
+        lineNumber: 84,
         columnNumber: 9
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Links, {}, void 0, false, {
         fileName: "app/root.tsx",
-        lineNumber: 89,
+        lineNumber: 85,
         columnNumber: 9
       }, this)
     ] }, void 0, true, {
       fileName: "app/root.tsx",
-      lineNumber: 85,
+      lineNumber: 81,
       columnNumber: 7
     }, this),
     /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("body", { className: "h-full", children: [
@@ -115,32 +107,32 @@ function App() {
         user
       } }, void 0, false, {
         fileName: "app/root.tsx",
-        lineNumber: 92,
+        lineNumber: 88,
         columnNumber: 9
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(ScrollRestoration, {}, void 0, false, {
         fileName: "app/root.tsx",
-        lineNumber: 96,
+        lineNumber: 92,
         columnNumber: 9
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Scripts, {}, void 0, false, {
         fileName: "app/root.tsx",
-        lineNumber: 97,
+        lineNumber: 93,
         columnNumber: 9
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(LiveReload, {}, void 0, false, {
         fileName: "app/root.tsx",
-        lineNumber: 98,
+        lineNumber: 94,
         columnNumber: 9
       }, this)
     ] }, void 0, true, {
       fileName: "app/root.tsx",
-      lineNumber: 91,
+      lineNumber: 87,
       columnNumber: 7
     }, this)
   ] }, void 0, true, {
     fileName: "app/root.tsx",
-    lineNumber: 84,
+    lineNumber: 80,
     columnNumber: 10
   }, this);
 }
@@ -156,4 +148,4 @@ export {
   App as default,
   links
 };
-//# sourceMappingURL=/build/root-XAOXXJVT.js.map
+//# sourceMappingURL=/build/root-E55UKLCO.js.map

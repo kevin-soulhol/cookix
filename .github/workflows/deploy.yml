@@ -73,4 +73,4 @@ jobs:
       
       - name: Setup and start application
         run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && npm ci --production && npx prisma migrate deploy && pm2 restart cookix || pm2 start npm --name "cookix" -- start'
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && npm ci && npx prisma migrate deploy && pm2 restart cookix || pm2 start npm --name "cookix" -- start'

@@ -7,16 +7,14 @@ import {
   ScrollRestoration,
   useLoaderData
 } from "@remix-run/react";
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { cssBundleHref } from "@remix-run/css-bundle";
 import { getUserId } from "~/routes/api.user";
 import { prisma } from "~/utils/db.server";
 
 import tailwindStyles from "./tailwind.css";
 
 export const links: LinksFunction = () => [
-  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
   { rel: "stylesheet", href: tailwindStyles },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {

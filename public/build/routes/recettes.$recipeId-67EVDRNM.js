@@ -5,21 +5,21 @@ import {
   require_node
 } from "/build/_shared/chunk-G7CHZRZX.js";
 import {
-  Link,
-  useLoaderData,
-  useOutletContext
-} from "/build/_shared/chunk-S75R672J.js";
-import "/build/_shared/chunk-U4FRFQSK.js";
-import {
   require_jsx_dev_runtime
 } from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
-  require_react
-} from "/build/_shared/chunk-7M6SC7J5.js";
+  Link,
+  useLoaderData,
+  useOutletContext
+} from "/build/_shared/chunk-CZSOU3SK.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
 import "/build/_shared/chunk-UWV35TSL.js";
+import "/build/_shared/chunk-U4FRFQSK.js";
+import {
+  require_react
+} from "/build/_shared/chunk-7M6SC7J5.js";
 import {
   __toESM
 } from "/build/_shared/chunk-PNG5AS42.js";
@@ -516,4 +516,4 @@ export {
   RecipeDetail as default,
   meta
 };
-//# sourceMappingURL=/build/routes/recettes.$recipeId-DA765G7J.js.map
+//# sourceMappingURL=/build/routes/recettes.$recipeId-67EVDRNM.js.map

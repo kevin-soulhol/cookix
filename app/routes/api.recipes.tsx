@@ -27,6 +27,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset")!) : 0;
   const random = url.searchParams.get("random") === "true";
 
+  console.log("______________________", userId, id)
+
   try {
     // Cas 1: Recherche d'une recette spécifique par ID
     if (id) {
@@ -110,24 +112,30 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 
     // Récupérer les recettes
-    const includeObj = {
-      menuItems: {
-        select: {
-          id: true
+    let includeObj = {}
+    if (userId) {
+      includeObj = {
+        favorites: {
+          where: {
+            userId
+          },
+          select: {
+            id: true
+          }
+        },
+        menuItems: {
+          where: {
+            menu: {
+              userId
+            }
+          },
+          select: {
+            id: true
+          }
         }
       }
     }
 
-    if (userId) {
-      includeObj.favorites = {
-        where: {
-          userId
-        },
-        select: {
-          id: true
-        }
-      }
-    }
 
     const recipes = await prisma.recipe.findMany({
       where,
@@ -136,6 +144,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       skip: offset,
       include: includeObj
     });
+
 
     if (random) {
       recipes.sort(() => Math.random() - 0.5);
@@ -148,7 +157,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const transformedRecipes = recipes.map(recipe => ({
       ...recipe,
       isFavorite: recipe.favorites?.length > 0,
-      isInMenu: recipe.menuItems.length > 0 && userId,
+      isInMenu: recipe.menuItems?.length > 0 && userId,
       favorites: undefined // Supprimer les données de relation brutes
     }));
 

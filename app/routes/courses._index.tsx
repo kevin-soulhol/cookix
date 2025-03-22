@@ -171,21 +171,30 @@ export async function loader({ request }: LoaderFunctionArgs) {
         let shoppingList;
 
         if (listId) {
+
             shoppingList = await prisma.shoppingList.findUnique({
                 where: {
                     id: parseInt(listId)
                 }
             });
 
-            // Vérifier si la liste appartient à l'utilisateur
-            if (shoppingList && shoppingList.userId !== userId) {
-                return json(
-                    {
-                        error: "Vous n'avez pas accès à cette liste"
-                    },
-                    { status: 403 }
-                );
+
+            // Vérifier si l'utilisateur est propriétaire du menu ou s'il a un partage accepté
+            const hasAccess = shoppingList.userId === userId || await prisma.menuShare.findFirst({
+                where: {
+                    shoppingListId: parseInt(listId),
+                    OR: [
+                        { sharedWithUserId: userId },
+                        { sharedWithEmail: { equals: (await prisma.user.findUnique({ where: { id: userId } }))?.email } }
+                    ],
+                    isAccepted: true
+                }
+            });
+
+            if (!hasAccess) {
+                return json({ success: false, message: "Vous n'avez pas accès à cette liste" }, { status: 403 });
             }
+
         } else {
             shoppingList = await prisma.shoppingList.findFirst({
                 where: {
@@ -251,6 +260,9 @@ export default function ShoppingList() {
     const [newItemQuantity, setNewItemQuantity] = useState("");
     const [newItemUnit, setNewItemUnit] = useState("");
     const [itemInFocus, setItemInFocus] = useState<number | null>(null);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [email, setEmail] = useState("");
+    const shareFetcher = useFetcher();
 
     const toggleItemFetcher = useFetcher();
     const removeItemFetcher = useFetcher();
@@ -258,10 +270,10 @@ export default function ShoppingList() {
     const clearCheckedFetcher = useFetcher();
 
     // Calculer le nombre d'articles cochés
-    const checkedCount = items.filter(item => item.isChecked).length;
+    const checkedCount = items?.filter(item => item.isChecked)?.length || 0;
 
     // Calculer la progression
-    const progress = items.length > 0 ? Math.round((checkedCount / items.length) * 100) : 0;
+    const progress = items?.length > 0 ? Math.round((checkedCount / items.length) * 100) : 0;
 
     // Gérer la soumission du formulaire d'ajout
     const handleAddItem = (e) => {
@@ -332,6 +344,27 @@ export default function ShoppingList() {
                                     Vider les cochés
                                 </button>
                             )}
+
+                            <button
+                                onClick={() => setShowShareModal(true)}
+                                className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                <svg
+                                    className="w-5 h-5 mr-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                                    />
+                                </svg>
+                                Partager
+                            </button>
                         </div>
 
                         {/* Barre de progression */}
@@ -600,6 +633,53 @@ export default function ShoppingList() {
                                 Retour au menu
                             </Link>
                         </div>
+
+                        {/* Modal de partage */}
+                        {showShareModal && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                                    <h2 className="text-lg font-bold mb-4">Partager votre liste de courses</h2>
+
+                                    <shareFetcher.Form method="post" action="/api/share" onSubmit={() => setShowShareModal(false)}>
+                                        <input type="hidden" name="_action" value="shareMenu" />
+                                        <input type="hidden" name="shoppingListId" value={shoppingList.id} />
+                                        {/* Laissez menuId vide - dans l'API nous allons gérer ce cas spécial */}
+
+                                        <div className="mb-4">
+                                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Adresse email
+                                            </label>
+                                            <input
+                                                type="email"
+                                                id="email"
+                                                name="email"
+                                                required
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500"
+                                                placeholder="exemple@email.com"
+                                            />
+                                        </div>
+
+                                        <div className="flex justify-end space-x-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowShareModal(false)}
+                                                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                            >
+                                                Annuler
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
+                                            >
+                                                Partager
+                                            </button>
+                                        </div>
+                                    </shareFetcher.Form>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
