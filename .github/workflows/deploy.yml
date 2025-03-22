@@ -58,17 +58,13 @@ jobs:
       
       - name: Copy Prisma schema and generated client
         run: |
-          rsync -avz prisma/schema.prisma ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
-          rsync -avz prisma/schema.prisma ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
-          rsync -avz prisma/index.js ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma
-          rsync -avz prisma/prisma.js ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma
-          rsync -avz node_modules/.prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/node_modules/.prisma/
-          rsync -avz node_modules/@prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/node_modules/@prisma/
+          rsync -avz prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix/prisma/ && npx prisma generate'
       
       - name: Copy scraper files
         run: |
           rsync -avz scripts/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/scripts/
-          rsync -avz scraper.Dockerfile ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          
       
       - name: Setup scraper (if using cron on server)
         run: |
