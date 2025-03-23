@@ -90,7 +90,8 @@ async function scrapeCookomix(browser) {
     console.log(`Found ${categoryLinks.length} categories`);
 
     let recipeLinks =[];
-    for (let i = 0; i < Math.min(2, categoryLinks.length); i++) {
+    const recipesNumberToGet = process.env.NODE_ENV === "production" ? categoryLinks.length : Math.min(2, categoryLinks.length)
+    for (let i = 0; i < recipesNumberToGet; i++) {
         await wait(3, 7);
 
         const category = categoryLinks[i];
