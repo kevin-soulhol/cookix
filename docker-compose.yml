@@ -1,48 +1,49 @@
 services:
   app:
     build: .
-    ports:
-      - "3000:3000"
-      - "5555:5555"  # Pour Prisma Studio
-    volumes:
-      - .:/app
-      - /app/node_modules
+    restart: always
     depends_on:
       - db
     environment:
       - DATABASE_URL=${DATABASE_URL}
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3000
-      - REMIX_DEV_ORIGIN=http://localhost:3000
-    command: npm run dev
-    restart: unless-stopped
+      - SESSION_SECRET=${SESSION_SECRET}
+    networks:
+      - cookix-network
+    # Ne pas exposer le port directement, Apache fera le proxy
 
   db:
     image: mariadb:10.6
-    ports:
-      - "3306:3306"
+    restart: always
     volumes:
-      - db_data:/var/lib/mysql
+      - cookix_db_data:/var/lib/mysql
     environment:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
-    restart: unless-stopped
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    networks:
+      - cookix-network
 
   scraper:
     build:
       context: .
       dockerfile: scraper.Dockerfile
+    restart: always
     volumes:
-      - ./scripts/scraper:/app
-      - ./prisma:/app/prisma
       - playwright-browsers:/ms-playwright
     depends_on:
       - db
     environment:
       - DATABASE_URL=${DATABASE_URL}
-    restart: unless-stopped
+    networks:
+      - cookix-network
+
+networks:
+  cookix-network:
+    driver: bridge
 
 volumes:
-  db_data:
+  cookix_db_data:
   playwright-browsers:
