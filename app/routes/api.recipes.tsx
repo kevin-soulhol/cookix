@@ -27,7 +27,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset")!) : 0;
   const random = url.searchParams.get("random") === "true";
 
-  console.log("______________________", userId, id)
 
   try {
     // Cas 1: Recherche d'une recette spécifique par ID

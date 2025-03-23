@@ -19,7 +19,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json({ success: false, message: "Il faut être connecté" }, { status: 401 });
   }
 
-  console.log("_____________________________ ", userId, menuId)
   try {
     // Si un ID de menu spécifique est demandé
     if (menuId) {
@@ -123,7 +122,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       activeMenu = await prisma.menu.create({
         data: {
           userId,
-          name: `Menu du ${new Date().toLocaleDateString('fr-FR')}`,
           startDate: new Date(),
           endDate: new Date()
         }
@@ -165,6 +163,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
     }
 
+
     // Vérifier si le menu a été partagé
     const menuShares = await prisma.menuShare.findMany({
       where: { menuId: activeMenu.id }
@@ -190,7 +189,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       favoriteRecipes: [],
       shoppingListCount: 0,
       shoppingListId: null,
-      menuShares: [],
       error: "Une erreur est survenue lors du chargement du menu"
     }, { status: 500 });
   }
@@ -262,7 +260,6 @@ async function getMenuByUserId(userId: number) {
 
   return activeMenu;
 }
-
 
 async function addRecipeToMenu(recipeId: number, userId: number) {
   if (!recipeId) {

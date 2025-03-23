@@ -90,8 +90,8 @@ async function scrapeCookomix(browser) {
     console.log(`Found ${categoryLinks.length} categories`);
 
     let recipeLinks =[];
-    const recipesNumberToGet = process.env.NODE_ENV === "production" ? categoryLinks.length : Math.min(2, categoryLinks.length)
-    for (let i = 0; i < recipesNumberToGet; i++) {
+    const categoryNumberToGet = process.env.NODE_ENV === "production" ? categoryLinks.length : Math.min(2, categoryLinks.length)
+    for (let i = 0; i < categoryNumberToGet; i++) {
         await wait(3, 7);
 
         const category = categoryLinks[i];
@@ -110,7 +110,8 @@ async function scrapeCookomix(browser) {
         recipeLinks = [...recipeLinks, ...recipesInPage];
 
         // Pour chaque recette, extraire les détails (limité à 3 recettes par catégorie pour les tests)
-        for (let j = 0; j < Math.min(5, recipesInPage.length); j++) {
+        const recipesNumberToGet = process.env.NODE_ENV === "production" ? recipesInPage.length : Math.min(10, recipesInPage.length)
+        for (let j = 0; j < recipesNumberToGet; j++) {
             const recipe = recipesInPage[j];
             await scrapeRecipeDetails(page, recipe.url, category.title);
         }

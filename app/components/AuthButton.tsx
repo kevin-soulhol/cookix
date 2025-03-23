@@ -36,7 +36,7 @@ export default function AuthButton({ isAuthenticated, user }: AuthButtonProps) {
         );
         setIsDropdownOpen(false);
         // Redirection vers la page d'accueil après déconnexion
-        navigate("/");
+        //navigate("/");
     };
 
     // Si non connecté, afficher le bouton de connexion

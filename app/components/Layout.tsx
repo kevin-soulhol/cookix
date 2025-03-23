@@ -63,12 +63,6 @@ export default function Layout({ children, showHomeLink = false, pageTitle }: La
                     Menu de la semaine
                   </Link>
                   <Link
-                    to="/partages"
-                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors"
-                  >
-                    Menu partagé
-                  </Link>
-                  <Link
                     to="/courses"
                     className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors"
                   >
@@ -133,13 +127,6 @@ export default function Layout({ children, showHomeLink = false, pageTitle }: La
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Menu de la semaine
-                </Link>
-                <Link
-                  to="/partages"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Menu partagé
                 </Link>
                 <Link
                   to="/courses"

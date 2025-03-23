@@ -6,85 +6,6 @@ import Layout from "~/components/Layout";
 import { TypeMenuItem } from "./api.menu";
 
 
-// Fonction pour partager le menu par email
-export async function action() {
-  /*
-  // Pour un vrai système d'authentification, vous devriez récupérer l'userId depuis la session
-  const userId = 1; // ID utilisateur fictif
-  
-  const formData = await request.formData();
-  const actionType = formData.get("_action");
-  
-  try {
-    // Action pour partager le menu
-    if (actionType === "share") {
-      const email = formData.get("email");
-      const menuId = formData.get("menuId");
-      
-      if (!email || !menuId) {
-        return json({ 
-          success: false, 
-          message: "Email et ID du menu requis" 
-        }, { status: 400 });
-      }
-      
-      // Dans une vraie implémentation, vous enverriez un email ou créeriez une invitation
-      // Ici, nous simulons un partage en créant une entrée dans une table "MenuShare"
-      await prisma.menuShare.create({
-        data: {
-          menuId: parseInt(menuId.toString()),
-          sharedByUserId: userId,
-          sharedWithEmail: email.toString(),
-          token: Math.random().toString(36).substring(2, 15),
-          isAccepted: false
-        }
-      });
-      
-      return json({ 
-        success: true, 
-        message: `Menu partagé avec ${email}` 
-      });
-    }
-    
-    // Action pour supprimer un élément du menu
-    if (actionType === "removeItem") {
-      const menuItemId = formData.get("menuItemId");
-      
-      if (!menuItemId) {
-        return json({ 
-          success: false, 
-          message: "ID de l'élément du menu requis" 
-        }, { status: 400 });
-      }
-      
-      // Supprimer l'élément du menu
-      await prisma.menuItem.delete({
-        where: {
-          id: parseInt(menuItemId.toString())
-        }
-      });
-      
-      return json({ 
-        success: true, 
-        message: "Élément supprimé du menu" 
-      });
-    }
-    
-    return json({ 
-      success: false, 
-      message: "Action non reconnue" 
-    }, { status: 400 });
-    
-  } catch (error) {
-    console.error("Erreur lors de l'action sur le menu:", error);
-    return json(
-      { success: false, message: "Une erreur est survenue" },
-      { status: 500 }
-    );
-  }
-    */
-}
-
 export async function loader({ request }: LoaderFunctionArgs) {
   // Récupérer l'ID du menu depuis les paramètres de requête
   const url = new URL(request.url);
@@ -106,8 +27,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
 
-  const data = await response.json();
-  return json(data);
+  const dataMenu = await response.json();
+
+  //récupéré les menus partagés
+
+  const apiShareUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/share`);
+  const responseShare = await fetch(apiShareUrl.toString(), {
+    method: "GET",
+    headers: {
+      Cookie: cookies || "", // Transmettre les cookies
+    },
+  });
+  const dataShare = await responseShare.json();
+  console.log(dataShare)
+
+
+  return json({
+    ...dataMenu,
+    ...dataShare
+  });
 }
 
 export default function WeeklyMenu() {
@@ -118,6 +56,8 @@ export default function WeeklyMenu() {
     shoppingListCount,
     shoppingListId,
     menuShares,
+    sharedWithMe,
+    pendingInvitations,
     isSharedMenu,
     canEdit,
     error
@@ -129,6 +69,10 @@ export default function WeeklyMenu() {
 
   const shareFetcher = useFetcher();
   const removeItemFetcher = useFetcher();
+
+
+  const deleteFetcher = useFetcher();
+  const acceptFetcher = useFetcher();
 
   // Transformer les éléments du menu pour affichage
   const recipes = menuItems.map((item: TypeMenuItem) => item.recipe);
@@ -323,6 +267,130 @@ export default function WeeklyMenu() {
                 ))}
               </div>
             )}
+
+            {/* Liste des menus offerts par quelqu'un d'autres */}
+            {isSharedMenu && (
+              <div className="mb-12">
+                <h2 className="text-xl font-semibold mb-4">Partagés avec moi</h2>
+
+                {sharedWithMe?.length > 0 ? (
+                  <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <ul className="divide-y divide-gray-200">
+                      {sharedWithMe.map((share) => (
+                        <li key={share.id} className="p-4 hover:bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-medium text-gray-900">{share.menu.name}</h3>
+                              <p className="text-sm text-gray-500">
+                                Partagé par: {share.sharedByUser.email}
+                              </p>
+                              {share.includeShoppingList && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 mt-2">
+                                  Inclut la liste de courses
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex space-x-2">
+                              <Link
+                                to={`/menu?id=${share.menu.id}`}
+                                className="inline-flex items-center px-3 py-1.5 border border-rose-500 text-xs font-medium rounded-md text-rose-500 bg-white hover:bg-rose-50"
+                              >
+                                Voir le menu
+                              </Link>
+
+                              {share.includeShoppingList && share.shoppingList && (
+                                <Link
+                                  to={`/courses?listId=${share.shoppingList.id}`}
+                                  className="inline-flex items-center px-3 py-1.5 border border-teal-500 text-xs font-medium rounded-md text-teal-500 bg-white hover:bg-teal-50"
+                                >
+                                  Voir la liste
+                                </Link>
+                              )}
+
+                              <deleteFetcher.Form method="post" action="/api/share">
+                                <input type="hidden" name="_action" value="deleteShare" />
+                                <input type="hidden" name="shareId" value={share.id} />
+                                <button
+                                  type="submit"
+                                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                  onClick={() => confirm("Êtes-vous sûr de vouloir supprimer ce partage ?")}
+                                >
+                                  Supprimer
+                                </button>
+                              </deleteFetcher.Form>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
+                    Aucun menu n'est partagé avec vous pour le moment.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Invitations en attente */}
+            <div className="mb-12">
+              <h2 className="text-xl font-semibold mb-4">Invitations en attente</h2>
+
+              {pendingInvitations?.length > 0 ? (
+                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                  <ul className="divide-y divide-gray-200">
+                    {pendingInvitations.map((invitation) => (
+                      <li key={invitation.id} className="p-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium text-gray-900">
+                              Invitation de {invitation.sharedByUser.email}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {invitation.includeShoppingList
+                                ? "Menu et liste de courses"
+                                : "Menu uniquement"}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              Reçue le {new Date(invitation.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+
+                          <div className="flex space-x-2">
+                            <acceptFetcher.Form method="post" action="/api/share">
+                              <input type="hidden" name="_action" value="acceptShare" />
+                              <input type="hidden" name="token" value={invitation.token} />
+                              <button
+                                type="submit"
+                                className="inline-flex items-center px-3 py-1.5 border border-green-500 text-xs font-medium rounded-md text-green-500 bg-white hover:bg-green-50"
+                              >
+                                Accepter
+                              </button>
+                            </acceptFetcher.Form>
+
+                            <deleteFetcher.Form method="post" action="/api/share">
+                              <input type="hidden" name="_action" value="deleteShare" />
+                              <input type="hidden" name="shareId" value={invitation.id} />
+                              <button
+                                type="submit"
+                                className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-md text-red-500 bg-white hover:bg-red-50"
+                              >
+                                Refuser
+                              </button>
+                            </deleteFetcher.Form>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
+                  Vous n'avez aucune invitation en attente.
+                </p>
+              )}
+            </div>
 
             {/* Liste des partages actifs */}
             {menuShares.length > 0 && (
