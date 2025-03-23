@@ -45,14 +45,18 @@ jobs:
       
       - name: Create .env file
         run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
           echo "SESSION_SECRET=${{ secrets.SESSION_SECRET }}" >> .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
+          echo "DATABASE_URL="mysql://${secrets.DB_USER}:${secrets.DB_PASSWORD}@db:3306/${secrets.DB_NAME}" > .env
       
       - name: Copy configuration and build files
         run: |
           rsync -avz .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
           rsync -avz --exclude 'node_modules' --exclude '.git' ./ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+
+      - name: Start docker
+        run: |
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix/ && sudo docker compose up --build -d'
