@@ -1,32 +1,47 @@
-FROM node:22-alpine
+# Stage de build
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Installation des dépendances système nécessaires pour Prisma
-RUN apk add --no-cache openssl
-
-# Copie des fichiers de dépendances
-COPY package.json package-lock.json ./
-
-# Installation de toutes les dépendances, y compris les devDependencies
+# Installation des dépendances
+COPY package*.json ./
 RUN npm ci
 
-# Vérification que Remix est correctement installé
-RUN npx --no-install remix --version || npm install --save-dev @remix-run/dev
-
-# Copie du schéma Prisma
-COPY ./prisma ./prisma/
-
-# Génération du client Prisma
+# Copie des sources et build
+COPY . .
+RUN npm run build
+RUN npm install -g prisma
+RUN npm install -g @prisma/client
 RUN npx prisma generate
 
-# Copie du reste du code source
-COPY . .
+# Stage de production
+FROM node:22-alpine AS runner
 
-# Construction de l'application
-RUN npm run build
+WORKDIR /app
 
+# Installation des dépendances de production + dotenv
+COPY package*.json ./
+RUN npm ci --production && npm install dotenv
+
+# Copie des fichiers nécessaires depuis le stage de build
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/vite.config.ts ./vite.config.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/start.sh ./start.sh
+
+RUN mkdir -p /app/uploads
+RUN chmod 777 /app/uploads
+
+# Variables d'environnement
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Exposition du port
 EXPOSE 3000
 
-# Commande pour démarrer l'application
-CMD ["npm", "run", "start"]
+# Commande de démarrage mise à jour pour exécuter les migrations
+RUN chmod +x ./start.sh
+CMD ["./start.sh"] 

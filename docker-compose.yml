@@ -11,7 +11,6 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
     networks:
       - cookix-network
-    # Ne pas exposer le port directement, Apache fera le proxy
 
   db:
     image: mariadb:10.6
