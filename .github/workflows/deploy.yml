@@ -72,4 +72,4 @@ jobs:
 
       - name: Start docker
         run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} '_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && chmod +x deploy.sh && ls -la && ./deploy.sh'
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} '_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && ls -la && ./deploy.sh'
