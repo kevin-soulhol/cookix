@@ -62,7 +62,6 @@ jobs:
         run: |
           ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && echo "#!/bin/bash
           docker compose down
-          docker compose build
-          docker compose up -d
+          docker compose up -d --build -V
           docker compose exec -T app npx prisma migrate deploy
           " > /tmp/deploy_temp.sh && chmod +x /tmp/deploy_temp.sh && /tmp/deploy_temp.sh'
