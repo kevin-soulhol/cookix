@@ -51,25 +51,17 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
           echo "DATABASE_URL='mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}'" > .env
-      
-      - name: Prepare deploy script
-        run: |
-          echo '#!/bin/bash
-          set -e
-          # Reconstruire et redémarrer les conteneurs
-          docker-compose down
-          docker-compose build
-          docker-compose up -d
-          # Exécuter les migrations de base de données
-          docker-compose exec -T app npx prisma migrate deploy
-          echo "Déploiement terminé avec succès!"' > deploy.sh
-          chmod +x deploy.sh
 
       - name: Copy configuration and build files
         run: |
-          rsync -avz --perms .env deploy.sh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          rsync -avz --perms .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
           rsync -avz --exclude 'node_modules' --exclude '.git' ./ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
 
-      - name: Start docker
+      - name: Deploy using temporary script
         run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && ls -la && ./deploy.sh'
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && echo "#!/bin/bash
+          docker compose down
+          docker compose build
+          docker compose up -d
+          docker compose exec -T app npx prisma migrate deploy
+          " > /tmp/deploy_temp.sh && chmod +x /tmp/deploy_temp.sh && /tmp/deploy_temp.sh'
