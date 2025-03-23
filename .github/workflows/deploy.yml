@@ -52,11 +52,24 @@ jobs:
           echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
           echo "DATABASE_URL='mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}'" > .env
       
+      - name: Prepare deploy script
+        run: |
+          echo '#!/bin/bash
+          set -e
+          # Reconstruire et redémarrer les conteneurs
+          docker-compose down
+          docker-compose build
+          docker-compose up -d
+          # Exécuter les migrations de base de données
+          docker-compose exec -T app npx prisma migrate deploy
+          echo "Déploiement terminé avec succès!"' > deploy.sh
+          chmod +x deploy.sh
+
       - name: Copy configuration and build files
         run: |
-          rsync -avz .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          rsync -avz --perms .env deploy.sh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
           rsync -avz --exclude 'node_modules' --exclude '.git' ./ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
 
       - name: Start docker
         run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'ls -la /var/www/cookix/ && /var/www/cookix/deploy.sh'
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} '_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && chmod +x deploy.sh && ls -la && ./deploy.sh'
