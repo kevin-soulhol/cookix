@@ -54,23 +54,4 @@ jobs:
       - name: Copy configuration and build files
         run: |
           rsync -avz .env ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
-          rsync -avz package*.json ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
-          rsync -avz --delete build/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/build/
-          rsync -avz public/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/public/
-      
-      - name: Copy Prisma files
-        run: |
-          rsync -avz prisma/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/prisma/
-      
-      - name: Copy scraper files
-        run: |
-          rsync -avz scripts/ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/scripts/
-      
-      - name: Setup scraper (if using cron on server)
-        run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix/scripts/scraper && npm install && chmod +x entrypoint.sh'
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && echo "0 2 * * 1 cd /var/www/cookix/scripts/scraper && node index.js >> /var/log/cookix-scraper.log 2>&1" | crontab -'
-      
-      - name: Setup and start application
-        run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && npm ci && npx prisma migrate deploy && pm2 restart cookix || pm2 start npm --name "cookix" -- start'
+          rsync -avz --exclude 'node_modules' --exclude '.git' ./ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
