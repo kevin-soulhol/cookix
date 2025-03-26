@@ -41,4 +41,4 @@ COPY ./scripts/scraper/entrypoint.sh ./
 RUN chmod +x ./entrypoint.sh
 
 # Le point d'entrée lance cron et maintient le conteneur actif
-#ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
