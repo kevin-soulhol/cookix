@@ -42,4 +42,4 @@ RUN chmod +x ./start-prod.sh
 EXPOSE 3000
 
 # Commande de démarrage
-CMD ["./start-prod.sh"]
+CMD ["node", "build/server.js"]
