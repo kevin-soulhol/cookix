@@ -1,0 +1,65 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+    networks:
+      - cookix-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: mariadb:10.6
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - cookix_db_data:/var/lib/mysql
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    networks:
+      - cookix-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper.Dockerfile
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ./scripts/scraper:/app
+      - /app/node_modules
+      - playwright-browsers:/ms-playwright
+    networks:
+      - cookix-network
+
+networks:
+  cookix-network:
+    driver: bridge
+
+volumes:
+  cookix_db_data:
+  playwright-browsers:
