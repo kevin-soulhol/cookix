@@ -28,6 +28,17 @@ model Recipe {
   steps           RecipeStep[]
   category        Category?          @relation(fields: [categoryId], references: [id])
   meals           MealOnRecipe[]
+
+  // Index pour accélérer les recherches par titre
+  @@index([title])
+  // Index pour les recherches par temps de préparation
+  @@index([preparationTime])
+  // Index pour les recherches par difficulté
+  @@index([difficulty])
+  // Index pour les recherches combinant catégorie et temps de préparation
+  @@index([categoryId, preparationTime])
+  // Index pour les premières 255 caractères de la description
+  @@index([description(length: 255)])
 }
 
 model Meal {
@@ -43,6 +54,9 @@ model MealOnRecipe {
   mealId   Int
   recipe   Recipe @relation(fields: [recipeId], references: [id])
   meal     Meal   @relation(fields: [mealId], references: [id])
+
+  @@index([mealId])
+  @@index([recipeId])
 }
 
 model Category {

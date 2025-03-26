@@ -86,12 +86,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // Cas 2: Recherche de recettes avec filtres
     const where: any = {};
 
-    // Filtre par texte (titre ou description)
+    // Filtre par texte plus efficace (d'abord vérifier le titre, qui est indexé)
     if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } }
-      ];
+      // Pour les recherches courtes, utiliser startsWith sur le titre qui est plus rapide
+      if (search.length <= 3) {
+        where.OR = [
+          { title: { startsWith: search } },
+          { title: { contains: search } },
+          { description: { contains: search } }
+        ];
+      } else {
+        where.OR = [
+          { title: { contains: search } },
+          { description: { contains: search } }
+        ];
+      }
     }
 
     // Filtre par difficulté
@@ -107,7 +116,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       where.meals = {
         some: {
           meal: {
-            title: mealType
+            title: {
+              equals: mealType  // Utiliser equals pour une correspondance exacte (plus efficace)
+            }
           }
         }
       };
@@ -151,13 +162,37 @@ export async function loader({ request }: LoaderFunctionArgs) {
       }
     }
 
+    // Optimisation: sélection conditionnelle des champs pour limiter les données transférées
+    const selectObj = {
+      id: true,
+      title: true,
+      categoryId: true,
+      preparationTime: true,
+      cookingTime: true,
+      servings: true,
+      difficulty: true,
+      note: true,
+      imageUrl: true,
+      sourceUrl: true,
+      createdAt: true,
+      updatedAt: true,
+      // Ne pas sélectionner la description complète sauf si on fait une recherche textuelle
+      description: search ? true : false,
+    };
+
 
     const recipes = await prisma.recipe.findMany({
       where,
       orderBy,
       take: limit,
       skip: offset,
-      include: includeObj
+      select: {
+        ...selectObj,
+        ...(userId ? {
+          favorites: includeObj.favorites,
+          menuItems: includeObj.menuItems
+        } : {})
+      }
     });
 
 

@@ -1,5 +1,5 @@
 import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
-import { Form, Link, useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
+import { Form, Link, useLoaderData, useNavigate, useNavigation, useSubmit } from "@remix-run/react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import BoxRecipe, { RecipeType } from "~/components/BoxRecipe";
 import Layout from "~/components/Layout";
@@ -154,6 +154,8 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+
+
 export default function RecipesIndex() {
   const {
     recipes,
@@ -165,6 +167,8 @@ export default function RecipesIndex() {
 
   const navigation = useNavigation();
   const submit = useSubmit();
+
+  const navigate = useNavigate();
 
   // State pour les filtres
   const [search, setSearch] = useState(appliedFilters.search);
@@ -181,14 +185,31 @@ export default function RecipesIndex() {
   const formRef = useRef<HTMLFormElement>(null);
 
   // Debounce la recherche
-  const debouncedSearch = useDebounce(search, 400);
+  const debouncedSearch = useDebounce(search, 600);
 
   // Effet pour soumettre le formulaire lorsque la recherche debouncée change
   useEffect(() => {
+    // Ne faire l'action que si la valeur a réellement changé
     if (debouncedSearch !== appliedFilters.search && formRef.current) {
-      submit(formRef.current);
+      // Créer un objet URLSearchParams pour construire la nouvelle URL
+      const searchParams = new URLSearchParams();
+
+      // Ajouter uniquement les paramètres non vides
+      if (debouncedSearch) searchParams.set("search", debouncedSearch);
+      if (category) searchParams.set("categoryId", category);
+      if (mealType) searchParams.set("mealType", mealType);
+      if (maxPreparationTime) searchParams.set("maxPreparationTime", maxPreparationTime.toString());
+      searchParams.set("sortBy", sortBy);
+      searchParams.set("sortDirection", sortDirection);
+      searchParams.set("page", "1"); // Remettre à la première page lors d'une recherche
+
+      // Construire l'URL avec les nouveaux paramètres de recherche
+      const newUrl = `/recettes?${searchParams.toString()}`;
+
+      // Utiliser la navigation de Remix pour changer l'URL sans recharger la page
+      navigate(newUrl, { replace: true });
     }
-  }, [debouncedSearch, appliedFilters.search, submit]);
+  }, [debouncedSearch, appliedFilters.search, category, mealType, maxPreparationTime, sortBy, sortDirection]);
 
   // Effets pour gestion des filtres
   useEffect(() => {
@@ -242,12 +263,37 @@ export default function RecipesIndex() {
           </p>
         </div>
 
+        {/* Bouton Filtres Mobile */}
+        <div className="md:hidden mb-4">
+          <button
+            type="button"
+            onClick={() => setFiltersVisible(true)}
+            className="w-full py-3 flex items-center justify-center bg-white rounded-lg shadow-md text-rose-500 font-medium"
+          >
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+              />
+            </svg>
+            Filtrer les recettes
+          </button>
+        </div>
+
         {/* Section principale avec filtres et recettes */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Filtres */}
           <div
-            className={`${filtersVisible ? 'block' : 'hidden'
-              } md:block md:col-span-1 bg-white rounded-lg shadow-md p-6 self-start sticky top-24`}
+            className={`${filtersVisible ? 'fixed inset-0 z-50 bg-white md:bg-transparent md:relative md:inset-auto md:z-auto' : 'hidden'
+              } md:block md:col-span-1 bg-white rounded-lg shadow-md p-6 self-start sticky top-24 overflow-auto max-h-screen md:max-h-[calc(100vh-120px)]`}
           >
             <Form ref={formRef} method="get" id="filter-form" onChange={e => submit(e.currentTarget)}>
               <h3 className="font-semibold text-lg mb-4 flex items-center justify-between">
