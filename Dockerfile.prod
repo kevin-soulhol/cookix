@@ -33,13 +33,13 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/start-prod.sh ./
 
-# S'assurer que le script de démarrage est exécutable
+# Script pour les migrations et le démarrage de l'application
+COPY ./start-prod-fix.sh ./start-prod.sh
 RUN chmod +x ./start-prod.sh
 
 # Exposer le port
 EXPOSE 3000
 
 # Commande de démarrage
-CMD ["node", "build/server.js"]
+CMD ["./start-prod.sh"]
