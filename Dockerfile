@@ -1,47 +1,43 @@
-# Stage de build
-FROM node:22-alpine AS builder
+FROM node:22-alpine AS base
 
+# Installer les dépendances nécessaires pour Prisma
+RUN apk add --no-cache openssl
+
+# Configuration de l'environnement de travail
 WORKDIR /app
 
-# Installation des dépendances
-COPY package*.json ./
+# Copier les fichiers de dépendances
+COPY package.json package-lock.json* ./
+COPY start.sh ./
+RUN chmod +x start.sh
+
+# Installer les dépendances
+FROM base AS deps
 RUN npm ci
 
-# Copie des sources et build
+# Builder l'application
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
-RUN npm install -g prisma
-RUN npm install -g @prisma/client
-RUN npx prisma generate
 
-# Stage de production
-FROM node:22-alpine AS runner
+# Configuration de l'image finale
+FROM base AS runner
+ENV NODE_ENV=production
 
-WORKDIR /app
-
-# Installation des dépendances de production + dotenv
-COPY package*.json ./
-RUN npm ci --production && npm install dotenv
-
-# Copie des fichiers nécessaires depuis le stage de build
+# Copier les fichiers construits et les dépendances
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/vite.config.ts ./vite.config.ts
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
-COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/start.sh ./start.sh
 
-RUN mkdir -p /app/uploads
-RUN chmod 777 /app/uploads
-
-# Variables d'environnement
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Exposition du port
-EXPOSE 3000
-
-# Commande de démarrage mise à jour pour exécuter les migrations
+# Copie du build d'entrée
+COPY --from=builder /app/start.sh ./
 RUN chmod +x ./start.sh
-CMD ["./start.sh"] 
+
+# Configuration des ports et commandes
+EXPOSE 3000 5555
+
+# Commande pour exécuter l'application
+ENTRYPOINT ["./start.sh"]

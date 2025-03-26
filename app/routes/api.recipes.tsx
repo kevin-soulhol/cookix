@@ -20,6 +20,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const id = url.searchParams.get("id");
   const search = url.searchParams.get("search");
   const difficulty = url.searchParams.get("difficulty");
+  const categoryId = url.searchParams.get("categoryId");
+  const mealType = url.searchParams.get("mealType");
   const maxPreparationTime = url.searchParams.get("maxPreparationTime");
   const sort = url.searchParams.get("sort") || "title";
   const dir = url.searchParams.get("dir") || "asc";
@@ -95,6 +97,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // Filtre par difficulté
     if (difficulty) {
       where.difficulty = difficulty;
+    }
+
+    if (categoryId) {
+      where.categoryId = parseInt(categoryId);
+    }
+
+    if (mealType) {
+      where.meals = {
+        some: {
+          meal: {
+            title: mealType
+          }
+        }
+      };
     }
 
     // Filtre par temps de préparation maximum
@@ -191,10 +207,29 @@ export async function action({ request }: ActionFunctionArgs) {
   const id = url.searchParams.get("id");
   const method = request.method.toUpperCase();
 
-  // Pour un vrai système d'authentification, vous devriez vérifier 
-  // si l'utilisateur a les permissions nécessaires
 
   try {
+
+    //Recherche par catégories
+    if (path === "categories") {
+      try {
+        const categories = await prisma.category.findMany({
+          orderBy: { title: 'asc' }
+        });
+
+        return json({
+          success: true,
+          categories
+        });
+      } catch (error) {
+        console.error("Erreur lors de la récupération des catégories:", error);
+        return json(
+          { success: false, message: "Une erreur est survenue lors de la récupération des catégories" },
+          { status: 500 }
+        );
+      }
+    }
+
     // Cas 1: Création d'une nouvelle recette (POST)
     if (method === "POST") {
       const formData = await request.formData();

@@ -3,11 +3,8 @@ import { Form, Link, useLoaderData, useNavigation, useSubmit } from "@remix-run/
 import { useEffect, useState, useRef, useCallback } from "react";
 import BoxRecipe, { RecipeType } from "~/components/BoxRecipe";
 import Layout from "~/components/Layout";
-import { prisma } from "~/utils/db.server";
-import { getUserId } from "./api.user";
 
 // Types pour nos filtres
-type DifficultyLevel = 'Facile' | 'Moyen' | 'Difficile' | string;
 type SortOption = 'title' | 'preparationTime' | 'note';
 type SortDirection = 'asc' | 'desc';
 
@@ -21,20 +18,22 @@ export const meta: MetaFunction = () => {
 export async function loader({ request }: LoaderFunctionArgs) {
   // Récupérer les paramètres de filtrage depuis l'URL
   const url = new URL(request.url);
+  const categoryId = url.searchParams.get("categoryId") || "";
+  const mealType = url.searchParams.get("mealType") || "";
   const searchQuery = url.searchParams.get("search") || "";
-  const difficulty = url.searchParams.get("difficulty") || "";
   const maxPreparationTime = url.searchParams.get("maxPreparationTime") || null;
   const sortBy = url.searchParams.get("sortBy") || "title";
   const sortDirection = url.searchParams.get("sortDirection") || "asc";
   const page = url.searchParams.get("page") || "1";
-  const perPage = "9"; // nombre de recettes par page
+  const perPage = "300"; // nombre de recettes par page
 
   // Construire l'URL de l'API recipes avec tous les paramètres
   const apiUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/recipes`);
 
   // Ajouter les paramètres de filtrage à l'URL de l'API
   if (searchQuery) apiUrl.searchParams.append("search", searchQuery);
-  if (difficulty) apiUrl.searchParams.append("difficulty", difficulty);
+  if (categoryId) apiUrl.searchParams.append("categoryId", categoryId);
+  if (mealType) apiUrl.searchParams.append("mealType", mealType);
   if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime.toString());
 
   // Ajouter les paramètres de tri
@@ -61,24 +60,32 @@ export async function loader({ request }: LoaderFunctionArgs) {
       throw new Error(apiResponse.message || "Erreur lors du chargement des recettes");
     }
 
-    // Récupérer les différentes difficultés pour le filtre (à faire séparément car l'API ne le fournit pas)
-    const apiUrlForDifficulties = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/recipes/difficulties`);
-    const difficultiesResponse = await fetch(apiUrlForDifficulties.toString(), {
+    //Récupérer les différentes catégories
+    const apiUrlForCategories = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/categories`);
+    const categoriesResponse = await fetch(apiUrlForCategories.toString(), {
       headers: {
         Cookie: cookies || "",
       },
     });
 
-    let difficultyOptions = [];
-
-    // Si notre API spécifique pour les difficultés n'existe pas encore, utiliser un ensemble de valeurs par défaut
-    if (difficultiesResponse.ok) {
-      const difficultiesData = await difficultiesResponse.json();
-      difficultyOptions = difficultiesData.difficulties || ["Facile", "Moyen", "Difficile"];
-    } else {
-      // Valeurs par défaut au cas où nous n'avons pas d'API spécifique
-      difficultyOptions = ["Facile", "Moyen", "Difficile"];
+    let categoryOptions = [];
+    if (categoriesResponse.ok) {
+      const categoriesData = await categoriesResponse.json();
+      categoryOptions = categoriesData.categories || [];
     }
+
+    //Récupérer les différents types de repas
+    const apiUrlForMealTypes = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/mealtypes`);
+    const mealTypesResponse = await fetch(apiUrlForMealTypes.toString(), {
+      headers: {
+        Cookie: cookies || "",
+      },
+    });
+
+    let mealTypeOptions = [];
+    const mealTypesData = await mealTypesResponse.json();
+    mealTypeOptions = mealTypesData.mealTypes || [];
+
 
     return json({
       recipes: apiResponse.recipes,
@@ -88,16 +95,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
         totalRecipes: apiResponse.pagination.total
       },
       filters: {
-        difficultyOptions,
+        categoryOptions,
+        mealTypeOptions,
         preparationTimeMax: 120 // valeur arbitraire, peut être ajustée
       },
       appliedFilters: {
         search: searchQuery,
-        difficulty,
         maxPreparationTime: maxPreparationTime ? parseInt(maxPreparationTime) : null,
+        categoryId: categoryId ? parseInt(categoryId) : null,
+        mealType,
         sortBy,
         sortDirection
-      }
+      },
+      error: false
     });
 
   } catch (error) {
@@ -110,12 +120,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
         totalRecipes: 0
       },
       filters: {
-        difficultyOptions: ["Facile", "Moyen", "Difficile"],
+        categoryOptions: [],
+        mealTypeOptions: [],
         preparationTimeMax: 120
       },
       appliedFilters: {
         search: searchQuery,
-        difficulty,
+        mealType,
+        categoryId: null,
         maxPreparationTime: maxPreparationTime ? parseInt(maxPreparationTime) : null,
         sortBy: "title",
         sortDirection: "asc"
@@ -156,8 +168,9 @@ export default function RecipesIndex() {
 
   // State pour les filtres
   const [search, setSearch] = useState(appliedFilters.search);
-  const [difficulty, setDifficulty] = useState(appliedFilters.difficulty);
   const [maxPreparationTime, setMaxPreparationTime] = useState<number | null>(appliedFilters.maxPreparationTime);
+  const [category, setCategory] = useState(appliedFilters.categoryId?.toString() || "");
+  const [mealType, setMealType] = useState(appliedFilters.mealType);
   const [sortBy, setSortBy] = useState<SortOption>(appliedFilters.sortBy as SortOption);
   const [sortDirection, setSortDirection] = useState<SortDirection>(appliedFilters.sortDirection as SortDirection);
 
@@ -180,8 +193,9 @@ export default function RecipesIndex() {
   // Effets pour gestion des filtres
   useEffect(() => {
     setSearch(appliedFilters.search);
-    setDifficulty(appliedFilters.difficulty);
     setMaxPreparationTime(appliedFilters.maxPreparationTime);
+    setCategory(appliedFilters.categoryId?.toString() || "");
+    setMealType(appliedFilters.mealType);
     setSortBy(appliedFilters.sortBy as SortOption);
     setSortDirection(appliedFilters.sortDirection as SortDirection);
   }, [appliedFilters]);
@@ -207,7 +221,6 @@ export default function RecipesIndex() {
   // Réinitialiser les filtres
   const resetFilters = useCallback(() => {
     setSearch("");
-    setDifficulty("");
     setMaxPreparationTime(null);
     setSortBy("title");
     setSortDirection("asc");
@@ -295,22 +308,43 @@ export default function RecipesIndex() {
                 </div>
               </div>
 
-              {/* Difficulté */}
+              {/* Filtre de categories */}
               <div className="mb-6">
-                <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 mb-1">
-                  Difficulté
+                <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
+                  Catégorie
                 </label>
                 <select
-                  id="difficulty"
-                  name="difficulty"
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
+                  id="categoryId"
+                  name="categoryId"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
                   className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
                 >
-                  <option value="">Toutes les difficultés</option>
-                  {filters?.difficultyOptions?.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+                  <option value="">Toutes les catégories</option>
+                  {filters.categoryOptions?.map((option) => (
+                    <option key={option.id} value={option.id.toString()}>
+                      {option.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtre de type de repas */}
+              <div className="mb-6">
+                <label htmlFor="mealType" className="block text-sm font-medium text-gray-700 mb-1">
+                  Type de repas
+                </label>
+                <select
+                  id="mealType"
+                  name="mealType"
+                  value={mealType}
+                  onChange={(e) => setMealType(e.target.value)}
+                  className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
+                >
+                  <option value="">Tous les types</option>
+                  {filters.mealTypeOptions?.map((option) => (
+                    <option key={option.title} value={option.title}>
+                      {option.title}
                     </option>
                   ))}
                 </select>
@@ -455,7 +489,7 @@ export default function RecipesIndex() {
                     <Form method="get" className="inline-block">
                       {/* Conserver les filtres */}
                       <input type="hidden" name="search" value={search} />
-                      <input type="hidden" name="difficulty" value={difficulty} />
+                      <input type="hidden" name="mealType" value={mealType} />
                       {maxPreparationTime && <input type="hidden" name="maxPreparationTime" value={maxPreparationTime.toString()} />}
                       <input type="hidden" name="sortBy" value={sortBy} />
                       <input type="hidden" name="sortDirection" value={sortDirection} />
@@ -514,7 +548,7 @@ export default function RecipesIndex() {
                         <Form method="get" className="inline-block">
                           {/* Conserver les filtres */}
                           <input type="hidden" name="search" value={search} />
-                          <input type="hidden" name="difficulty" value={difficulty} />
+                          <input type="hidden" name="mealType" value={mealType} />
                           {maxPreparationTime && <input type="hidden" name="maxPreparationTime" value={maxPreparationTime.toString()} />}
                           <input type="hidden" name="sortBy" value={sortBy} />
                           <input type="hidden" name="sortDirection" value={sortDirection} />
@@ -539,7 +573,7 @@ export default function RecipesIndex() {
                     <Form method="get" className="inline-block">
                       {/* Conserver les filtres */}
                       <input type="hidden" name="search" value={search} />
-                      <input type="hidden" name="difficulty" value={difficulty} />
+                      <input type="hidden" name="mealType" value={mealType} />
                       {maxPreparationTime && <input type="hidden" name="maxPreparationTime" value={maxPreparationTime.toString()} />}
                       <input type="hidden" name="sortBy" value={sortBy} />
                       <input type="hidden" name="sortDirection" value={sortDirection} />

@@ -10,6 +10,7 @@ datasource db {
 
 model Recipe {
   id              Int                @id @default(autoincrement())
+  categoryId      Int?
   title           String
   description     String?            @db.Text
   preparationTime Int?
@@ -25,6 +26,30 @@ model Recipe {
   menuItems       MenuItem[]
   ingredients     RecipeIngredient[]
   steps           RecipeStep[]
+  category        Category?          @relation(fields: [categoryId], references: [id])
+  meals           MealOnRecipe[]
+}
+
+model Meal {
+  id        Int            @id @default(autoincrement())
+  title     String
+  sourceUrl String         @unique
+  recipe    MealOnRecipe[]
+}
+
+model MealOnRecipe {
+  id       Int    @id @default(autoincrement())
+  recipeId Int
+  mealId   Int
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  meal     Meal   @relation(fields: [mealId], references: [id])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  title     String
+  sourceUrl String?
+  Recipes   Recipe[]
 }
 
 model Ingredient {
@@ -128,6 +153,7 @@ model ShoppingItem {
   quantity       Float?
   unit           String?
   isChecked      Boolean      @default(false)
+  marketplace    Boolean      @default(false)
   ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
   shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
 
@@ -139,6 +165,7 @@ model User {
   id            Int         @id @default(autoincrement())
   email         String      @unique // Ajout de l'unicité
   password      String
+  pseudo        String?
   sharedMenus   MenuShare[] @relation("SharedByUser")
   receivedMenus MenuShare[] @relation("SharedWithUser") // Nouvelle relation
   MenuShare     MenuShare[]

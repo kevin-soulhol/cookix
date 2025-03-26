@@ -3,6 +3,10 @@ const { PrismaClient } = require('@prisma/client');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
+
+const RecipeNumberByCategory = 30;
+const NumberCategoryToScrap = 3;
+const ENV = 'dev';
 // Initialisation avec gestion des erreurs
 let prisma;
 try {
@@ -90,8 +94,8 @@ async function scrapeCookomix(browser) {
     console.log(`Found ${categoryLinks.length} categories`);
 
     let recipeLinks =[];
-    const categoryNumberToGet = process.env.NODE_ENV === "production" ? categoryLinks.length : Math.min(2, categoryLinks.length)
-    for (let i = 0; i < categoryNumberToGet; i++) {
+    const numberCategoryToScrap = ENV === "dev" && NumberCategoryToScrap ? NumberCategoryToScrap : categoryLinks.length;
+    for (let i = 0; i < numberCategoryToScrap; i++) {
         await wait(3, 7);
 
         const category = categoryLinks[i];
@@ -109,11 +113,11 @@ async function scrapeCookomix(browser) {
         )
         recipeLinks = [...recipeLinks, ...recipesInPage];
 
-        // Pour chaque recette, extraire les détails (limité à 3 recettes par catégorie pour les tests)
-        const recipesNumberToGet = process.env.NODE_ENV === "production" ? recipesInPage.length : Math.min(10, recipesInPage.length)
+        // Pour chaque recette, extraire les détails
+        const recipesNumberToGet = ENV === "dev" && RecipeNumberByCategory ?  RecipeNumberByCategory : recipesInPage.length;
         for (let j = 0; j < recipesNumberToGet; j++) {
             const recipe = recipesInPage[j];
-            await scrapeRecipeDetails(page, recipe.url, category.title);
+            await scrapeRecipeDetails(page, recipe.url, category);
         }
     }
 
@@ -155,6 +159,15 @@ async function scrapeRecipeDetails(page, url, category) {
         // Extraire l'image
         const imageUrl = document.querySelector('.recipe-container .recipe-img img')?.src;
         
+        //Extraire le type de repas
+        const meals = []
+        document.querySelectorAll('.recipe-themes .meal-course').forEach(el => {
+          meals.push({
+            title: el.textContent,
+            sourceUrl: el.href
+          })
+        })
+
         // Extraire les ingrédients
         const ingredients = [];
         const tmpIngredients = document.querySelectorAll('#sidebar .ingredients dt');
@@ -162,8 +175,6 @@ async function scrapeRecipeDetails(page, url, category) {
         document.querySelectorAll('#sidebar .ingredients dd').forEach((el, i)=> {
           const quantityEl = tmpIngredients[i]?.textContent
           const name = el.querySelector('a')?.textContent;
-
-
           
           if (name && quantityEl && typeof quantityEl === 'string') {
             let match = quantityEl?.match(/^([\d.,]+)\s*([\wéèà ]+)?$/)
@@ -202,7 +213,8 @@ async function scrapeRecipeDetails(page, url, category) {
           imageUrl,
           sourceUrl: window.location.href,
           ingredients,
-          steps
+          steps,
+          meals
         };
       });
       
@@ -243,16 +255,32 @@ async function scrollPageToBottom(page, maxScrolls = 10, scrollDelay = 300) {
     }, { maxScrolls, delay: scrollDelay });
 }
 
-
 async function saveRecipe(recipeData, category) {
   try {
+
+    //Vérifier si la category existe déjà
+    let dataCategory = await prisma.category.findFirst({
+      where : {
+        title: category.title
+      }
+    })
+
+    if(!dataCategory){
+      dataCategory = await prisma.category.create({
+        data: {
+          title : category.title,
+          sourceUrl: category.url
+        }
+      })
+    }
+
     // Vérifier si la recette existe déjà
     const existingRecipe = await prisma.recipe.findFirst({
       where: {
         sourceUrl: recipeData.sourceUrl
       }
     });
-    
+
     if (existingRecipe) {
       logWithTimestamp(`Recipe already exists: ${recipeData.title} [ID: ${existingRecipe.id}]`);
 
@@ -304,7 +332,7 @@ async function saveRecipe(recipeData, category) {
       
       return;
     }
-    
+
     // Créer une nouvelle recette
     const recipe = await prisma.recipe.create({
       data: {
@@ -317,7 +345,22 @@ async function saveRecipe(recipeData, category) {
         note: recipeData.note,
         imageUrl: recipeData.imageUrl,
         sourceUrl: recipeData.sourceUrl,
-        // Créer les étapes de la recette
+        categoryId: dataCategory.id,
+        meals: {
+          create: recipeData.meals.map(meal => ({
+            meal : {
+              connectOrCreate: {
+                where: {
+                  sourceUrl: meal.sourceUrl
+                },
+                create:{
+                  title: meal.title,
+                  sourceUrl: meal.sourceUrl
+                }
+              }
+            }
+          }))
+        },
         steps: {
           create: recipeData.steps
         }

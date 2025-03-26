@@ -3,6 +3,7 @@ import { Link, useLoaderData, useOutletContext } from "@remix-run/react";
 import { PrismaClient } from "@prisma/client";
 import { useState } from "react";
 import { prisma } from "~/utils/db.server";
+import Layout from "~/components/Layout";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data?.recipe) {
@@ -100,36 +101,8 @@ export default function RecipeDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header avec retour */}
-      <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center">
-            <Link
-              to="/recettes"
-              className="flex items-center text-rose-500 hover:text-rose-700"
-            >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              Retour aux recettes
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Layout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           {/* Hero image et info de base */}
           <div className="relative">
@@ -369,7 +342,7 @@ export default function RecipeDetail() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }

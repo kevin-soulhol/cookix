@@ -17,6 +17,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 # Copie du schéma Prisma
 COPY ./prisma ./prisma/
 COPY ./scripts/scraper/index.js ./
+COPY .env ./
 
 # Installation des navigateurs nécessaires
 RUN if [ ! -d "/root/.cache/ms-playwright/chromium" ]; then \
@@ -40,4 +41,4 @@ COPY ./scripts/scraper/entrypoint.sh ./
 RUN chmod +x ./entrypoint.sh
 
 # Le point d'entrée lance cron et maintient le conteneur actif
-ENTRYPOINT ["./entrypoint.sh"]
+#ENTRYPOINT ["./entrypoint.sh"]
