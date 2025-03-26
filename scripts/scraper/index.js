@@ -6,7 +6,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const RecipeNumberByCategory = 30;
 const NumberCategoryToScrap = 3;
-const ENV = 'prod';
+const ENV = 'dev';
 // Initialisation avec gestion des erreurs
 let prisma;
 try {

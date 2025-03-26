@@ -68,9 +68,6 @@ jobs:
           # Reconstruire et démarrer les conteneurs en mode production
           docker compose -f docker-compose.prod.yml up -d --build
 
-          # Exécuter les migrations Prisma
-          docker compose -f docker-compose.prod.yml exec -T app npx prisma migrate deploy
-          
           # Nettoyer les images Docker inutilisées pour libérer de l'espace disque
           docker image prune -f
           EOF
