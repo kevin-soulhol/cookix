@@ -12,7 +12,7 @@ crontab -l
 
 # Exécuter immédiatement le script au démarrage (optionnel, à commenter si non souhaité)
 echo "Running initial scrape on startup..."
-node /app/index.js
+#node /app/index.js
 
 # Garder le conteneur en vie en surveillant les logs
 echo "Container running, monitoring logs..."
