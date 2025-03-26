@@ -34,8 +34,9 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 
-# Script pour les migrations et le démarrage de l'application
-COPY ./start-prod-fix.sh ./start-prod.sh
+# Ajouter le fichier server.js et le script de démarrage
+COPY ./server.js ./server.js
+COPY --from=builder /app/start-prod.sh ./
 RUN chmod +x ./start-prod.sh
 
 # Exposer le port

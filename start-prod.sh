@@ -8,6 +8,6 @@ npx wait-on tcp:db:3306 -t 30000
 echo "Running database migrations..."
 npx prisma migrate deploy
 
-# Démarrer l'application en mode production
+# Démarrer l'application avec Express
 echo "Starting application in production mode..."
-npx remix-serve build
+node server.js
