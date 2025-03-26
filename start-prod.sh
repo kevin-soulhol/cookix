@@ -10,4 +10,4 @@ npx prisma migrate deploy
 
 # Démarrer l'application en mode production
 echo "Starting application in production mode..."
-npx remix-serve build
+node build/server.js
