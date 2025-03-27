@@ -5,7 +5,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 
-const RecipeNumberByCategory = 10;
+const RecipeNumberByCategory = 0;
 const NumberCategoryToScrap = 3;
 const ENV = 'dev';
 // Initialisation avec gestion des erreurs
@@ -15,7 +15,7 @@ try {
     // Pour plus de détails sur les erreurs
     log: ['query', 'info', 'warn', 'error']
   });
-  console.log("Prisma Client initialized successfully");
+  logWithTimestamp("Prisma Client initialized successfully");
 } catch (error) {
   console.error("Failed to initialize Prisma Client:", error);
   // eslint-disable-next-line no-undef
@@ -70,16 +70,15 @@ async function scrapeCookomix(browser) {
   try {
     // Accéder à la page principale des recettes avec plus de timeout et attente
     await page.goto('https://www.cookomix.com/recettes-thermomix/', {
-        waitUntil: 'networkidle',
-        timeout: 60000  // Augmenter le timeout à 60 secondes
-      });
-    
-     console.log('Checking page content...');
-     // Vérifier si la page est chargée correctement
+      waitUntil: 'networkidle',
+      timeout: 60000  // Augmenter le timeout à 60 secondes
+    });
+
+    console.log('Checking page content...');
+    // Vérifier si la page est chargée correctement
     const pageTitle = await page.title();
     console.log(`Page title: ${pageTitle}`);
 
-    // Vérifier si nous sommes bien sur la bonne page
     const selectorCategories = 'main .recipe-list.recipe-filter ul.category li a'
     const selectorRecipes = 'main .entries .entry'
 
@@ -93,7 +92,7 @@ async function scrapeCookomix(browser) {
       })
     );
     
-    console.log(`Found ${categoryLinks.length} categories`);
+    logWithTimestamp(`Found ${categoryLinks.length} categories`);
 
     let recipeLinks =[];
     const numberCategoryToScrap = ENV === "dev" && NumberCategoryToScrap ? NumberCategoryToScrap : categoryLinks.length;
@@ -101,7 +100,7 @@ async function scrapeCookomix(browser) {
         await wait(3, 7);
 
         const category = categoryLinks[i];
-        console.log(`Processing category: ${category.title} - ${category.url}`);
+        logWithTimestamp(`Processing category: ${category.title}`);
 
 
         await page.goto(category.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -123,7 +122,7 @@ async function scrapeCookomix(browser) {
         }
     }
 
-    console.log(`Found ${recipeLinks.length} recipes`);
+    logWithTimestamp(`Found ${recipeLinks.length} recipes`);
 
     
   } catch (error) {
@@ -137,7 +136,7 @@ async function scrapeCookomix(browser) {
 async function scrapeRecipeDetails(page, url, category) {
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded' });
-      console.log(`Scraping recipe at ${url}`);
+      logWithTimestamp(`Scraping recipe at ${url}`);
       
       // Extraire les détails de la recette
       const recipeData = await page.evaluate(() => {
@@ -240,41 +239,61 @@ async function scrapeRecipeDetails(page, url, category) {
         };
       });
       
-      console.log(`Scraped recipe: ${recipeData.title}`);
+      logWithTimestamp(`Scraped recipe: ${recipeData.title}`);
       
       // Enregistrer la recette dans la base de données
       await saveRecipe(recipeData, category);
       
     } catch (error) {
-      console.error(`Error scraping recipe at ${url}:`, error);
+      logWithTimestamp(`Error scraping recipe at ${url}:`, error);
     }
   }
 
 // Fonction d'attente avec délai aléatoire
 async function wait(minSeconds = 2, maxSeconds = 5) {
     const delay = Math.floor(Math.random() * (maxSeconds - minSeconds + 1) + minSeconds) * 1000;
-    console.log(`Waiting for ${delay/1000} seconds...`);
     return new Promise(resolve => setTimeout(resolve, delay));
 }
 
-async function scrollPageToBottom(page, maxScrolls = 10, scrollDelay = 300) {
-    // Passer les arguments en un seul objet
-    await page.evaluate(({ maxScrolls, delay }) => {
-        return new Promise((resolve) => {
-            let scrollCount = 0;
-            const distance = 400;
-            const timer = setInterval(() => {
-                window.scrollBy(0, distance);
-                scrollCount++;
-
-                if (scrollCount >= maxScrolls || 
-                    window.innerHeight + window.scrollY >= document.body.scrollHeight) {
-                        clearInterval(timer);
-                        resolve();
-                }
-            }, delay);
-        });
-    }, { maxScrolls, delay: scrollDelay });
+async function scrollPageToBottom(page, scrollDelay = 300, maxScrollTime = 30000) {
+  // Définit une durée maximale pour éviter un défilement infini
+  return await page.evaluate(async (delay) => {
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      let lastScrollY = 0;
+      let unchangedScrollCount = 0;
+      
+      const scrollInterval = setInterval(() => {
+        // Scroll vers le bas
+        window.scrollBy(0, 500);
+        
+        // Vérifier si nous avons atteint le bas
+        const currentScrollY = window.scrollY;
+        
+        // Si la position de scroll n'a pas changé après plusieurs tentatives, 
+        // ou si la durée maximale est dépassée, on considère qu'on a atteint le bas
+        if (currentScrollY === lastScrollY) {
+          unchangedScrollCount++;
+          if (unchangedScrollCount >= 3) { // 3 tentatives sans changement
+            clearInterval(scrollInterval);
+            console.log("Fin de scroll: position inchangée après plusieurs tentatives");
+            resolve();
+          }
+        } else {
+          // Réinitialiser si le scroll a changé
+          unchangedScrollCount = 0;
+          lastScrollY = currentScrollY;
+        }
+        
+        // Vérifier si le temps maximum est écoulé
+        if (Date.now() - startTime > maxScrollTime) {
+          clearInterval(scrollInterval);
+          console.log("Fin de scroll: temps maximum écoulé");
+          resolve();
+        }
+      }, delay);
+    });
+  }, scrollDelay);
 }
 
 async function saveRecipe(recipeData, category) {
@@ -394,7 +413,7 @@ async function saveRecipe(recipeData, category) {
       });
     }
     
-    console.log(`Added ${recipeData.ingredients.length} ingredients to recipe ${recipe.id}`);
+    logWithTimestamp(`Added ${recipeData.ingredients.length} ingredients to recipe ${recipe.id}`);
     
   } catch (error) {
     logWithTimestamp('Error saving recipe to database:', error);
@@ -402,8 +421,13 @@ async function saveRecipe(recipeData, category) {
 }
 
 // Fonction utilitaire pour logger avec horodatage
-function logWithTimestamp(message) {
-  console.log(`[${new Date().toISOString()}] ${message}`);
+function logWithTimestamp(message, error) {
+  console.log(`
+    -------------------------------------------- \n
+    [${new Date().toISOString()}] ${message} \n
+     ${error ? `${error}\n` : ``}
+    -------------------------------------------- \n
+    `);
 }
 
 // Fonction pour exécuter avec des tentatives
