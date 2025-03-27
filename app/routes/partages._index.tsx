@@ -1,11 +1,8 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData, useFetcher } from "@remix-run/react";
-import { useState } from "react";
 import Layout from "~/components/Layout";
-import { requireUserId } from "./api.user";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-    const userId = await requireUserId(request);
 
     // Appeler l'API pour obtenir les partages
     const apiUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/share`);

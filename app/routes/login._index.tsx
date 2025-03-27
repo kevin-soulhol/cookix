@@ -31,6 +31,7 @@ export async function action({ request }: ActionFunctionArgs) {
         // Appeler l'API utilisateur et retourner sa réponse
         const response = await fetch(apiRequest);
         const responseData = await response.json();
+        console.log("_______________________________________", responseData)
 
         // Si c'est une redirection (connexion réussie), garder le comportement original
         if (response.status >= 300 && response.status < 400) {

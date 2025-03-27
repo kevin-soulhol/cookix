@@ -1,6 +1,6 @@
 import {
   BoxRecipe
-} from "/build/_shared/chunk-LCWRSZS7.js";
+} from "/build/_shared/chunk-RRRLBCON.js";
 import {
   Layout
 } from "/build/_shared/chunk-7EYIA7FC.js";
@@ -690,4 +690,4 @@ export {
   RecipesIndex as default,
   meta
 };
-//# sourceMappingURL=/build/routes/recettes._index-UQOV2DKZ.js.map
+//# sourceMappingURL=/build/routes/recettes._index-QH77AIV5.js.map

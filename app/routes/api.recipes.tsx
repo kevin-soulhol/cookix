@@ -57,6 +57,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
             id: true
           }
         };
+        includeObj.menuItems = {
+          where: {
+            menu: {
+              userId
+            }
+          },
+          select: {
+            id: true
+          }
+        }
       }
 
       const recipe = await prisma.recipe.findUnique({
@@ -74,7 +84,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       // Transformer les données pour faciliter leur utilisation côté client
       const transformedRecipe = {
         ...recipe,
-        isFavorite: recipe.favorites.length > 0
+        isFavorite: recipe.favorites.length > 0,
+        isInMenu: recipe.menuItems?.length > 0 && userId,
       };
 
       // Supprimer les données de relation brutes

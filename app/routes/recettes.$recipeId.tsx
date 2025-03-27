@@ -1,7 +1,6 @@
 import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData, useOutletContext } from "@remix-run/react";
-import { PrismaClient } from "@prisma/client";
-import { useState } from "react";
+import { Link, useFetcher, useLoaderData, useOutletContext } from "@remix-run/react";
+import { useEffect, useState } from "react";
 import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
 
@@ -19,35 +18,32 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   ];
 };
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
   const { recipeId } = params;
 
   if (!recipeId) {
     return json({ recipe: null, error: "ID de recette manquant" }, { status: 400 });
   }
 
+  const apiUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/recipes`);
+  apiUrl.searchParams.append("id", recipeId);
+
+  const cookies = request.headers.get("Cookie");
   try {
-    const recipe = await prisma.recipe.findUnique({
-      where: { id: parseInt(recipeId) },
-      include: {
-        steps: {
-          orderBy: {
-            stepNumber: 'asc'
-          }
-        },
-        ingredients: {
-          include: {
-            ingredient: true
-          }
-        }
-      }
+    const response = await fetch(apiUrl.toString(), {
+      method: "GET",
+      headers: {
+        Cookie: cookies || "", // Transmettre les cookies pour l'authentification
+      },
     });
 
-    if (!recipe) {
-      return json({ recipe: null, error: "Recette non trouvée" }, { status: 404 });
-    }
+    const apiResponse = await response.json();
 
-    return json({ recipe, error: null });
+    return json({
+      recipe: apiResponse.recipe,
+      error: false
+    })
+
 
   } catch (error) {
     console.error("Erreur lors du chargement de la recette:", error);
@@ -62,6 +58,44 @@ export default function RecipeDetail() {
   const { isAuthenticated } = useOutletContext<any>() || { isAuthenticated: false };
   const { recipe, error } = useLoaderData<typeof loader>();
   const [selectedTab, setSelectedTab] = useState<'ingredients' | 'instructions' | 'description'>('ingredients');
+  const [inFavorites, setInFavorites] = useState(recipe.isFavorite);
+  const [isAddingToMenu, setIsAddingToMenu] = useState(false);
+  const [isAdded, setIsAdded] = useState(recipe.isInMenu);
+
+  const favoriteFetcher = useFetcher();
+  const isTogglingFavoriteInProgress = favoriteFetcher.state === "submitting";
+  const menuFetcher = useFetcher();
+  const isAddingToMenuInProgress = menuFetcher.state === "submitting";
+
+  useEffect(() => {
+    if (menuFetcher.state === "idle" && menuFetcher.data) {
+      setIsAdded(true)
+    }
+  }, [menuFetcher])
+
+  // Lorsque la requête est terminée, mettre à jour les states
+  if (menuFetcher.state === "idle" && isAddingToMenu && isAddingToMenuInProgress) {
+    setIsAddingToMenu(false);
+  }
+
+  // Gestion de l'ajout au menu
+  const handleAddToMenu = async () => {
+    setIsAddingToMenu(true);
+    menuFetcher.submit(
+      { recipeId: recipe.id.toString() },
+      { method: "post", action: "/api/menu" }
+    )
+  };
+
+  // Gestion du basculement des favoris
+  const handleToggleFavorite = () => {
+    setInFavorites(!inFavorites);
+    favoriteFetcher.submit(
+      { recipeId: recipe.id.toString(), action: inFavorites ? "remove" : "add" },
+      { method: "post", action: "/api/favorites" }
+    );
+  };
+
 
   if (error) {
     return (
@@ -136,6 +170,38 @@ export default function RecipeDetail() {
             <div className="absolute bottom-0 left-0 w-full p-6 text-white">
               <h1 className="text-3xl font-bold mb-2 text-shadow">{recipe.title}</h1>
             </div>
+
+            {/* Bouton Favori en superposition sur l'image */}
+            {isAuthenticated && (
+              <button
+                onClick={handleToggleFavorite}
+                disabled={isTogglingFavoriteInProgress}
+                className="absolute top-4 left-4 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
+                aria-label={inFavorites ? "Retirer des favoris" : "Ajouter aux favoris"}
+              >
+                {isTogglingFavoriteInProgress ? (
+                  <svg className="w-5 h-5 animate-spin text-rose-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg
+                    className={`w-5 h-5 ${inFavorites ? 'text-rose-500 fill-current' : 'text-gray-500'}`}
+                    fill={inFavorites ? "currentColor" : "none"}
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Metadata */}
@@ -171,34 +237,62 @@ export default function RecipeDetail() {
           {/* Tabs pour ingrédients et instructions */}
           <div>
             <div className="border-b border-gray-200">
-              <nav className="flex">
-                <button
-                  onClick={() => setSelectedTab('ingredients')}
-                  className={`py-4 px-6 font-medium text-sm focus:outline-none ${selectedTab === 'ingredients'
-                    ? 'border-b-2 border-rose-500 text-rose-500'
-                    : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  Ingrédients
-                </button>
-                <button
-                  onClick={() => setSelectedTab('instructions')}
-                  className={`py-4 px-6 font-medium text-sm focus:outline-none ${selectedTab === 'instructions'
-                    ? 'border-b-2 border-rose-500 text-rose-500'
-                    : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  Instructions
-                </button>
-                <button
-                  onClick={() => setSelectedTab('description')}
-                  className={`py-4 px-6 font-medium text-sm focus:outline-none ${selectedTab === 'description'
-                    ? 'border-b-2 border-rose-500 text-rose-500'
-                    : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  Description
-                </button>
+              <nav className="flex justify-between items-center">
+                <div className="flex">
+                  <button
+                    onClick={() => setSelectedTab('ingredients')}
+                    className={`py-4 px-6 font-medium text-sm focus:outline-none ${selectedTab === 'ingredients'
+                      ? 'border-b-2 border-rose-500 text-rose-500'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    Ingrédients
+                  </button>
+                  <button
+                    onClick={() => setSelectedTab('instructions')}
+                    className={`py-4 px-6 font-medium text-sm focus:outline-none ${selectedTab === 'instructions'
+                      ? 'border-b-2 border-rose-500 text-rose-500'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    Instructions
+                  </button>
+                  <button
+                    onClick={() => setSelectedTab('description')}
+                    className={`py-4 px-6 font-medium text-sm focus:outline-none ${selectedTab === 'description'
+                      ? 'border-b-2 border-rose-500 text-rose-500'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    Description
+                  </button>
+                </div>
+
+                {/* Boutons d'action à droite */}
+                {isAuthenticated && (
+                  <div className="flex items-center gap-2 px-4">
+                    <button
+                      onClick={handleAddToMenu}
+                      disabled={isAddingToMenuInProgress || isAdded}
+                      className={`inline-flex items-center px-3 py-1.5 border border-teal-500 rounded-md text-teal-500 transition-colors text-sm ${isAdded ? 'bg-teal-600 text-white' : 'bg-white hover:bg-teal-50'}`}>
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      {isAdded ? "Déjà dans le menu" : "Ajouter au menu"}
+                    </button>
+                  </div>
+                )}
               </nav>
             </div>
 
@@ -273,67 +367,6 @@ export default function RecipeDetail() {
               )}
             </div>
           </div>
-
-          {/* Actions */}
-          {isAuthenticated && (
-            <div className="bg-gray-50 p-6 flex flex-wrap gap-4 justify-between">
-              <div className="flex flex-wrap gap-2">
-                <button className="inline-flex items-center px-4 py-2 border border-rose-500 rounded-md text-rose-500 bg-white hover:bg-rose-50 transition-colors">
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                  Ajouter aux favoris
-                </button>
-                <button className="inline-flex items-center px-4 py-2 border border-teal-500 rounded-md text-teal-500 bg-white hover:bg-teal-50 transition-colors">
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  Ajouter au menu
-                </button>
-              </div>
-              <div>
-                <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                    />
-                  </svg>
-                  Partager
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Source */}
           {recipe.sourceUrl && (

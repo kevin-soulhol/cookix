@@ -1,6 +1,6 @@
 import {
   BoxRecipe
-} from "/build/_shared/chunk-LCWRSZS7.js";
+} from "/build/_shared/chunk-RRRLBCON.js";
 import {
   Layout
 } from "/build/_shared/chunk-7EYIA7FC.js";
@@ -678,4 +678,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   WeeklyMenu as default
 };
-//# sourceMappingURL=/build/routes/menu._index-ZUASX7DR.js.map
+//# sourceMappingURL=/build/routes/menu._index-FNFRM27G.js.map
