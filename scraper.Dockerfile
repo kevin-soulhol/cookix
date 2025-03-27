@@ -1,39 +1,44 @@
 FROM mcr.microsoft.com/playwright:v1.40.0-focal
 
-# Configuration Playwright avant l'installation
-ENV PLAYWRIGHT_BROWSERS_TIMEOUT=180000
-ENV PLAYWRIGHT_DOWNLOAD_HOST=https://playwright-eu.azureedge.net
-
-# Installation des dépendances système
-RUN apt-get update && \
-    apt-get install -y cron && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Installation de cron
+RUN apt-get update && apt-get install -y cron
 
 WORKDIR /app
 
-# Stratification intelligente des dépendances
-COPY ./scripts/scraper/package*.json ./
-RUN npm install --production --unsafe-perm && \
-    npx playwright install --with-deps chromium
+# Copie des fichiers de dépendances uniquement
+COPY ./scripts/scraper/package.json ./scripts/scraper/package-lock.json ./
 
-# Copie des éléments spécifiques au projet
+# Installation des dépendances
+RUN npm install
+
+# Configurer le répertoire de cache pour les navigateurs Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Copie du schéma Prisma
 COPY ./prisma ./prisma/
 COPY ./scripts/scraper/index.js ./
 COPY .env ./
 
-# Génération Prisma (optimisation du cache)
+# Installation des navigateurs nécessaires
+RUN if [ ! -d "/root/.cache/ms-playwright/chromium" ]; then \
+    npx playwright install chromium; \
+    fi
+
+# Régénération du client Prisma avec les bons binaryTargets
 RUN npx prisma generate
 
-# Configuration Cron (méthode plus robuste)
-RUN echo "0 2 * * 1 root cd /app && /usr/bin/node index.js >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper-cron && \
-    chmod 0644 /etc/cron.d/scraper-cron && \
-    crontab /etc/cron.d/scraper-cron && \
-    touch /var/log/cron.log && \
-    chmod 0666 /var/log/cron.log
+# Création du fichier crontab
+RUN echo "0 2 * * 1 cd /app && node index.js >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper-cron
+RUN chmod 0644 /etc/cron.d/scraper-cron
+RUN crontab /etc/cron.d/scraper-cron
 
-# Gestion des entrées/sorties
+# Créer le fichier de log
+RUN touch /var/log/cron.log
+RUN chmod 0666 /var/log/cron.log
+
+# Copie du script d'entrée
 COPY ./scripts/scraper/entrypoint.sh ./
 RUN chmod +x ./entrypoint.sh
 
+# Le point d'entrée lance cron et maintient le conteneur actif
 ENTRYPOINT ["/bin/bash", "./entrypoint.sh"]
