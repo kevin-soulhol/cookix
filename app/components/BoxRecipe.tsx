@@ -139,74 +139,105 @@ export default function BoxRecipe({ recipe }: BoxLayoutProps) {
 
                 {/* Contenu de la recette */}
                 <div className="p-5 flex flex-col flex-grow">
-                    <h3 className="font-bold text-lg mb-2">
-                        <Link to={`/recettes/${recipe.id}`} className="text-gray-900 hover:text-rose-500">
+                    <h3 className="font-bold text-lg mb-2 h-14 overflow-hidden leading-tight">
+                        <span className="line-clamp-2 text-gray-900">
                             {recipe.title}
-                        </Link>
+                        </span>
                     </h3>
 
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                        {recipe.preparationTime && (
-                            <span className="flex items-center">
-                                <svg
-                                    className="w-4 h-4 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                                {recipe.preparationTime} min
-                            </span>
-                        )}
+                    {/* Ligne de temps de préparation et cuisson */}
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-3 h-6">
+                        <div className="flex items-center">
+                            {recipe.preparationTime ? (
+                                <span className="flex items-center mr-3">
+                                    <svg
+                                        className="w-4 h-4 mr-1"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <span>{recipe.preparationTime} min</span>
+                                </span>
+                            ) : (
+                                <span className="flex items-center mr-3 opacity-0">-</span>
+                            )}
 
-                        {recipe.cookingTime && (
-                            <span className="flex items-center">
-                                <svg
-                                    className="w-4 h-4 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7a2 2 0 002 2z"
-                                    />
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M9 14l2 2 4-4"
-                                    />
-                                </svg>
-                                {recipe.cookingTime} min
-                            </span>
-                        )}
+                            {recipe.cookingTime ? (
+                                <span className="flex items-center">
+                                    <svg
+                                        className="w-4 h-4 mr-1"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                    <span>{recipe.cookingTime} min</span>
+                                </span>
+                            ) : (
+                                <span className="flex items-center opacity-0">-</span>
+                            )}
+                        </div>
+                    </div>
 
-                        {recipe.note && (
-                            <span className="flex items-center">
-                                <svg
-                                    className="w-4 h-4 mr-1 text-yellow-500"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                                    />
-                                </svg>
-                                {recipe.note} ({recipe.voteNumber})
-                            </span>
-                        )}
+                    {/* Ligne pour les notes et nombre de votants */}
+                    <div className="flex items-center h-6 text-sm mt-1">
+                        <div className="flex items-center">
+                            {[1, 2, 3, 4, 5].map((star) => {
+                                const noteValue = recipe.note || 0;
+                                const isFullStar = star <= Math.floor(noteValue);
+                                const isHalfStar = !isFullStar && star <= Math.ceil(noteValue) && noteValue % 1 >= 0.5;
+
+                                return (
+                                    <span key={star} className="relative inline-block w-4 h-4">
+                                        {/* Étoile de base (vide) */}
+                                        <svg
+                                            className="w-4 h-4 text-gray-300 fill-current absolute"
+                                            viewBox="0 0 20 20"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+
+                                        {/* Étoile pleine ou demi-étoile */}
+                                        {(isFullStar || isHalfStar) && (
+                                            <svg
+                                                className="w-4 h-4 text-yellow-500 fill-current absolute"
+                                                viewBox="0 0 20 20"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                style={{
+                                                    clipPath: isHalfStar
+                                                        ? 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
+                                                        : 'none'
+                                                }}
+                                            >
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                            </svg>
+                                        )}
+                                    </span>
+                                );
+                            })}
+                            {(recipe.note || recipe.voteNumber) && (
+                                <span className="ml-1 text-gray-500">
+                                    {recipe.note} -
+                                    ({recipe.voteNumber || 0})
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     {recipe.description && (

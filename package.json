@@ -16,8 +16,8 @@
     "dev:logs": "docker compose logs -f",
     "studio": "docker compose exec app npx prisma studio",
     "migrate": "docker compose exec app ./prisma-migrate.sh",
-    "migrate:dev": "docker compose exec app npx prisma migrate dev",
-    "migrate:reset": "docker compose exec app ./prisma-migrate.sh reset",
+    "migrate:dev": "docker compose exec app npx prisma migrate dev --name",
+    "migrate:reset": "docker compose exec app npx prisma migrate reset",
     "migrate:deploy": "docker compose exec app npx prisma migrate deploy"
   },
   "dependencies": {

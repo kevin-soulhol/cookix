@@ -17,7 +17,7 @@ model Recipe {
   cookingTime     Int?
   servings        Int?
   difficulty      String?
-  note            Decimal?           @db.Decimal(3, 1)
+  note            Decimal?           @db.Decimal(3, 2)
   voteNumber      Int?               @default(0)
   imageUrl        String?
   sourceUrl       String?

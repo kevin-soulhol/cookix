@@ -150,13 +150,30 @@ async function scrapeRecipeDetails(page, url, category) {
         // Extraire la description
         const description = cleanText(document.querySelector('.recipe-container .recipe-content .intro')?.textContent);
         
-        // Extraire les temps et autres infos
-        const preparationTime = parseInt(document.querySelector('.basic.prez dd:nth-child(2)')?.textContent) || null;
-        const cookingTime = parseInt(document.querySelector('.basic.prez dd:nth-child(4)')?.textContent) || null;
-        const servings = parseInt(document.querySelector('.basic.prez dd:nth-child(8)')?.textContent) || null;
-        
-        // Extraire la difficulté
-        const difficulty = document.querySelector('.basic.prez dd:nth-child(6)')?.textContent;
+        let preparationTime = null;
+        let cookingTime = null;
+        let servings = null;
+        let difficulty = null;
+
+        // Récupérer toutes les paires dt/dd
+        const dtElements = document.querySelectorAll('.basic.prez dt');
+        const ddElements = document.querySelectorAll('.basic.prez dd');
+
+        // Parcourir toutes les paires
+        for (let i = 0; i < dtElements.length; i++) {
+          const label = cleanText(dtElements[i].textContent).toLowerCase();
+          const value = cleanText(ddElements[i].textContent);
+          
+          if (label.includes('préparation')) {
+            preparationTime = parseInt(value) || null;
+          } else if (label.includes('durée totale') || label.includes('cuisson')) {
+            cookingTime = parseInt(value) || null;
+          } else if (label.includes('difficulté')) {
+            difficulty = value;
+          } else if (label.includes('parts') || label.includes('portion')) {
+            servings = parseInt(value) || null;
+          }
+        }
         
         // Extraire l'image
         const imageUrl = document.querySelector('.recipe-container .recipe-img img')?.src;
