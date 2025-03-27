@@ -28,6 +28,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit")!) : 50;
   const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset")!) : 0;
   const random = url.searchParams.get("random") === "true";
+  const diversityLevel = url.searchParams.get("diversity") || "medium"; // options: 
 
 
   try {
@@ -84,7 +85,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       // Transformer les données pour faciliter leur utilisation côté client
       const transformedRecipe = {
         ...recipe,
-        isFavorite: recipe.favorites.length > 0,
+        isFavorite: recipe.favorites?.length > 0,
         isInMenu: recipe.menuItems?.length > 0 && userId,
       };
 
@@ -199,6 +200,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       skip: offset,
       select: {
         ...selectObj,
+        note: true,
+        voteNumber: true,
         ...(userId ? {
           favorites: includeObj.favorites,
           menuItems: includeObj.menuItems
@@ -208,7 +211,66 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 
     if (random) {
-      recipes.sort(() => Math.random() - 0.5);
+      let RATING_WEIGHT, VOTE_COUNT_WEIGHT, RANDOM_WEIGHT;
+
+      switch (diversityLevel) {
+        case "low":
+          // Priorité forte aux notes et votes, peu d'aléatoire
+          RATING_WEIGHT = 0.7;
+          VOTE_COUNT_WEIGHT = 0.25;
+          RANDOM_WEIGHT = 0.05;
+          break;
+        case "high":
+          // Plus d'accent sur l'aléatoire pour plus de diversité
+          RATING_WEIGHT = 0.4;
+          VOTE_COUNT_WEIGHT = 0.1;
+          RANDOM_WEIGHT = 0.5;
+          break;
+        case "medium":
+        default:
+          // Équilibre comme dans notre implémentation précédente
+          RATING_WEIGHT = 0.6;
+          VOTE_COUNT_WEIGHT = 0.2;
+          RANDOM_WEIGHT = 0.2;
+          break;
+      }
+
+      const maxVoteCount = Math.max(...recipes.map(r => r.voteNumber || 0));
+      const maxRating = 5; // échelle de notation max
+
+      // Fonction pour calculer un score basé sur la note, le nombre de votes et une composante aléatoire
+      const calculateScore = (recipe) => {
+        const rating = recipe.note || 0;
+        const voteCount = recipe.voteNumber || 0;
+
+        // Normalisation améliorée du nombre de votes
+        // Utiliser une fonction sigmoïde pour donner plus de poids aux recettes avec un nombre significatif de votes
+        // sans trop pénaliser celles qui en ont peu
+        const normalizedVoteCount = maxVoteCount > 0
+          ? Math.tanh(voteCount / (maxVoteCount * 0.25)) // tanh donne une courbe en S entre -1 et 1
+          : 0;
+
+        // Normaliser la note
+        const normalizedRating = rating / maxRating;
+
+        // Composante aléatoire
+        const randomFactor = Math.random();
+
+        // Calculer le score final
+        const score = (normalizedRating * RATING_WEIGHT) +
+          (normalizedVoteCount * VOTE_COUNT_WEIGHT) +
+          (randomFactor * RANDOM_WEIGHT);
+
+        return score;
+      };
+
+
+      // Trier les recettes selon le score calculé
+      recipes.sort((a, b) => {
+        const scoreA = calculateScore(a);
+        const scoreB = calculateScore(b);
+        return scoreB - scoreA; // Ordre décroissant
+      });
     }
 
     // Compter le nombre total de recettes (pour la pagination)
@@ -219,7 +281,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       ...recipe,
       isFavorite: recipe.favorites?.length > 0,
       isInMenu: recipe.menuItems?.length > 0 && userId,
-      favorites: undefined // Supprimer les données de relation brutes
+      // Supprimer les données non nécessaires pour le client
+      favorites: undefined,
     }));
 
 

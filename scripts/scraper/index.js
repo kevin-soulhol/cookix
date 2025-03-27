@@ -1,10 +1,11 @@
 const { chromium } = require('playwright');
 const { PrismaClient } = require('@prisma/client');
 const path = require('path');
+// eslint-disable-next-line no-undef
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 
-const RecipeNumberByCategory = 30;
+const RecipeNumberByCategory = 10;
 const NumberCategoryToScrap = 3;
 const ENV = 'dev';
 // Initialisation avec gestion des erreurs
@@ -17,6 +18,7 @@ try {
   console.log("Prisma Client initialized successfully");
 } catch (error) {
   console.error("Failed to initialize Prisma Client:", error);
+  // eslint-disable-next-line no-undef
   process.exit(1);
 }
 
@@ -192,6 +194,8 @@ async function scrapeRecipeDetails(page, url, category) {
 
         // extraire la note
         const note = parseFloat(document.querySelector('.ec-stars-rating-value')?.textContent.replace(",", ".")) ;
+        const voteNumber = parseFloat(document.querySelector('.ec-stars-rating-count')?.textContent.replace(",", ".")) ;
+        
         
         // Extraire les étapes
         const steps = [];
@@ -210,6 +214,7 @@ async function scrapeRecipeDetails(page, url, category) {
           servings,
           difficulty,
           note,
+          voteNumber,
           imageUrl,
           sourceUrl: window.location.href,
           ingredients,
@@ -284,43 +289,21 @@ async function saveRecipe(recipeData, category) {
     if (existingRecipe) {
       logWithTimestamp(`Recipe already exists: ${recipeData.title} [ID: ${existingRecipe.id}]`);
 
-      // Vous pourriez ajouter ici une logique de mise à jour si nécessaire
-      // Ex: mettre à jour la note ou d'autres attributs qui peuvent changer
+      const fieldsToVerify = ["title", "difficulty", "preparationTime", "cookingTime", "serving", "note", "voteNumber", "description", "imgUrl" ];
+
       const updatedFields = {};
-      
-      // Mise à jour de la note si elle est différente
-      if (recipeData.note !== existingRecipe.note && recipeData.note !== null) {
-        updatedFields.note = recipeData.note;
-      }
-      
-      // Mise à jour du temps de préparation si celui-ci a changé
-      if (recipeData.preparationTime !== existingRecipe.preparationTime && recipeData.preparationTime !== null) {
-        updatedFields.preparationTime = recipeData.preparationTime;
-      }
-      
-      // Mise à jour du temps de cuisson s'il a changé
-      if (recipeData.cookingTime !== existingRecipe.cookingTime && recipeData.cookingTime !== null) {
-        updatedFields.cookingTime = recipeData.cookingTime;
-      }
-      
-      // Mise à jour du nombre de portions s'il a changé
-      if (recipeData.servings !== existingRecipe.servings && recipeData.servings !== null) {
-        updatedFields.servings = recipeData.servings;
-      }
-      
-      // Si l'image est vide dans la base de données mais disponible maintenant, la mettre à jour
-      if (!existingRecipe.imageUrl && recipeData.imageUrl) {
-        updatedFields.imageUrl = recipeData.imageUrl;
-      }
-      
-      // Si la description est vide dans la base de données mais disponible maintenant, la mettre à jour
-      if (!existingRecipe.description && recipeData.description) {
-        updatedFields.description = recipeData.description;
+
+      for (const key in recipeData) {
+        if(fieldsToVerify.includes(key)){
+          if(recipeData[key] !== existingRecipe[key] && recipeData[key] !== null){
+            updatedFields[key] = recipeData[key]
+          }
+        }
       }
       
       // Si nous avons des champs à mettre à jour
       if (Object.keys(updatedFields).length > 0) {
-        const updatedRecipe = await prisma.recipe.update({
+        await prisma.recipe.update({
           where: { id: existingRecipe.id },
           data: updatedFields
         });
@@ -343,6 +326,7 @@ async function saveRecipe(recipeData, category) {
         servings: recipeData.servings,
         difficulty: recipeData.difficulty,
         note: recipeData.note,
+        voteNumber: recipeData.voteNumber,
         imageUrl: recipeData.imageUrl,
         sourceUrl: recipeData.sourceUrl,
         categoryId: dataCategory.id,
@@ -406,6 +390,7 @@ function logWithTimestamp(message) {
 }
 
 // Fonction pour exécuter avec des tentatives
+/*
 async function runWithRetry(fn, maxRetries = 3, initialDelay = 5000) {
   let lastError = null;
   let delay = initialDelay;
@@ -427,9 +412,11 @@ async function runWithRetry(fn, maxRetries = 3, initialDelay = 5000) {
   
   throw lastError;
 }
+  */
 
 
 main().catch(error => {
   console.error('Unhandled error in main function:', error);
+  // eslint-disable-next-line no-undef
   process.exit(1);
 });

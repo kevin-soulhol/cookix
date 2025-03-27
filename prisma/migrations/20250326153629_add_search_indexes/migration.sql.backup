@@ -18,6 +18,8 @@ CREATE INDEX `Recipe_description_idx` ON `Recipe`(`description`(255));
 
 -- RedefineIndex
 CREATE INDEX `MealOnRecipe_mealId_idx` ON `MealOnRecipe`(`mealId`);
+DROP INDEX `MealOnRecipe_mealId_fkey` ON `MealOnRecipe`;
 
 -- RedefineIndex
 CREATE INDEX `MealOnRecipe_recipeId_idx` ON `MealOnRecipe`(`recipeId`);
+DROP INDEX `MealOnRecipe_recipeId_fkey` ON `MealOnRecipe`;

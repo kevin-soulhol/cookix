@@ -43,6 +43,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Ajouter les paramètres de pagination
   apiUrl.searchParams.append("limit", perPage);
   apiUrl.searchParams.append("offset", ((parseInt(page) - 1) * parseInt(perPage)).toString());
+  apiUrl.searchParams.append("random", "true");
 
   // Envoyer la requête à l'API
   const cookies = request.headers.get("Cookie");

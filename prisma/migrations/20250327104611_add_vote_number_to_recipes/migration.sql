@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Recipe` ADD COLUMN `voteNumber` INTEGER NULL DEFAULT 0;
