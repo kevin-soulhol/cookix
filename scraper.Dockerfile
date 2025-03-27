@@ -1,34 +1,41 @@
 FROM mcr.microsoft.com/playwright:v1.40.0-focal
-
-# Installation de cron
-RUN apt-get update && apt-get install -y cron
+# Réduire la taille de l'image et l'utilisation des ressources
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends cron && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copie des fichiers de dépendances uniquement
 COPY ./scripts/scraper/package.json ./scripts/scraper/package-lock.json ./
 
-# Installation des dépendances
-RUN npm install
+# Installation des dépendances avec options pour réduire la consommation
+RUN npm install --production --silent && \
+    npm cache clean --force
 
 # Configurer le répertoire de cache pour les navigateurs Playwright
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Réduire l'utilisation de mémoire par Playwright
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/ms-playwright/chromium-1091/chrome-linux/chrome
+ENV NODE_OPTIONS="--max-old-space-size=128"
 
 # Copie du schéma Prisma
 COPY ./prisma ./prisma/
 COPY ./scripts/scraper/index.js ./
 COPY .env ./
 
-# Installation des navigateurs nécessaires
-RUN if [ ! -d "/root/.cache/ms-playwright/chromium" ]; then \
-    npx playwright install chromium; \
+# Installation seulement de Chromium, pas des autres navigateurs
+RUN if [ ! -d "/ms-playwright/chromium" ]; then \
+    npx playwright install chromium --with-deps; \
     fi
 
 # Régénération du client Prisma avec les bons binaryTargets
 RUN npx prisma generate
 
-# Création du fichier crontab
-RUN echo "0 2 * * 1 cd /app && node index.js >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper-cron
+# Modifier la fréquence du cron pour être MOINS fréquent (une fois par semaine au lieu de tous les lundis)
+# Exécuter à 2h du matin tous les dimanches
+RUN echo "0 2 * * 0 cd /app && node index.js >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper-cron
 RUN chmod 0644 /etc/cron.d/scraper-cron
 RUN crontab /etc/cron.d/scraper-cron
 
@@ -40,5 +47,4 @@ RUN chmod 0666 /var/log/cron.log
 COPY ./scripts/scraper/entrypoint.sh ./
 RUN chmod +x ./entrypoint.sh
 
-# Le point d'entrée lance cron et maintient le conteneur actif
-ENTRYPOINT ["/bin/bash", "./entrypoint.sh"]
+# Le point d'entrée lance cron et maintient l

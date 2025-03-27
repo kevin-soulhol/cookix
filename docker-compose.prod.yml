@@ -12,6 +12,11 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - SESSION_SECRET=${SESSION_SECRET}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
     networks:
       - cookix-network
     healthcheck:
@@ -32,6 +37,11 @@ services:
     volumes:
       - cookix_db_data:/var/lib/mysql
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256M
     networks:
       - cookix-network
     healthcheck:
@@ -53,6 +63,11 @@ services:
       - ./scripts/scraper:/app
       - /app/node_modules
       - playwright-browsers:/ms-playwright
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
     networks:
       - cookix-network
 

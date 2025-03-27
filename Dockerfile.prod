@@ -7,8 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Installer les dépendances
-RUN npm ci
+# Installer les dépendances en utilisant --omit=dev pour exclure les paquets de développement
+RUN npm ci --omit=dev --silent
 
 # Copier le reste du code source
 COPY . .
@@ -17,7 +17,7 @@ COPY . .
 RUN npx prisma generate
 
 # Construire l'application
-RUN npm run build
+RUN NODE_ENV=production npm run build
 
 # Production stage
 FROM node:20-alpine AS production
@@ -26,6 +26,7 @@ WORKDIR /app
 
 # Variables d'environnement de production
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=256 --optimize-for-size"
 
 # Copier les dépendances et les fichiers de build
 COPY --from=builder /app/node_modules ./node_modules
@@ -33,11 +34,16 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
-
-# Ajouter le fichier server.js et le script de démarrage
 COPY ./server.js ./server.js
-COPY --from=builder /app/start-prod.sh ./
+COPY ./start-prod.sh ./
+
+# Rendre le script exécutable
 RUN chmod +x ./start-prod.sh
+
+# Nettoyage des caches npm
+RUN npm cache clean --force && \
+    rm -rf /tmp/* && \
+    rm -rf /root/.npm/*
 
 # Exposer le port
 EXPOSE 3000

@@ -1,10 +1,23 @@
-// server.js
+// Ajouter en haut du fichier server.js
 import { createRequestHandler } from "@remix-run/express";
 import express from "express";
 import * as build from "./build/index.js";
+import compression from "compression"; // Ajoutez cette dépendance
 
 const app = express();
-app.use(express.static("public"));
+
+// Activer la compression gzip
+app.use(compression());
+
+// Définir des timeouts raisonnables
+app.use((req, res, next) => {
+  res.setTimeout(30000); // 30 secondes
+  next();
+});
+
+app.use(express.static("public", {
+  maxAge: '1d' // Mise en cache côté client pendant 1 jour
+}));
 
 // Définissez le gestionnaire Remix
 app.all(
