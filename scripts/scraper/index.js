@@ -7,7 +7,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const RecipeNumberByCategory = 0;
 const NumberCategoryToScrap = 3;
-const ENV = 'dev';
+const ENV = "prod";
 // Initialisation avec gestion des erreurs
 let prisma;
 try {
@@ -15,7 +15,7 @@ try {
     // Pour plus de détails sur les erreurs
     log: ['query', 'info', 'warn', 'error']
   });
-  logWithTimestamp("Prisma Client initialized successfully");
+  logWithTimestamp(`Prisma Client initialized successfully on ${ENV} env`);
 } catch (error) {
   console.error("Failed to initialize Prisma Client:", error);
   // eslint-disable-next-line no-undef
@@ -95,7 +95,7 @@ async function scrapeCookomix(browser) {
     logWithTimestamp(`Found ${categoryLinks.length} categories`);
 
     let recipeLinks =[];
-    const numberCategoryToScrap = ENV === "dev" && NumberCategoryToScrap ? NumberCategoryToScrap : categoryLinks.length;
+    const numberCategoryToScrap = ENV === "development" && NumberCategoryToScrap ? NumberCategoryToScrap : categoryLinks.length;
     for (let i = 0; i < numberCategoryToScrap; i++) {
         await wait(3, 7);
 
@@ -115,7 +115,7 @@ async function scrapeCookomix(browser) {
         recipeLinks = [...recipeLinks, ...recipesInPage];
 
         // Pour chaque recette, extraire les détails
-        const recipesNumberToGet = ENV === "dev" && RecipeNumberByCategory ?  RecipeNumberByCategory : recipesInPage.length;
+        const recipesNumberToGet = ENV === "development" && RecipeNumberByCategory ?  RecipeNumberByCategory : recipesInPage.length;
         for (let j = 0; j < recipesNumberToGet; j++) {
             const recipe = recipesInPage[j];
             await scrapeRecipeDetails(page, recipe.url, category);

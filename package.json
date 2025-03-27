@@ -4,7 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "build": "remix build",
+    "build": "npx remix build",
     "dev": "remix dev",
     "start": "node server.js",
     "seed": "node prisma/seed.js",

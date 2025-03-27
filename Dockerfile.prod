@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Installer les dépendances en utilisant --omit=dev pour exclure les paquets de développement
-RUN npm ci --omit=dev --silent
+RUN npm ci
 
 # Copier le reste du code source
 COPY . .
@@ -26,7 +26,7 @@ WORKDIR /app
 
 # Variables d'environnement de production
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=256 --optimize-for-size"
+ENV NODE_OPTIONS="--max-old-space-size=256"
 
 # Copier les dépendances et les fichiers de build
 COPY --from=builder /app/node_modules ./node_modules
