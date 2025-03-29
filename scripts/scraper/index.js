@@ -1,7 +1,6 @@
 const { chromium } = require('playwright');
 const { PrismaClient, Prisma } = require('@prisma/client');
 const path = require('path');
-const { connect } = require('http2');
 // eslint-disable-next-line no-undef
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -91,7 +90,7 @@ async function scrapeCookomix(browser) {
     const recipesInPage = await getAllLinkRecipeBy(page, mainMealCategory);
 
     for (let i = 0; i < recipesInPage.length; i++) {
-      await scrapeRecipeDetailsAndSave(page, recipesInPage[i])
+      await scrapeRecipeDetailsAndSave(page, recipesInPage[i]);
     }
     
   } catch (error) {
@@ -300,6 +299,7 @@ async function scrapeRecipeDetailsAndSave(page, recipe) {
             instruction: cleanText(el.textContent)
           });
         });
+
         
         return {
           description,
@@ -310,7 +310,6 @@ async function scrapeRecipeDetailsAndSave(page, recipe) {
           note,
           voteNumber,
           imageUrl,
-          sourceUrl: window.location.href,
           ingredients,
           steps,
           meals,
@@ -319,6 +318,7 @@ async function scrapeRecipeDetailsAndSave(page, recipe) {
       });
 
       recipeData.title = recipe.title;
+      recipeData.sourceUrl = recipe.sourceUrl;
       
       // Enregistrer la recette dans la base de données
       await saveRecipe(recipeData);
@@ -338,6 +338,7 @@ async function scrollPageToBottom(page, scrollDelay = 300, maxScrollTime = 90000
   // Définit une durée maximale pour éviter un défilement infini
   return await page.evaluate(async (delay) => {
     return new Promise((resolve) => {
+
       const startTime = Date.now();
       let lastScrollY = 0;
       let unchangedScrollCount = 0;
@@ -370,6 +371,7 @@ async function scrollPageToBottom(page, scrollDelay = 300, maxScrollTime = 90000
           console.log("Fin de scroll: temps maximum écoulé");
           resolve();
         }
+
       }, delay);
     });
   }, scrollDelay);
@@ -377,8 +379,7 @@ async function scrollPageToBottom(page, scrollDelay = 300, maxScrollTime = 90000
 
 async function saveRecipe(recipeData) {
   try {
-
-    const newRecipe = await prisma.recipe.upsert({
+    let data = {
       where : {
         sourceUrl: recipeData.sourceUrl
       },
@@ -392,25 +393,20 @@ async function saveRecipe(recipeData) {
         note: recipeData.note,
         voteNumber: recipeData.voteNumber,
         imageUrl: recipeData.imageUrl,
-        sourceUrl: recipeData.sourceUrl,
+        sourceUrl: recipeData?.sourceUrl,
         steps: {
           create: recipeData.steps
-        },
-        category: {
-          connect: {
-            sourceUrl: recipeData.category.sourceUrl
-          }
         },
         meals: {
           create: recipeData.meals.map(meal => ({
             meal : {
               connectOrCreate: {
                 where: {
-                  sourceUrl: meal.sourceUrl
+                  sourceUrl: meal?.sourceUrl
                 },
                 create:{
                   title: meal.title,
-                  sourceUrl: meal.sourceUrl
+                  sourceUrl: meal?.sourceUrl
                 }
               }
             }
@@ -427,7 +423,17 @@ async function saveRecipe(recipeData) {
         voteNumber: recipeData.voteNumber,
         imageUrl: recipeData.imageUrl,
       }
-    })
+    }
+
+    if(recipeData.category?.sourceUrl){
+      data.create.category = {
+        connect : {
+          sourceUrl : recipeData.category.sourceUrl
+        }
+      }
+    }
+
+    const newRecipe = await prisma.recipe.upsert(data);
 
     for (const ingredientData of recipeData.ingredients) {
       // Trouver ou créer l'ingrédient
@@ -469,7 +475,7 @@ async function saveRecipe(recipeData) {
 
   } catch (error) {
     if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {    
-      logWithTimestamp('Error saving recipe to database:', error);
+      logWithTimestamp(`Error saving recipe to database: ${JSON.stringify(recipeData)}`, error);
     } 
   }
 }

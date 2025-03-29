@@ -13,8 +13,7 @@ import { getUserId } from "./api.user";
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
 
-  // Pour un vrai système d'authentification, vous devriez récupérer l'userId depuis la session
-  const userId = await getUserId(request); // ID utilisateur fictif
+  const userId = await getUserId(request);
 
   // Paramètres de requête
   const id = url.searchParams.get("id");
@@ -28,13 +27,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit")!) : 50;
   const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset")!) : 0;
   const random = url.searchParams.get("random") === "true";
-  const diversityLevel = url.searchParams.get("diversity") || "medium"; // options: 
-
+  const diversityLevel = url.searchParams.get("diversity") || "medium";
 
   try {
     // Cas 1: Recherche d'une recette spécifique par ID
     if (id) {
-
       const includeObj = {
         steps: {
           orderBy: {
@@ -77,7 +74,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
         include: includeObj
       });
 
-
       if (!recipe) {
         return json({ success: false, message: "Recette non trouvée" }, { status: 404 });
       }
@@ -98,20 +94,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // Cas 2: Recherche de recettes avec filtres
     const where: any = {};
 
-    // Filtre par texte plus efficace (d'abord vérifier le titre, qui est indexé)
+    // Traitement de la recherche
     if (search) {
-      // Pour les recherches courtes, utiliser startsWith sur le titre qui est plus rapide
-      if (search.length <= 3) {
-        where.OR = [
-          { title: { startsWith: search } },
-          { title: { contains: search } },
-          { description: { contains: search } }
-        ];
-      } else {
-        where.OR = [
-          { title: { contains: search } },
-          { description: { contains: search } }
-        ];
+      const searchTerms = search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 1);
+
+      if (searchTerms.length > 0) {
+        // Créer une condition OR pour chaque terme de recherche
+        where.OR = searchTerms.flatMap(term => [
+          { title: { contains: term.toLowerCase() } },
+          { description: { contains: term.toLowerCase() } }
+        ]);
       }
     }
 
@@ -129,7 +121,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         some: {
           meal: {
             title: {
-              equals: mealType  // Utiliser equals pour une correspondance exacte (plus efficace)
+              equals: mealType
             }
           }
         }
@@ -147,7 +139,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const orderBy = {
       [sort]: dir
     };
-
 
     // Récupérer les recettes
     let includeObj = {}
@@ -174,7 +165,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       }
     }
 
-    // Optimisation: sélection conditionnelle des champs pour limiter les données transférées
+    // Optimisation: sélection conditionnelle des champs
     const selectObj = {
       id: true,
       title: true,
@@ -188,113 +179,178 @@ export async function loader({ request }: LoaderFunctionArgs) {
       sourceUrl: true,
       createdAt: true,
       updatedAt: true,
-      // Ne pas sélectionner la description complète sauf si on fait une recherche textuelle
-      description: search ? true : false,
+      // Toujours inclure la description pour le système de score
+      description: true,
     };
-
-
-    const recipes = await prisma.recipe.findMany({
-      where,
-      orderBy,
-      take: limit,
-      skip: offset,
-      select: {
-        ...selectObj,
-        note: true,
-        voteNumber: true,
-        ...(userId ? {
-          favorites: includeObj.favorites,
-          menuItems: includeObj.menuItems
-        } : {})
-      }
-    });
-
-
-    if (random) {
-      let RATING_WEIGHT, VOTE_COUNT_WEIGHT, RANDOM_WEIGHT;
-
-      switch (diversityLevel) {
-        case "low":
-          // Priorité forte aux notes et votes, peu d'aléatoire
-          RATING_WEIGHT = 0.7;
-          VOTE_COUNT_WEIGHT = 0.25;
-          RANDOM_WEIGHT = 0.05;
-          break;
-        case "high":
-          // Plus d'accent sur l'aléatoire pour plus de diversité
-          RATING_WEIGHT = 0.4;
-          VOTE_COUNT_WEIGHT = 0.1;
-          RANDOM_WEIGHT = 0.5;
-          break;
-        case "medium":
-        default:
-          // Équilibre comme dans notre implémentation précédente
-          RATING_WEIGHT = 0.6;
-          VOTE_COUNT_WEIGHT = 0.2;
-          RANDOM_WEIGHT = 0.2;
-          break;
-      }
-
-      const maxVoteCount = Math.max(...recipes.map(r => r.voteNumber || 0));
-      const maxRating = 5; // échelle de notation max
-
-      // Fonction pour calculer un score basé sur la note, le nombre de votes et une composante aléatoire
-      const calculateScore = (recipe) => {
-        const rating = recipe.note || 0;
-        const voteCount = recipe.voteNumber || 0;
-
-        // Normalisation améliorée du nombre de votes
-        // Utiliser une fonction sigmoïde pour donner plus de poids aux recettes avec un nombre significatif de votes
-        // sans trop pénaliser celles qui en ont peu
-        const normalizedVoteCount = maxVoteCount > 0
-          ? Math.tanh(voteCount / (maxVoteCount * 0.25)) // tanh donne une courbe en S entre -1 et 1
-          : 0;
-
-        // Normaliser la note
-        const normalizedRating = rating / maxRating;
-
-        // Composante aléatoire
-        const randomFactor = Math.random();
-
-        // Calculer le score final
-        const score = (normalizedRating * RATING_WEIGHT) +
-          (normalizedVoteCount * VOTE_COUNT_WEIGHT) +
-          (randomFactor * RANDOM_WEIGHT);
-
-        return score;
-      };
-
-
-      // Trier les recettes selon le score calculé
-      recipes.sort((a, b) => {
-        const scoreA = calculateScore(a);
-        const scoreB = calculateScore(b);
-        return scoreB - scoreA; // Ordre décroissant
-      });
-    }
 
     // Compter le nombre total de recettes (pour la pagination)
     const totalRecipes = await prisma.recipe.count({ where });
 
-    // Transformer les données pour faciliter leur utilisation côté client
-    const transformedRecipes = recipes.map(recipe => ({
-      ...recipe,
-      isFavorite: recipe.favorites?.length > 0,
-      isInMenu: recipe.menuItems?.length > 0 && userId,
-      // Supprimer les données non nécessaires pour le client
-      favorites: undefined,
-    }));
+    // Si on a une recherche textuelle, utiliser notre système de score personnalisé
+    if (search && search.trim().length > 0) {
+      const recipes = await prisma.recipe.findMany({
+        where,
+        orderBy,
+        // Pour la recherche, récupérer toutes les recettes correspondantes pour le tri par score
+        // (mais limiter à un nombre raisonnable pour éviter les problèmes de performance)
+        take: limit * 3, // Prendre plus de résultats pour avoir assez après filtrage par score
+        select: {
+          ...selectObj,
+          note: true,
+          voteNumber: true,
+          ...(userId ? {
+            favorites: includeObj.favorites,
+            menuItems: includeObj.menuItems
+          } : {})
+        }
+      });
 
+      const searchTerms = search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 1);
 
-    return json({
-      success: true,
-      recipes: transformedRecipes,
-      pagination: {
-        total: totalRecipes,
-        limit,
-        offset
+      // Calculer un score de pertinence pour chaque recette
+      const scoredRecipes = recipes.map(recipe => {
+        let score = 0;
+        const recipeTitle = recipe.title?.toLowerCase() || '';
+        const recipeDescription = recipe.description?.toLowerCase() || '';
+
+        // Points pour les correspondances dans le titre (plus important)
+        searchTerms.forEach(term => {
+          if (recipeTitle.includes(term)) {
+            score += 10;
+            // Bonus pour le terme au début du titre
+            if (recipeTitle.startsWith(term)) score += 5;
+          }
+
+          if (recipeDescription.includes(term)) {
+            score += 3;
+          }
+        });
+
+        // Bonus pour la proximité des termes dans le titre
+        if (searchTerms.length > 1 && recipeTitle.includes(search.toLowerCase())) {
+          score += 15;
+        }
+
+        // Bonus pour tous les termes présents dans le titre
+        if (searchTerms.every(term => recipeTitle.includes(term))) {
+          score += 20;
+        }
+
+        return { ...recipe, searchScore: score };
+      });
+
+      // Trier les recettes par score de pertinence décroissant
+      scoredRecipes.sort((a, b) => b.searchScore - a.searchScore);
+
+      // Filtrer par score minimal - plus stricte pour les recherches multi-termes
+      const minScore = searchTerms.length > 1 ? 15 : 5;
+      const filteredRecipes = scoredRecipes.filter(recipe => recipe.searchScore >= minScore);
+
+      // Appliquer la pagination sur les résultats filtrés
+      const paginatedRecipes = filteredRecipes.slice(offset, offset + limit);
+
+      // Transformer pour le client
+      const transformedRecipes = paginatedRecipes.map(recipe => ({
+        ...recipe,
+        isFavorite: recipe.favorites?.length > 0,
+        isInMenu: recipe.menuItems?.length > 0 && userId,
+        // Supprimer les données non nécessaires
+        favorites: undefined,
+        searchScore: undefined,
+      }));
+
+      return json({
+        success: true,
+        recipes: transformedRecipes,
+        pagination: {
+          total: filteredRecipes.length,
+          limit,
+          offset
+        }
+      });
+    }
+    // Si pas de recherche textuelle, utiliser le tri standard
+    else {
+      const recipes = await prisma.recipe.findMany({
+        where,
+        orderBy,
+        take: limit,
+        skip: offset,
+        select: {
+          ...selectObj,
+          note: true,
+          voteNumber: true,
+          ...(userId ? {
+            favorites: includeObj.favorites,
+            menuItems: includeObj.menuItems
+          } : {})
+        }
+      });
+
+      if (random) {
+        let RATING_WEIGHT, VOTE_COUNT_WEIGHT, RANDOM_WEIGHT;
+
+        switch (diversityLevel) {
+          case "low":
+            RATING_WEIGHT = 0.7;
+            VOTE_COUNT_WEIGHT = 0.25;
+            RANDOM_WEIGHT = 0.05;
+            break;
+          case "high":
+            RATING_WEIGHT = 0.4;
+            VOTE_COUNT_WEIGHT = 0.1;
+            RANDOM_WEIGHT = 0.5;
+            break;
+          case "medium":
+          default:
+            RATING_WEIGHT = 0.6;
+            VOTE_COUNT_WEIGHT = 0.2;
+            RANDOM_WEIGHT = 0.2;
+            break;
+        }
+
+        const maxVoteCount = Math.max(...recipes.map(r => r.voteNumber || 0));
+        const maxRating = 5;
+
+        const calculateScore = (recipe) => {
+          const rating = recipe.note || 0;
+          const voteCount = recipe.voteNumber || 0;
+          const normalizedVoteCount = maxVoteCount > 0
+            ? Math.tanh(voteCount / (maxVoteCount * 0.25))
+            : 0;
+          const normalizedRating = rating / maxRating;
+          const randomFactor = Math.random();
+          const score = (normalizedRating * RATING_WEIGHT) +
+            (normalizedVoteCount * VOTE_COUNT_WEIGHT) +
+            (randomFactor * RANDOM_WEIGHT);
+          return score;
+        };
+
+        recipes.sort((a, b) => {
+          const scoreA = calculateScore(a);
+          const scoreB = calculateScore(b);
+          return scoreB - scoreA;
+        });
       }
-    });
+
+      // Transformer les données pour le client
+      const transformedRecipes = recipes.map(recipe => ({
+        ...recipe,
+        isFavorite: recipe.favorites?.length > 0,
+        isInMenu: recipe.menuItems?.length > 0 && userId,
+        favorites: undefined,
+      }));
+
+      return json({
+        success: true,
+        recipes: transformedRecipes,
+        pagination: {
+          total: totalRecipes,
+          limit,
+          offset
+        }
+      });
+    }
 
   } catch (error) {
     console.error("Erreur lors de la récupération des recettes:", error);
