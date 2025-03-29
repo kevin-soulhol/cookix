@@ -216,7 +216,7 @@ export default function RecipeDetail() {
               <div className="p-4 text-center">
                 <span className="block text-sm text-gray-500">Cuisson</span>
                 <span className="text-lg font-semibold">
-                  {recipe.cookingTime ? `${recipe.cookingTime} min` : 'Non spécifié'}
+                  {recipe.cookingTime ? `${recipe.cookingTime}` : 'Non spécifié'}
                 </span>
               </div>
               <div className="p-4 text-center">

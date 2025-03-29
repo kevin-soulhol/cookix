@@ -38,7 +38,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/components/BoxRecipe.tsx"
   );
-  import.meta.hot.lastModified = "1743084690644.0977";
+  import.meta.hot.lastModified = "1743184723452.7505";
 }
 function BoxRecipe({
   recipe
@@ -197,10 +197,7 @@ function BoxRecipe({
             lineNumber: 125,
             columnNumber: 37
           }, this),
-          /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { children: [
-            recipe.cookingTime,
-            " min"
-          ] }, void 0, true, {
+          /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { children: recipe.cookingTime }, void 0, false, {
             fileName: "app/components/BoxRecipe.tsx",
             lineNumber: 128,
             columnNumber: 37
@@ -356,4 +353,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   BoxRecipe
 };
-//# sourceMappingURL=/build/_shared/chunk-XXGXYCZG.js.map
+//# sourceMappingURL=/build/_shared/chunk-SXDNTOT5.js.map

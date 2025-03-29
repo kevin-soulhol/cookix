@@ -47,7 +47,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/routes/recettes.$recipeId.tsx"
   );
-  import.meta.hot.lastModified = "1743069603025.3616";
+  import.meta.hot.lastModified = "1743271318027.964";
 }
 var meta = ({
   data
@@ -242,7 +242,7 @@ function RecipeDetail() {
           lineNumber: 196,
           columnNumber: 17
         }, this),
-        /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { className: "text-lg font-semibold", children: recipe.cookingTime ? `${recipe.cookingTime} min` : "Non sp\xE9cifi\xE9" }, void 0, false, {
+        /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { className: "text-lg font-semibold", children: recipe.cookingTime ? `${recipe.cookingTime}` : "Non sp\xE9cifi\xE9" }, void 0, false, {
           fileName: "app/routes/recettes.$recipeId.tsx",
           lineNumber: 197,
           columnNumber: 17
@@ -510,4 +510,4 @@ export {
   RecipeDetail as default,
   meta
 };
-//# sourceMappingURL=/build/routes/recettes.$recipeId-SNXRSULS.js.map
+//# sourceMappingURL=/build/routes/recettes.$recipeId-HGXUHWVJ.js.map

@@ -1,9 +1,20 @@
 const { chromium } = require('playwright');
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient, Prisma } = require('@prisma/client');
 const path = require('path');
+const { connect } = require('http2');
 // eslint-disable-next-line no-undef
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
+
+// Ne pas faire le scrap si la recette existe
+// choisir une catégorie à faire seulement (plat)
+
+/* [2025-03-27T19:48:28.888Z] Error scraping recipe at https://www.cookomix.com/recettes/taboule-chou-fleur-thermomix/: 
+
+TimeoutError: page.goto: Timeout 30000ms exceeded.
+Call log:
+- navigating to "https://www.cookomix.com/recettes/taboule-chou-fleur-thermomix/", waiting until "domcontentloaded"
+ */
 
 const RecipeNumberByCategory = 0;
 const NumberCategoryToScrap = 3;
@@ -79,51 +90,20 @@ async function scrapeCookomix(browser) {
     const pageTitle = await page.title();
     console.log(`Page title: ${pageTitle}`);
 
-    const selectorCategories = 'main .recipe-list.recipe-filter ul.category li a'
-    const selectorRecipes = 'main .entries .entry'
-
     // Récupérer les liens des catégories
-    const categoryLinks = await page.$$eval(selectorCategories, links => 
-      links.map(link => {
-        return {
-            title: link.querySelector('span').textContent.trim(),
-            url: `https://www.cookomix.com/recettes/categories/${link.dataset.taxonomyTerms}/`
-        }
-      })
-    );
-    
-    logWithTimestamp(`Found ${categoryLinks.length} categories`);
+    await getAndSaveCategories(page);
 
-    let recipeLinks =[];
-    const numberCategoryToScrap = ENV === "development" && NumberCategoryToScrap ? NumberCategoryToScrap : categoryLinks.length;
-    for (let i = 0; i < numberCategoryToScrap; i++) {
-        await wait(3, 7);
+    //Récupérer les types de plats
+    const mealTypeLinks = await getAndSaveMealType(page);
 
-        const category = categoryLinks[i];
-        logWithTimestamp(`Processing category: ${category.title}`);
+    const mainMealCategory = mealTypeLinks.find(type => type.title === "Plat principal");
+    //const mainMealCategoryRandom = getRandomElement(mealTypeLinks);
 
+    const recipesInPage = await getAllLinkRecipeBy(page, mainMealCategory);
 
-        await page.goto(category.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await scrollPageToBottom(page);
-        await page.waitForTimeout(400);
-        const recipesInPage = await page.$$eval(selectorRecipes, recipes => 
-            recipes.map(recipe => ({
-                title: recipe.querySelector('h2'),
-                url: recipe.querySelector('a').href
-            }))  
-        )
-        recipeLinks = [...recipeLinks, ...recipesInPage];
-
-        // Pour chaque recette, extraire les détails
-        const recipesNumberToGet = ENV === "development" && RecipeNumberByCategory ?  RecipeNumberByCategory : recipesInPage.length;
-        for (let j = 0; j < recipesNumberToGet; j++) {
-            const recipe = recipesInPage[j];
-            await scrapeRecipeDetails(page, recipe.url, category);
-        }
+    for (let i = 0; i < recipesInPage.length; i++) {
+      await scrapeRecipeDetailsAndSave(page, recipesInPage[i])
     }
-
-    logWithTimestamp(`Found ${recipeLinks.length} recipes`);
-
     
   } catch (error) {
     console.error('Error scraping Cookomix:', error);
@@ -132,11 +112,113 @@ async function scrapeCookomix(browser) {
   }
 }
 
+async function getAndSaveCategories(page){
+  logWithTimestamp('Récupération des catégories');
+  const selectorCategories = 'main .recipe-list.recipe-filter ul.category li a'
 
-async function scrapeRecipeDetails(page, url, category) {
+  // Récupérer les liens des catégories
+  const categoryLinks = await page.$$eval(selectorCategories, links => 
+    links.map(link => {
+      return {
+          title: link.querySelector('span').textContent.trim(),
+          sourceUrl: `https://www.cookomix.com/recettes/categories/${link.dataset.taxonomyTerms}/`
+      }
+    })
+  );
+
+  try {
+
+    for (let i = 0; i < categoryLinks.length; i++) {
+      const category = categoryLinks[i]
+      const newCategory = await prisma.category.upsert({
+        where : {
+          sourceUrl: category.sourceUrl
+        },
+        create : {
+          title: category.title,
+          sourceUrl: category.sourceUrl
+        },
+        update: {
+          title: category.title
+        }
+      })
+
+      if(newCategory.createdAt === newCategory.updatedAt){
+        logWithTimestamp(`Création de la catégorie : ${newCategory.title}`);
+      }
+    }
+
+    return categoryLinks;
+  } catch(error){
+    logWithTimestamp("Erreur dans l'enregistrement des catégories", error);
+  }
+
+  return categoryLinks;
+}
+
+async function getAndSaveMealType(page){
+  logWithTimestamp('Récupération des types de plat');
+  const selectorMealType = 'main .recipe-list.recipe-filter ul.meal-course li a'
+
+  // Récupérer les liens des catégories
+  const mealLinks = await page.$$eval(selectorMealType, links => 
+    links.map(link => {
+      return {
+          title: link.querySelector('span').textContent.trim(),
+          sourceUrl: `https://www.cookomix.com/recettes/type-plat/${link.dataset.taxonomyTerms}/`
+      }
+    })
+  );
+
+  try {
+    for (let i = 0; i < mealLinks.length; i++) {
+      const type = mealLinks[i]
+      const newType = await prisma.meal.upsert({
+        where : {
+          sourceUrl: type.sourceUrl
+        },
+        create : {
+          title: type.title,
+          sourceUrl: type.sourceUrl
+        },
+        update: {
+          title: type.title
+        }
+      })
+      if(newType.createdAt === newType.updatedAt){
+        logWithTimestamp(`Création du type de repas : ${newType.title}`);
+      }
+    }
+
+    return mealLinks;
+  } catch(error){
+    logWithTimestamp("Erreur dans l'enregistrement des type de repas", error);
+  }
+
+  return mealLinks;
+}
+
+async function getAllLinkRecipeBy(page, category){
+  logWithTimestamp('Début de la récupération des recettes de la page')
+  const selectorRecipes = 'main .entries .entry';
+
+  await page.goto(category.sourceUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await scrollPageToBottom(page);
+  const recipesInPage = await page.$$eval(selectorRecipes, recipes => 
+    recipes.map(recipe => ({
+        title: recipe.querySelector('h2').textContent.trim(),
+        sourceUrl: recipe.querySelector('a').href
+    }))  
+  )
+
+  logWithTimestamp(`Find ${recipesInPage.length} recipes in ${category.sourceUrl}`);
+  return recipesInPage;
+}
+
+async function scrapeRecipeDetailsAndSave(page, recipe) {
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded' });
-      logWithTimestamp(`Scraping recipe at ${url}`);
+      await page.goto(recipe.sourceUrl, { waitUntil: 'domcontentloaded' });
+      logWithTimestamp(`Scraping recipe at ${recipe.sourceUrl}`);
       
       // Extraire les détails de la recette
       const recipeData = await page.evaluate(() => {
@@ -144,7 +226,6 @@ async function scrapeRecipeDetails(page, url, category) {
         const cleanText = text => text ? text.trim().replace(/\s+/g, ' ') : null;
         
         // Extraire le titre
-        const title = cleanText(document.querySelector('h1.entry-title').textContent);
         
         // Extraire la description
         const description = cleanText(document.querySelector('.recipe-container .recipe-content .intro')?.textContent);
@@ -166,7 +247,7 @@ async function scrapeRecipeDetails(page, url, category) {
           if (label.includes('préparation')) {
             preparationTime = parseInt(value) || null;
           } else if (label.includes('durée totale') || label.includes('cuisson')) {
-            cookingTime = parseInt(value) || null;
+            cookingTime = value || null;
           } else if (label.includes('difficulté')) {
             difficulty = value;
           } else if (label.includes('parts') || label.includes('portion')) {
@@ -181,6 +262,15 @@ async function scrapeRecipeDetails(page, url, category) {
         const meals = []
         document.querySelectorAll('.recipe-themes .meal-course').forEach(el => {
           meals.push({
+            title: el.textContent,
+            sourceUrl: el.href
+          })
+        })
+
+        //extraire les catégories
+        const categories = [];
+        document.querySelectorAll('.recipe-themes .category').forEach(el => {
+          categories.push({
             title: el.textContent,
             sourceUrl: el.href
           })
@@ -223,7 +313,6 @@ async function scrapeRecipeDetails(page, url, category) {
         });
         
         return {
-          title,
           description,
           preparationTime,
           cookingTime,
@@ -235,17 +324,18 @@ async function scrapeRecipeDetails(page, url, category) {
           sourceUrl: window.location.href,
           ingredients,
           steps,
-          meals
+          meals,
+          category: categories[0]
         };
       });
-      
-      logWithTimestamp(`Scraped recipe: ${recipeData.title}`);
+
+      recipeData.title = recipe.title;
       
       // Enregistrer la recette dans la base de données
-      await saveRecipe(recipeData, category);
+      await saveRecipe(recipeData);
       
     } catch (error) {
-      logWithTimestamp(`Error scraping recipe at ${url}:`, error);
+      logWithTimestamp(`Error scraping recipe at ${recipe.title}:`, error);
     }
   }
 
@@ -296,65 +386,14 @@ async function scrollPageToBottom(page, scrollDelay = 300, maxScrollTime = 30000
   }, scrollDelay);
 }
 
-async function saveRecipe(recipeData, category) {
+async function saveRecipe(recipeData) {
   try {
 
-    //Vérifier si la category existe déjà
-    let dataCategory = await prisma.category.findFirst({
+    const newRecipe = await prisma.recipe.upsert({
       where : {
-        title: category.title
-      }
-    })
-
-    if(!dataCategory){
-      dataCategory = await prisma.category.create({
-        data: {
-          title : category.title,
-          sourceUrl: category.url
-        }
-      })
-    }
-
-    // Vérifier si la recette existe déjà
-    const existingRecipe = await prisma.recipe.findFirst({
-      where: {
         sourceUrl: recipeData.sourceUrl
-      }
-    });
-
-    if (existingRecipe) {
-      logWithTimestamp(`Recipe already exists: ${recipeData.title} [ID: ${existingRecipe.id}]`);
-
-      const fieldsToVerify = ["title", "difficulty", "preparationTime", "cookingTime", "serving", "note", "voteNumber", "description", "imgUrl" ];
-
-      const updatedFields = {};
-
-      for (const key in recipeData) {
-        if(fieldsToVerify.includes(key)){
-          if(recipeData[key] !== existingRecipe[key] && recipeData[key] !== null){
-            updatedFields[key] = recipeData[key]
-          }
-        }
-      }
-      
-      // Si nous avons des champs à mettre à jour
-      if (Object.keys(updatedFields).length > 0) {
-        await prisma.recipe.update({
-          where: { id: existingRecipe.id },
-          data: updatedFields
-        });
-        
-        logWithTimestamp(`Updated recipe ${existingRecipe.id} - ${existingRecipe.title} with new data: ${JSON.stringify(updatedFields)}`);
-      } else {
-        logWithTimestamp(`No updates needed for recipe ${existingRecipe.id}`);
-      }
-      
-      return;
-    }
-
-    // Créer une nouvelle recette
-    const recipe = await prisma.recipe.create({
-      data: {
+      },
+      create: {
         title: recipeData.title,
         description: recipeData.description,
         preparationTime: recipeData.preparationTime,
@@ -365,7 +404,14 @@ async function saveRecipe(recipeData, category) {
         voteNumber: recipeData.voteNumber,
         imageUrl: recipeData.imageUrl,
         sourceUrl: recipeData.sourceUrl,
-        categoryId: dataCategory.id,
+        steps: {
+          create: recipeData.steps
+        },
+        category: {
+          connect: {
+            sourceUrl: recipeData.category.sourceUrl
+          }
+        },
         meals: {
           create: recipeData.meals.map(meal => ({
             meal : {
@@ -381,15 +427,19 @@ async function saveRecipe(recipeData, category) {
             }
           }))
         },
-        steps: {
-          create: recipeData.steps
-        }
+      },
+      update: {
+        description: recipeData.description,
+        preparationTime: recipeData.preparationTime,
+        cookingTime: recipeData.cookingTime,
+        servings: recipeData.servings,
+        difficulty: recipeData.difficulty,
+        note: recipeData.note,
+        voteNumber: recipeData.voteNumber,
+        imageUrl: recipeData.imageUrl,
       }
-    });
-    
-    logWithTimestamp(`Created recipe: ${recipe.id} - ${recipe.title}`);
-    
-    // Ajouter les ingrédients
+    })
+
     for (const ingredientData of recipeData.ingredients) {
       // Trouver ou créer l'ingrédient
       let ingredient = await prisma.ingredient.findUnique({
@@ -401,23 +451,46 @@ async function saveRecipe(recipeData, category) {
           data: { name: ingredientData.name }
         });
       }
-      
+
       // Associer l'ingrédient à la recette
-      await prisma.recipeIngredient.create({
-        data: {
-          recipeId: recipe.id,
+      await prisma.recipeIngredient.upsert({
+        where: {
+          recipeId_ingredientId: {
+            recipeId: newRecipe.id,
+            ingredientId:ingredient.id
+          }
+        },
+        create: {
+          recipeId: newRecipe.id,
           ingredientId: ingredient.id,
+          quantity: ingredientData.quantity,
+          unit: ingredientData.unit
+        },
+        update: {
           quantity: ingredientData.quantity,
           unit: ingredientData.unit
         }
       });
+      }
+
+
+    if(newRecipe.createdAt === newRecipe.updatedAt){
+      logWithTimestamp(`Création de la recette : ${newRecipe.title}`);
     }
-    
-    logWithTimestamp(`Added ${recipeData.ingredients.length} ingredients to recipe ${recipe.id}`);
-    
+
   } catch (error) {
-    logWithTimestamp('Error saving recipe to database:', error);
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {    
+      logWithTimestamp('Error saving recipe to database:', error);
+    } 
   }
+}
+
+function getRandomElement(array) {
+  if (array.length === 0) {
+      return null; // ou une valeur par défaut si le tableau est vide
+  }
+  const randomIndex = Math.floor(Math.random() * array.length);
+  return array[randomIndex];
 }
 
 // Fonction utilitaire pour logger avec horodatage
