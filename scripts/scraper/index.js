@@ -6,18 +6,7 @@ const { connect } = require('http2');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 
-// Ne pas faire le scrap si la recette existe
-// choisir une catégorie à faire seulement (plat)
 
-/* [2025-03-27T19:48:28.888Z] Error scraping recipe at https://www.cookomix.com/recettes/taboule-chou-fleur-thermomix/: 
-
-TimeoutError: page.goto: Timeout 30000ms exceeded.
-Call log:
-- navigating to "https://www.cookomix.com/recettes/taboule-chou-fleur-thermomix/", waiting until "domcontentloaded"
- */
-
-const RecipeNumberByCategory = 0;
-const NumberCategoryToScrap = 3;
 const ENV = "prod";
 // Initialisation avec gestion des erreurs
 let prisma;
@@ -337,7 +326,7 @@ async function scrapeRecipeDetailsAndSave(page, recipe) {
     } catch (error) {
       logWithTimestamp(`Error scraping recipe at ${recipe.title}:`, error);
     }
-  }
+}
 
 // Fonction d'attente avec délai aléatoire
 async function wait(minSeconds = 2, maxSeconds = 5) {
@@ -345,7 +334,7 @@ async function wait(minSeconds = 2, maxSeconds = 5) {
     return new Promise(resolve => setTimeout(resolve, delay));
 }
 
-async function scrollPageToBottom(page, scrollDelay = 300, maxScrollTime = 30000) {
+async function scrollPageToBottom(page, scrollDelay = 300, maxScrollTime = 90000) {
   // Définit une durée maximale pour éviter un défilement infini
   return await page.evaluate(async (delay) => {
     return new Promise((resolve) => {
