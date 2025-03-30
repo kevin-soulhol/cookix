@@ -43,7 +43,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const sortDirection = url.searchParams.get("sortDirection") || "asc";
   const randomParam = url.searchParams.get("random") || "true"; // Par défaut à "true"
   const random = randomParam === "true";
-
+  console.log("_______________________caca", mealType)
   // Paramètres pour le scroll infini
   const page = parseInt(url.searchParams.get("page") || "1");
   const perPage = 12; // Nombre réduit pour un chargement mobile optimal
@@ -317,6 +317,24 @@ export default function RecipesIndex() {
     setSearch(e.target.value);
   };
 
+  //Gestion des filtres de la recherche
+  const updateFilter = useCallback((key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams);
+
+    // Mettre à jour ou supprimer le paramètre selon la valeur
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+
+    // Réinitialiser la page à 1 lors d'un changement de filtre
+    params.set("page", "1");
+
+    // Mettre à jour l'URL
+    setSearchParams(params);
+  }, [searchParams, setSearchParams]);
+
   // Réinitialiser les filtres
   const resetFilters = useCallback(() => {
     setSearch("");
@@ -328,19 +346,13 @@ export default function RecipesIndex() {
     setRandomEnabled(true);
 
     // Soumettre le formulaire avec des valeurs vides
-    if (formRef.current) {
-      const formData = new FormData(formRef.current);
-      formData.delete("search");
-      formData.delete("categoryId");
-      formData.delete("mealType");
-      formData.delete("maxPreparationTime");
-      formData.set("sortBy", "title");
-      formData.set("sortDirection", "asc");
-      formData.set("page", "1");
-
-      submit(formData, { method: "get" });
-    }
-  }, [submit]);
+    setSearchParams({
+      sortBy: "title",
+      sortDirection: "asc",
+      random: "true",
+      page: "1"
+    });
+  }, [setSearchParams]);
 
   // État de chargement
   const isLoading = navigation.state === "loading" || navigation.state === "submitting";
@@ -436,7 +448,7 @@ export default function RecipesIndex() {
                     type="button"
                     onClick={() => {
                       setCategory("");
-                      if (formRef.current) submit(formRef.current);
+                      updateFilter("categoryId", "");
                     }}
                     className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-indigo-400 hover:bg-indigo-200 hover:text-indigo-600"
                   >
@@ -454,7 +466,7 @@ export default function RecipesIndex() {
                     type="button"
                     onClick={() => {
                       setMealType("");
-                      if (formRef.current) submit(formRef.current);
+                      updateFilter("mealType", "");
                     }}
                     className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-green-400 hover:bg-green-200 hover:text-green-600"
                   >
@@ -472,7 +484,7 @@ export default function RecipesIndex() {
                     type="button"
                     onClick={() => {
                       setMaxPreparationTime(null);
-                      if (formRef.current) submit(formRef.current);
+                      updateFilter("maxPreparationTime", null);
                     }}
                     className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-amber-400 hover:bg-amber-200 hover:text-amber-600"
                   >
@@ -619,7 +631,7 @@ export default function RecipesIndex() {
                     value={category}
                     onChange={(e) => {
                       setCategory(e.target.value);
-                      if (formRef.current) submit(formRef.current);
+                      updateFilter("categoryId", e.target.value);
                     }}
                     className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
                   >
@@ -643,7 +655,7 @@ export default function RecipesIndex() {
                     value={mealType}
                     onChange={(e) => {
                       setMealType(e.target.value);
-                      if (formRef.current) submit(formRef.current);
+                      updateFilter("mealType", e.target.value);
                     }}
                     className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
                   >
@@ -670,7 +682,9 @@ export default function RecipesIndex() {
                     step="10"
                     value={maxPreparationTime || filters.preparationTimeMax}
                     onChange={(e) => {
-                      setMaxPreparationTime(parseInt(e.target.value));
+                      const newMaxTime = parseInt(e.target.value);
+                      setMaxPreparationTime(newMaxTime);
+                      updateFilter("maxPreparationTime", newMaxTime.toString());
                       if (formRef.current) submit(formRef.current);
                     }}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
