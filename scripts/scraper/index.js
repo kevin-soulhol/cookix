@@ -84,10 +84,11 @@ async function scrapeCookomix(browser) {
     //Récupérer les types de plats
     const mealTypeLinks = await getAndSaveMealType(page);
 
-    const mainMealCategory = mealTypeLinks.find(type => type.title === "Plat principal");
-    //const mainMealCategoryRandom = getRandomElement(mealTypeLinks);
+    const mainMealCategoryRandom = getRandomElement(mealTypeLinks);
+    //const mainMealCategoryRandom = mealTypeLinks.find(type => type.title === "Plat principal");
 
-    const recipesInPage = await getAllLinkRecipeBy(page, mainMealCategory);
+
+    const recipesInPage = await getAllLinkRecipeBy(page, mainMealCategoryRandom);
 
     for (let i = 0; i < recipesInPage.length; i++) {
       await scrapeRecipeDetailsAndSave(page, recipesInPage[i]);

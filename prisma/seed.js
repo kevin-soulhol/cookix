@@ -13,7 +13,7 @@ async function main() {
     console.log('Importing database from backup...');
     
     // Chemin absolu vers le fichier de sauvegarde
-    const backupFile = path.resolve('./prisma/backups/backup_20250326.sql');
+    const backupFile = path.resolve('./prisma/backups/dump.sql');
     
     if (!fs.existsSync(backupFile)) {
       throw new Error(`Le fichier de sauvegarde ${backupFile} n'existe pas`);
