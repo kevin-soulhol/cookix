@@ -39,7 +39,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/components/RecipeModal.tsx"
   );
-  import.meta.hot.lastModified = "1743287472811.569";
+  import.meta.hot.lastModified = "1743359499002.4517";
 }
 function RecipeModal({
   recipeId,
@@ -471,7 +471,9 @@ function RecipeModal({
               lineNumber: 236,
               columnNumber: 57
             }, this),
-            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "pt-1", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("p", { className: "text-gray-700", children: step.instruction }, void 0, false, {
+            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "pt-1", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "text-gray-700", dangerouslySetInnerHTML: {
+              __html: step.instruction
+            } }, void 0, false, {
               fileName: "app/components/RecipeModal.tsx",
               lineNumber: 240,
               columnNumber: 61
@@ -490,7 +492,7 @@ function RecipeModal({
             columnNumber: 84
           }, this) : /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("p", { className: "text-gray-500 italic", children: "Aucune instruction n'est sp\xE9cifi\xE9e pour cette recette." }, void 0, false, {
             fileName: "app/components/RecipeModal.tsx",
-            lineNumber: 243,
+            lineNumber: 245,
             columnNumber: 53
           }, this)
         ] }, void 0, true, {
@@ -501,21 +503,23 @@ function RecipeModal({
         selectedTab === "description" && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("h2", { className: "text-xl font-semibold mb-4", children: "Description" }, void 0, false, {
             fileName: "app/components/RecipeModal.tsx",
-            lineNumber: 247,
+            lineNumber: 249,
             columnNumber: 41
           }, this),
-          recipe.description ? /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("p", { className: "text-m mb-3", children: recipe.description }, void 0, false, {
+          recipe.description ? /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "text-m mb-3", dangerouslySetInnerHTML: {
+            __html: recipe.description
+          } }, void 0, false, {
             fileName: "app/components/RecipeModal.tsx",
-            lineNumber: 248,
+            lineNumber: 250,
             columnNumber: 63
           }, this) : /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("p", { className: "text-gray-500 italic", children: "Aucune description n'est sp\xE9cifi\xE9e pour cette recette." }, void 0, false, {
             fileName: "app/components/RecipeModal.tsx",
-            lineNumber: 248,
-            columnNumber: 117
+            lineNumber: 252,
+            columnNumber: 23
           }, this)
         ] }, void 0, true, {
           fileName: "app/components/RecipeModal.tsx",
-          lineNumber: 246,
+          lineNumber: 248,
           columnNumber: 67
         }, this)
       ] }, void 0, true, {
@@ -531,6 +535,18 @@ function RecipeModal({
       fileName: "app/components/RecipeModal.tsx",
       lineNumber: 191,
       columnNumber: 17
+    }, this),
+    recipe.sourceUrl && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "px-6 py-2 text-xs text-center text-gray-500 border-t", children: [
+      "Voir la recette sur ",
+      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("a", { href: recipe.sourceUrl, target: "_blank", rel: "noopener noreferrer", className: "text-rose-500 hover:underline", onClick: (e) => e.stopPropagation(), children: new URL(recipe.sourceUrl).hostname }, void 0, false, {
+        fileName: "app/components/RecipeModal.tsx",
+        lineNumber: 260,
+        columnNumber: 45
+      }, this)
+    ] }, void 0, true, {
+      fileName: "app/components/RecipeModal.tsx",
+      lineNumber: 259,
+      columnNumber: 38
     }, this)
   ] }, void 0, true, {
     fileName: "app/components/RecipeModal.tsx",
@@ -571,7 +587,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/components/BoxRecipe.tsx"
   );
-  import.meta.hot.lastModified = "1743286582946.5908";
+  import.meta.hot.lastModified = "1743359089145.0188";
 }
 function BoxRecipe({
   recipe,
@@ -638,7 +654,9 @@ function BoxRecipe({
               lineNumber: 61,
               columnNumber: 21
             }, this),
-            recipe.description && /* @__PURE__ */ (0, import_jsx_dev_runtime2.jsxDEV)("p", { className: "text-sm text-gray-600 mb-3 line-clamp-2", children: recipe.description }, void 0, false, {
+            recipe.description && /* @__PURE__ */ (0, import_jsx_dev_runtime2.jsxDEV)("div", { className: "text-sm text-gray-600 mb-3 line-clamp-2", dangerouslySetInnerHTML: {
+              __html: recipe.description
+            } }, void 0, false, {
               fileName: "app/components/BoxRecipe.tsx",
               lineNumber: 63,
               columnNumber: 44
@@ -705,4 +723,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   BoxRecipe
 };
-//# sourceMappingURL=/build/_shared/chunk-EFPT53QL.js.map
+//# sourceMappingURL=/build/_shared/chunk-IWHF6S5H.js.map

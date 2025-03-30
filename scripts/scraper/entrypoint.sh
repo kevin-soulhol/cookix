@@ -17,7 +17,7 @@ fi
 
 # Exécuter immédiatement le script au démarrage (optionnel, à commenter si non souhaité)
 echo "Running initial scrape on startup..."
-#node /app/index.js
+node /app/index.js
 
 # Pour garder le conteneur actif sans consommer trop de ressources
 # (au lieu d'une boucle active qui consommerait du CPU)

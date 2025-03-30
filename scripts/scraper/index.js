@@ -4,9 +4,8 @@ const path = require('path');
 // eslint-disable-next-line no-undef
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
-
-
-const ENV = "prod";
+const AuthorizedOnlyTypeMeal = ['Plat principal', "Accompagnement", "Boisson"]
+const OnlyTypeMeal = false
 // Initialisation avec gestion des erreurs
 let prisma;
 try {
@@ -14,7 +13,7 @@ try {
     // Pour plus de détails sur les erreurs
     log: ['query', 'info', 'warn', 'error']
   });
-  logWithTimestamp(`Prisma Client initialized successfully on ${ENV} env`);
+  logWithTimestamp(`Prisma Client initialized successfully`);
 } catch (error) {
   console.error("Failed to initialize Prisma Client:", error);
   // eslint-disable-next-line no-undef
@@ -84,8 +83,13 @@ async function scrapeCookomix(browser) {
     //Récupérer les types de plats
     const mealTypeLinks = await getAndSaveMealType(page);
 
-    const mainMealCategoryRandom = getRandomElement(mealTypeLinks);
-    //const mainMealCategoryRandom = mealTypeLinks.find(type => type.title === "Plat principal");
+
+    let mainMealCategoryRandom = {};
+    if(OnlyTypeMeal && AuthorizedOnlyTypeMeal.includes(OnlyTypeMeal)){
+      mainMealCategoryRandom = mealTypeLinks.find(type => type.title === OnlyTypeMeal);
+    } else {
+      mainMealCategoryRandom = getRandomElement(mealTypeLinks);
+    }
 
 
     const recipesInPage = await getAllLinkRecipeBy(page, mainMealCategoryRandom);
@@ -188,7 +192,7 @@ async function getAndSaveMealType(page){
 }
 
 async function getAllLinkRecipeBy(page, category){
-  logWithTimestamp('Début de la récupération des recettes de la page')
+  logWithTimestamp(`Début de la récupération des recettes de la page ${category.title}`)
   const selectorRecipes = 'main .entries .entry';
 
   await page.goto(category.sourceUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -214,11 +218,11 @@ async function scrapeRecipeDetailsAndSave(page, recipe) {
         // Fonction pour nettoyer le texte
         const cleanText = text => text ? text.trim().replace(/\s+/g, ' ') : null;
         
-        // Extraire le titre
-        
         // Extraire la description
-        const description = cleanText(document.querySelector('.recipe-container .recipe-content .intro')?.textContent);
-        
+        const descriptionElement = document.querySelector('.recipe-container .recipe-content .intro');
+        const description = descriptionElement ? descriptionElement.innerHTML : null;
+      
+
         let preparationTime = null;
         let cookingTime = null;
         let servings = null;
@@ -297,7 +301,7 @@ async function scrapeRecipeDetailsAndSave(page, recipe) {
         document.querySelectorAll('.recipe-content .instructions li').forEach((el, index) => {
           steps.push({
             stepNumber: index + 1,
-            instruction: cleanText(el.textContent)
+            instruction: el.innerHTML
           });
         });
 
@@ -434,7 +438,53 @@ async function saveRecipe(recipeData) {
       }
     }
 
-    const newRecipe = await prisma.recipe.upsert(data);
+    const recipe = await prisma.recipe.upsert(data);
+
+    const isNewRecipe = recipe.createdAt.getTime() === recipe.updatedAt.getTime();
+
+    if (!isNewRecipe) {
+      // Récupérer les étapes existantes
+      const existingSteps = await prisma.recipeStep.findMany({
+        where: { recipeId: recipe.id },
+        orderBy: { stepNumber: 'asc' }
+      });
+      
+      // Vérifier si les étapes ont changé
+      let stepsChanged = false;
+      
+      if (existingSteps.length !== recipeData.steps.length) {
+        stepsChanged = true;
+      } else {
+        // Comparer chaque étape
+        for (let i = 0; i < existingSteps.length; i++) {
+          if (existingSteps[i].instruction !== recipeData.steps[i].instruction) {
+            stepsChanged = true;
+            break;
+          }
+        }
+      }
+      
+      // Si les étapes ont changé, les mettre à jour
+      if (stepsChanged) {
+        // Supprimer toutes les étapes existantes
+        await prisma.recipeStep.deleteMany({
+          where: { recipeId: recipe.id }
+        });
+        
+        // Créer les nouvelles étapes
+        for (const step of recipeData.steps) {
+          await prisma.recipeStep.create({
+            data: {
+              recipeId: recipe.id,
+              stepNumber: step.stepNumber,
+              instruction: step.instruction
+            }
+          });
+        }
+        
+        logWithTimestamp(`Updated steps for recipe ${recipe.id} - ${recipe.title}`);
+      }
+    }
 
     for (const ingredientData of recipeData.ingredients) {
       // Trouver ou créer l'ingrédient
@@ -452,12 +502,12 @@ async function saveRecipe(recipeData) {
       await prisma.recipeIngredient.upsert({
         where: {
           recipeId_ingredientId: {
-            recipeId: newRecipe.id,
+            recipeId: recipe.id,
             ingredientId:ingredient.id
           }
         },
         create: {
-          recipeId: newRecipe.id,
+          recipeId: recipe.id,
           ingredientId: ingredient.id,
           quantity: ingredientData.quantity,
           unit: ingredientData.unit
@@ -470,8 +520,8 @@ async function saveRecipe(recipeData) {
       }
 
 
-    if(newRecipe.createdAt === newRecipe.updatedAt){
-      logWithTimestamp(`Création de la recette : ${newRecipe.title}`);
+    if(isNewRecipe){
+      logWithTimestamp(`Création de la recette : ${recipe.title}`);
     }
 
   } catch (error) {

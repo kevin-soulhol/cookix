@@ -340,7 +340,7 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
                                                             {step.stepNumber}
                                                         </span>
                                                         <div className="pt-1">
-                                                            <p className="text-gray-700">{step.instruction}</p>
+                                                            <div className="text-gray-700" dangerouslySetInnerHTML={{ __html: step.instruction }} />
                                                         </div>
                                                     </li>
                                                 ))}
@@ -355,7 +355,9 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
                                     <div>
                                         <h2 className="text-xl font-semibold mb-4">Description</h2>
                                         {recipe.description ? (
-                                            <p className="text-m mb-3">{recipe.description}</p>
+                                            <div
+                                                className="text-m mb-3"
+                                                dangerouslySetInnerHTML={{ __html: recipe.description }} />
                                         ) : (
                                             <p className="text-gray-500 italic">Aucune description n'est spécifiée pour cette recette.</p>
                                         )}
@@ -365,6 +367,21 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
                         )}
                     </div>
                 </div>
+
+                {/* Lien vers la source originale */}
+                {recipe.sourceUrl && (
+                    <div className="px-6 py-2 text-xs text-center text-gray-500 border-t">
+                        Voir la recette sur <a
+                            href={recipe.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-rose-500 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {new URL(recipe.sourceUrl).hostname}
+                        </a>
+                    </div>
+                )}
             </div>
         </div>
     );

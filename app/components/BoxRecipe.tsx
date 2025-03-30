@@ -79,9 +79,7 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                     <h3 className="text-lg font-semibold mb-1 text-gray-900">{recipe.title}</h3>
 
                     {recipe.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                            {recipe.description}
-                        </p>
+                        <div className="text-sm text-gray-600 mb-3 line-clamp-2" dangerouslySetInnerHTML={{ __html: recipe.description }} />
                     )}
 
                     <div className="mt-auto flex justify-between text-xs text-gray-500">
