@@ -22,7 +22,7 @@ async function main() {
     console.log(`Utilisation du fichier de sauvegarde: ${backupFile}`);
     
     // Exécuter la commande d'import via Docker
-    const command = `cat ${backupFile} | docker exec -i $(docker compose ps -q db) mysql -u${process.env.DB_USER} -p${process.env.DB_PASSWORD} ${process.env.DB_NAME}`;
+    const command = `cat ${backupFile} | docker exec -i $(docker compose ps -q db) mysql -u ${process.env.DB_USER} -p ${process.env.DB_PASSWORD} ${process.env.DB_NAME}`;
     
     console.log('Exécution de la commande d\'importation...');
     const { stdout, stderr } = await execAsync(command);
