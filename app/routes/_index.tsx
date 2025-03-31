@@ -385,18 +385,9 @@ export default function RecipesIndex() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        {/* En-tête avec nombre de recettes */}
-        <div className="mb-3 text-center">
-          <h2 className="text-xl font-bold text-gray-900">
-            {pagination.totalRecipes} recettes à découvrir
-          </h2>
-          <p className="text-sm text-gray-600">
-            Trouvez la recette parfaite pour votre Monsieur Cuisine Smart
-          </p>
-        </div>
 
-        {/* Barre de recherche fixe en haut */}
-        <div className="sticky top-0 z-10 bg-white pb-3 pt-1 shadow-sm">
+        {/* Barre de recherche sticky en haut */}
+        <div className="sticky top-[4rem] z-20 pb-3 pt-4 shadow-sm">
           <div className="relative">
             <input
               type="text"
@@ -405,7 +396,7 @@ export default function RecipesIndex() {
               placeholder="Rechercher une recette..."
               value={search}
               onChange={handleSearchChange}
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 text-base"
+              className="block w-full pl-10 pr-16 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 text-base"
             />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg
@@ -422,6 +413,11 @@ export default function RecipesIndex() {
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
+            </div>
+
+            {/* Badge de nombre de recettes */}
+            <div className="absolute inset-y-0 right-7 pr-3 flex items-center text-xs text-gray-500">
+              {pagination.totalRecipes} recettes
             </div>
 
             {/* Bouton pour afficher les filtres */}
@@ -554,7 +550,7 @@ export default function RecipesIndex() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {recipes.map((recipe, index) => (
                   <BoxRecipe key={`${recipe.id}-${index}`} recipe={recipe} />
                 ))}
