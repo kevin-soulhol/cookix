@@ -4,8 +4,8 @@ const path = require('path');
 // eslint-disable-next-line no-undef
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
-const AuthorizedOnlyTypeMeal = ['Plat principal', "Accompagnement", "Boisson"]
-const OnlyTypeMeal = false
+const AuthorizedOnlyTypeMeal = ['Plat principal', "Accompagnement", "Boisson", "Apéritif", "Dessert", "Entrée", "Petit déjeuner"]
+const OnlyTypeMeal = process.argv[2] ||false ;
 // Initialisation avec gestion des erreurs
 let prisma;
 try {
@@ -78,24 +78,23 @@ async function scrapeCookomix(browser) {
     console.log(`Page title: ${pageTitle}`);
 
     // Récupérer les liens des catégories
-    await getAndSaveCategories(page);
+    const categoryLinks = await getAndSaveCategories(page);
 
     //Récupérer les types de plats
     const mealTypeLinks = await getAndSaveMealType(page);
 
-
-    let mainMealCategoryRandom = {};
+    /* let mainMealCategoryRandom = {};
     if(OnlyTypeMeal && AuthorizedOnlyTypeMeal.includes(OnlyTypeMeal)){
       mainMealCategoryRandom = mealTypeLinks.find(type => type.title === OnlyTypeMeal);
     } else {
       mainMealCategoryRandom = getRandomElement(mealTypeLinks);
-    }
+    } */
 
-
-    const recipesInPage = await getAllLinkRecipeBy(page, mainMealCategoryRandom);
-
-    for (let i = 0; i < recipesInPage.length; i++) {
-      await scrapeRecipeDetailsAndSave(page, recipesInPage[i]);
+    for(let d = 0; d < categoryLinks.length; d++){
+      const recipesInPage = await getAllLinkRecipeBy(page, categoryLinks[d]);
+      for (let i = 0; i < recipesInPage.length; i++) {
+        await scrapeRecipeDetailsAndSave(page, recipesInPage[i]);
+      }
     }
     
   } catch (error) {

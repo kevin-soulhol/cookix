@@ -39,8 +39,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const mealType = url.searchParams.get("mealType") || "";
   const searchQuery = url.searchParams.get("search") || "";
   const maxPreparationTime = url.searchParams.get("maxPreparationTime") || null;
-  const sortBy = url.searchParams.get("sortBy") || "title";
-  const sortDirection = url.searchParams.get("sortDirection") || "asc";
+  const sortBy = url.searchParams.get("sortBy") || "note";
+  const sortDirection = url.searchParams.get("sortDirection") || "desc";
   const randomParam = url.searchParams.get("random") || "true"; // Par défaut à "true"
   const random = randomParam === "true";
   // Paramètres pour le scroll infini
