@@ -16,8 +16,12 @@ if [ $status -ne 0 ]; then
 fi
 
 # Exécuter immédiatement le script au démarrage (optionnel, à commenter si non souhaité)
-echo "Running initial scrape on startup..."
-node /app/index.js
+if [ "$NODE_ENV" = "production" ]; then
+    echo "Environnement de production détecté. Running initial scrape on startup..."
+    node /app/index.js
+else
+    echo "Environnement de développement détecté. Le scraper initial ne sera pas exécuté automatiquement."
+fi
 
 # Pour garder le conteneur actif sans consommer trop de ressources
 # (au lieu d'une boucle active qui consommerait du CPU)
