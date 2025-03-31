@@ -90,10 +90,14 @@ async function scrapeCookomix(browser) {
       mainMealCategoryRandom = getRandomElement(mealTypeLinks);
     } */
 
-    for(let d = 0; d < categoryLinks.length; d++){
+      let startAt = 0;
+      if(OnlyTypeMeal){
+        startAt = categoryLinks.indexOf(OnlyTypeMeal);
+      }
+    for(let d = startAt; d < categoryLinks.length; d++){
       const recipesInPage = await getAllLinkRecipeBy(page, categoryLinks[d]);
       for (let i = 0; i < recipesInPage.length; i++) {
-        await scrapeRecipeDetailsAndSave(page, recipesInPage[i]);
+        await scrapeRecipeDetailsAndSave(page, recipesInPage[i], i, categoryLinks.length);
       }
     }
     
@@ -207,10 +211,10 @@ async function getAllLinkRecipeBy(page, category){
   return recipesInPage;
 }
 
-async function scrapeRecipeDetailsAndSave(page, recipe) {
+async function scrapeRecipeDetailsAndSave(page, recipe, number, maxRecipe) {
     try {
       await page.goto(recipe.sourceUrl, { waitUntil: 'domcontentloaded' });
-      logWithTimestamp(`Scraping recipe at ${recipe.sourceUrl}`);
+      logWithTimestamp(`(${number}/${maxRecipe})  Scraping recipe at ${recipe.sourceUrl}`);
       
       // Extraire les détails de la recette
       const recipeData = await page.evaluate(() => {

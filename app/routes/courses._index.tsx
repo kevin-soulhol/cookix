@@ -1,6 +1,6 @@
 import { json, MetaFunction, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData, useFetcher } from "@remix-run/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
 import { getUserId } from "./api.user";
@@ -303,14 +303,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function ShoppingList() {
     const { shoppingList, items, categorizedItems, error } = useLoaderData<typeof loader>();
     const [showAddModal, setShowAddModal] = useState(false);
-    const [showAddForm, setShowAddForm] = useState(false);
     const [newItemName, setNewItemName] = useState("");
     const [newItemQuantity, setNewItemQuantity] = useState("");
     const [newItemUnit, setNewItemUnit] = useState("");
-    const [itemInFocus, setItemInFocus] = useState<number | null>(null);
     const [showShareModal, setShowShareModal] = useState(false);
     const [email, setEmail] = useState("");
     const shareFetcher = useFetcher();
+
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const suggestionsRef = useRef(null);
+    const ingredientsFetcher = useFetcher();
 
     const toggleItemFetcher = useFetcher();
     const removeItemFetcher = useFetcher();
@@ -318,10 +321,11 @@ export default function ShoppingList() {
     const addItemFetcher = useFetcher();
     const clearCheckedFetcher = useFetcher();
 
-    const firstMarketplaceCount = categorizedItems.firstMarketplace?.length || 0;
-    const secondMarketplaceCount = categorizedItems.secondMarketplace?.length || 0;
+    const firstMarketplaceCount = categorizedItems?.firstMarketplace?.length || 0;
+    const secondMarketplaceCount = categorizedItems?.secondMarketplace?.length || 0;
     const checkedCount = categorizedItems.checked?.length || 0;
-    const totalCount = firstMarketplaceCount + secondMarketplaceCount + checkedCount;
+    const totalCount = firstMarketplaceCount + secondMarketplaceCount;
+
 
     // Calculer la progression
     const progress = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
@@ -349,6 +353,48 @@ export default function ShoppingList() {
         setNewItemUnit("");
         setShowAddModal(false);
     };
+
+    //Gérer la saisie d'un nouvel ingrédient
+    const handleIngredientInput = (e) => {
+        const value = e.target.value;
+        setNewItemName(value);
+
+        if (value.length >= 2) {
+            ingredientsFetcher.load(`/api/ingredients?search=${encodeURIComponent(value)}`);
+            setShowSuggestions(true);
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    //Selectionne un ingrédient
+    const selectSuggestion = (suggestion) => {
+        setNewItemName(suggestion.name);
+        setSuggestions([]);
+        setShowSuggestions(false);
+    };
+
+    //Traiter les résultats de l'API
+    useEffect(() => {
+        if (ingredientsFetcher.data && ingredientsFetcher.data.ingredients) {
+            setSuggestions(ingredientsFetcher.data.ingredients);
+        }
+    }, [ingredientsFetcher.data]);
+
+    //Gérer les clics en dehors de la liste de suggestion
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     return (
         <Layout pageTitle="Liste de courses">
@@ -455,17 +501,27 @@ export default function ShoppingList() {
                         {/* Liste des courses */}
                         <div className="mb-8">
                             <h2 className="text-lg font-semibold mb-3 flex items-center">
-                                <span className="text-gray-600">{firstMarketplaceCount} articles</span>
+                                <span className="text-gray-600">{totalCount} articles</span>
+                                {firstMarketplaceCount > 0 && (
+                                    <span className="ml-2 text-sm text-teal-600">
+                                        {firstMarketplaceCount} du marché
+                                    </span>
+                                )}
+                                {secondMarketplaceCount > 0 && (
+                                    <span className="ml-2 text-sm text-indigo-600">
+                                        {secondMarketplaceCount} autres
+                                    </span>
+                                )}
                             </h2>
 
-                            {firstMarketplaceCount === 0 ? (
+                            {totalCount === 0 ? (
                                 <div className="bg-white rounded-lg shadow-md p-4 text-center text-gray-500">
                                     Aucun article pour le supermarché
                                 </div>
                             ) : (
                                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                                     <ul className="divide-y divide-gray-200">
-                                        {categorizedItems.firstMarketplace.map(item => (
+                                        {categorizedItems.secondMarketplace.map(item => (
                                             <ShoppingItemWithMarketplace
                                                 key={item.id}
                                                 item={item}
@@ -500,7 +556,7 @@ export default function ShoppingList() {
                                                 }}
                                             />
                                         ))}
-                                        {categorizedItems.secondMarketplace.map(item => (
+                                        {categorizedItems.firstMarketplace.map(item => (
                                             <ShoppingItemWithMarketplace
                                                 key={item.id}
                                                 item={item}
@@ -547,7 +603,7 @@ export default function ShoppingList() {
                                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                                     <ul className="divide-y divide-gray-200">
                                         {categorizedItems.checked.map(item => (
-                                            <ShoppingItem
+                                            <ShoppingItemWithMarketplace
                                                 key={item.id}
                                                 item={item}
                                                 onToggle={() => {
@@ -594,7 +650,7 @@ export default function ShoppingList() {
                                         <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un article</h3>
                                         <form onSubmit={handleAddItem}>
                                             <div className="space-y-4">
-                                                <div>
+                                                <div className="relative">
                                                     <label
                                                         htmlFor="name"
                                                         className="block text-sm font-medium text-gray-700 mb-1"
@@ -607,10 +663,27 @@ export default function ShoppingList() {
                                                         name="name"
                                                         required
                                                         value={newItemName}
-                                                        onChange={(e) => setNewItemName(e.target.value)}
+                                                        onChange={handleIngredientInput}
                                                         className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
                                                         placeholder="Ex: Tomates"
+                                                        autoComplete="off"
                                                     />
+                                                    {showSuggestions && suggestions.length > 0 && (
+                                                        <div
+                                                            ref={suggestionsRef}
+                                                            className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm"
+                                                        >
+                                                            {suggestions.map((suggestion) => (
+                                                                <div
+                                                                    key={suggestion.id}
+                                                                    onClick={() => selectSuggestion(suggestion)}
+                                                                    className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100"
+                                                                >
+                                                                    {suggestion.name}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="grid grid-cols-3 gap-3">
@@ -730,78 +803,90 @@ export default function ShoppingList() {
 
 // Composant pour les articles non cochés (avec switch de marketplace)
 function ShoppingItemWithMarketplace({ item, onToggle, onRemove, onToggleMarketplace }) {
-    const [itemInFocus, setItemInFocus] = useState(false);
+    // Définir les icônes et couleurs pour chaque catégorie
+    const marketplaceInfo = item.marketplace
+        ? {
+            icon: (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            ),
+            color: "bg-green-100 text-green-700 border-green-300"
+        }
+        : {
+            icon: (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+            ),
+            color: "bg-gray-100 text-gray-700 border-gray-300"
+        };
 
     return (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events
-        <li
-            className={`px-4 py-3 flex items-center hover:bg-gray-50 relative ${item.marketplace ? 'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-green-500' : ''}`}
-            onMouseEnter={() => setItemInFocus(true)}
-            onMouseLeave={() => setItemInFocus(false)}
-            onClick={onToggleMarketplace}
-        >
-            <button
-                type="button"
-                onClick={onToggle}
-                className="w-5 h-5 rounded-full border mr-3 flex items-center justify-center border-gray-300"
-                aria-label="Cocher"
-            >
-                {item.isChecked && (
-                    <svg
-                        className="w-3 h-3 text-teal-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="3"
-                            d="M5 13l4 4L19 7"
-                        />
-                    </svg>
-                )}
-            </button>
-
-            <div className="flex-grow">
-                <span className="font-medium text-gray-700">
-                    {item.ingredient.name}
-                </span>
-                {(item.quantity || item.unit) && (
-                    <span className="ml-2 text-sm text-gray-500">
-                        {item.quantity && <span>{item.quantity}</span>}
-                        {item.unit && <span> {item.unit}</span>}
-                    </span>
-                )}
-            </div>
-
-            <div className="flex items-center">
-                {/* Switch pour changer de magasin - toujours visible */}
+        <li className={`px-4 relative ${item.marketplace ? 'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-green-500' : ''} ${item.isChecked && "bg-gray-50"}`}>
+            <div className="flex items-center py-3">
                 <button
                     type="button"
-                    onClick={onToggleMarketplace}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full mr-2 ${item.marketplace
-                        ? 'bg-green-500 hover:bg-green-600'
-                        : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
+                    onClick={onToggle}
+                    className="flex-shrink-0 mr-3"
                 >
                     <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${item.marketplace ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                    />
+                        className="w-5 h-5 rounded-full border flex items-center justify-center border-gray-300"
+                        aria-hidden="true"
+                    >
+                        {item.isChecked && (
+                            <svg
+                                className="w-3 h-3 text-teal-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="3"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                        )}
+                    </span>
                 </button>
 
-                {/* Bouton de suppression - apparaît uniquement au focus */}
-                {itemInFocus && (
+                <div className="flex-grow min-w-0 mr-2">
+                    <div className="flex items-center">
+                        <span className={`font-medium text-gray-700 truncate ${item.isChecked && "line-through text-gray-500"}`}>
+                            {item.ingredient.name}
+                        </span>
+                        {(item.quantity || item.unit) && (
+                            <span className="ml-1 text-sm text-gray-500 flex-shrink-0">
+                                {item.quantity && <span>{item.quantity}</span>}
+                                {item.unit && <span> {item.unit}</span>}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                    {/* Bouton pour changer la catégorie */}
+                    <button
+                        type="button"
+                        onClick={onToggleMarketplace}
+                        className={`p-1 rounded-full ${marketplaceInfo.color} hover:opacity-80 transition-colors `}
+                        aria-label={item.marketplace ? "Déplacer vers le supermarché" : "Déplacer vers le marché"}
+                        title={item.marketplace ? "Marché" : "Supermarché"}
+                    >
+                        {marketplaceInfo.icon}
+                    </button>
+
                     <button
                         type="button"
                         onClick={onRemove}
-                        className="text-gray-400 hover:text-red-500"
+                        className="text-gray-400 p-1 hover:text-red-500"
                         aria-label="Supprimer"
                     >
                         <svg
-                            className="w-5 h-5"
+                            className="w-4 h-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -815,79 +900,8 @@ function ShoppingItemWithMarketplace({ item, onToggle, onRemove, onToggleMarketp
                             />
                         </svg>
                     </button>
-                )}
+                </div>
             </div>
-        </li>
-    );
-}
-
-
-function ShoppingItem({ item, onToggle, onRemove }) {
-    const [itemInFocus, setItemInFocus] = useState(false);
-
-    return (
-        <li
-            className="px-4 py-3 flex items-center hover:bg-gray-50 bg-gray-50"
-            onMouseEnter={() => setItemInFocus(true)}
-            onMouseLeave={() => setItemInFocus(false)}
-        >
-            <button
-                type="button"
-                onClick={onToggle}
-                className="w-5 h-5 rounded-full border mr-3 flex items-center justify-center bg-teal-500 border-teal-500 text-white"
-                aria-label="Décocher"
-            >
-                <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="3"
-                        d="M5 13l4 4L19 7"
-                    />
-                </svg>
-            </button>
-
-            <div className="flex-grow">
-                <span className="font-medium line-through text-gray-500">
-                    {item.ingredient.name}
-                </span>
-                {(item.quantity || item.unit) && (
-                    <span className="ml-2 text-sm text-gray-400">
-                        {item.quantity && <span>{item.quantity}</span>}
-                        {item.unit && <span> {item.unit}</span>}
-                    </span>
-                )}
-            </div>
-
-            {(itemInFocus || true) && (
-                <button
-                    type="button"
-                    onClick={onRemove}
-                    className="text-gray-400 hover:text-red-500 ml-2"
-                    aria-label="Supprimer"
-                >
-                    <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                    </svg>
-                </button>
-            )}
         </li>
     );
 }

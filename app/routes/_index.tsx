@@ -41,8 +41,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const maxPreparationTime = url.searchParams.get("maxPreparationTime") || null;
   const sortBy = url.searchParams.get("sortBy") || "note";
   const sortDirection = url.searchParams.get("sortDirection") || "desc";
-  const randomParam = url.searchParams.get("random") || "true"; // Par défaut à "true"
-  const random = randomParam === "true";
+  const randomParam = url.searchParams.get("random") || "false"; // Par défaut à "true"
+  const random = randomParam === "false";
   // Paramètres pour le scroll infini
   const page = parseInt(url.searchParams.get("page") || "1");
   const perPage = 12; // Nombre réduit pour un chargement mobile optimal
@@ -56,7 +56,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (categoryId) apiUrl.searchParams.append("categoryId", categoryId);
   if (mealType) apiUrl.searchParams.append("mealType", mealType);
   if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime.toString());
-  if (random) apiUrl.searchParams.append("random", "true");
+  if (random) apiUrl.searchParams.append("random", "false");
 
   // Ajouter les paramètres de tri
   apiUrl.searchParams.append("sort", sortBy);
@@ -194,7 +194,6 @@ export default function RecipesIndex() {
   const [mealType, setMealType] = useState(appliedFilters.mealType);
   const [sortBy, setSortBy] = useState<SortOption>(appliedFilters.sortBy as SortOption);
   const [sortDirection, setSortDirection] = useState<SortDirection>(appliedFilters.sortDirection as SortDirection);
-  //const [randomEnabled, setRandomEnabled] = useState(true)
   const [randomEnabled, setRandomEnabled] = useState(appliedFilters.random !== false);
 
   // Debounce la recherche
@@ -353,7 +352,7 @@ export default function RecipesIndex() {
     setMealType("");
     setSortBy("title");
     setSortDirection("asc");
-    setRandomEnabled(true);
+    setRandomEnabled(false);
 
     // Soumettre le formulaire avec des valeurs vides
     setSearchParams({
@@ -414,6 +413,9 @@ export default function RecipesIndex() {
                 />
               </svg>
             </div>
+
+            {/* Bouton de supression de la recherche */}
+
 
             {/* Badge de nombre de recettes */}
             <div className="absolute inset-y-0 right-7 pr-3 flex items-center text-xs text-gray-500">
@@ -609,8 +611,11 @@ export default function RecipesIndex() {
 
         {/* Panneau de filtres mobile */}
         {filtersVisible && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end">
-            <div className="bg-white w-full rounded-t-xl p-5 transform transition-transform duration-300 ease-in-out max-h-[90vh] overflow-auto">
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
+            onClick={(e) => {
+              setFiltersVisible(false)
+            }} >
+            <div onClick={(e) => e.stopPropagation()} className="bg-white w-full rounded-t-xl p-5 transform transition-transform duration-300 ease-in-out max-h-[90vh] overflow-auto">
               {/* En-tête du panneau de filtres */}
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Filtres</h3>
@@ -718,7 +723,7 @@ export default function RecipesIndex() {
                       className={`relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none ${randomEnabled ? 'bg-rose-500' : 'bg-gray-200'
                         }`}
                       role="switch"
-                      aria-checked={randomEnabled}
+                      aria-checked={false}
                     >
                       <span className="sr-only">Activer l'affichage aléatoire</span>
                       <span
