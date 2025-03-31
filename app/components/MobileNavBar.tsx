@@ -10,7 +10,7 @@ export default function MobileNavBar() {
     };
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 sm:hidden">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-10 sm:hidden">
             <div className="flex justify-around items-center">
                 <Link
                     to="/"

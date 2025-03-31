@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFetcher, useOutletContext } from "@remix-run/react";
 import RecipeModal from "./RecipeModal";
 
@@ -54,6 +54,24 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
         );
     };
 
+    useEffect(() => {
+        const handlePopState = (event) => {
+            event.preventDefault();
+            setIsModalOpen(false);
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
+
+    const openModal = () => {
+        window.history.pushState(null, '', '#modal');
+        setIsModalOpen(true);
+    };
+
     if (menuFetcher.state === "idle" && isAddingToMenu) {
         setIsAddingToMenu(false);
     }
@@ -62,7 +80,7 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
         <>
             <div
                 className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow relative"
-                onClick={() => setIsModalOpen(true)} // Ouvrir le modal au clic
+                onClick={() => openModal()} // Ouvrir le modal au clic
             >
                 {/* Image de la recette */}
                 <div className="relative h-44">
