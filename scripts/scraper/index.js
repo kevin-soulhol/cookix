@@ -90,10 +90,17 @@ async function scrapeCookomix(browser) {
       mainMealCategoryRandom = getRandomElement(mealTypeLinks);
     } */
 
-      let startAt = 0;
-      if(OnlyTypeMeal){
-        startAt = categoryLinks.indexOf(OnlyTypeMeal);
+      const trouverIndexParTitre = function(tableau, titreRecherche) {
+        return tableau.findIndex(objet => objet.title === titreRecherche);
       }
+
+    let startAt = 0;
+    if(OnlyTypeMeal){
+      startAt = trouverIndexParTitre(categoryLinks, OnlyTypeMeal);
+    }
+
+    logWithTimestamp(`Start scrap by ${OnlyTypeMeal}:${startAt}`)
+
     for(let d = startAt; d < categoryLinks.length; d++){
       const recipesInPage = await getAllLinkRecipeBy(page, categoryLinks[d]);
       for (let i = 0; i < recipesInPage.length; i++) {
