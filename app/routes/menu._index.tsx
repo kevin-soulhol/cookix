@@ -1,10 +1,16 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, MetaFunction, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData, useFetcher } from "@remix-run/react";
 import { useState } from "react";
 import BoxRecipe, { RecipeType } from "~/components/BoxRecipe";
 import Layout from "~/components/Layout";
 import { TypeMenuItem } from "./api.menu";
 
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Votre Menu - Cookix" },
+  ];
+};
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // Récupérer l'ID du menu depuis les paramètres de requête
@@ -102,24 +108,22 @@ export default function WeeklyMenu() {
             </div>
           </div>
         )}
+
         {error ? (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 text-red-700 mb-8">
             {error}
           </div>
         ) : (
           <>
-            {/* En-tête du menu */}
             <div className="flex justify-between items-center mb-8">
-              <h1 className="text-2xl font-bold">Menu de la semaine</h1>
-
-              <div className="flex space-x-4">
-                {/* Bouton liste de courses */}
+              <div className="flex items-center space-x-4">
+                {/* Bouton Liste de courses avec badge */}
                 <Link
                   to={`/courses?listId=${shoppingListId}`}
-                  className="inline-flex items-center px-4 py-2 border border-teal-500 rounded-md text-teal-500 bg-white hover:bg-teal-50 transition-colors"
+                  className="relative inline-flex items-center p-2 bg-white border border-teal-500 text-teal-500 rounded-full hover:bg-teal-50 transition-colors"
                 >
                   <svg
-                    className="w-5 h-5 mr-2"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -132,21 +136,20 @@ export default function WeeklyMenu() {
                       d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                     />
                   </svg>
-                  Liste de courses
                   {shoppingListCount > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-teal-500 rounded-full">
+                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-teal-500 rounded-full">
                       {shoppingListCount}
                     </span>
                   )}
                 </Link>
 
-                {/* Bouton partager */}
+                {/* Bouton de partage élégant */}
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  className="group relative inline-flex items-center p-2 bg-white border border-rose-500 text-rose-500 rounded-full hover:bg-rose-50 transition-colors"
                 >
                   <svg
-                    className="w-5 h-5 mr-2"
+                    className="w-5 h-5 transition-transform group-hover:rotate-12"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -159,41 +162,40 @@ export default function WeeklyMenu() {
                       d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
                     />
                   </svg>
-                  Partager
                 </button>
               </div>
-            </div>
 
-            {/* Recherche dans le menu */}
-            {menuItems.length > 0 && (
-              <div className="mb-6">
-                <div className="relative rounded-md shadow-sm">
-                  <input
-                    type="text"
-                    placeholder="Rechercher dans votre menu..."
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-rose-500 focus:border-rose-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
+              {/* Recherche dans le menu */}
+              {menuItems.length > 0 && (
+                <div className="flex-grow mx-4">
+                  <div className="relative rounded-full shadow-sm">
+                    <input
+                      type="text"
+                      placeholder="Rechercher dans votre menu..."
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-rose-500 focus:border-rose-500"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Liste des recettes du menu */}
             {menuItems.length === 0 ? (

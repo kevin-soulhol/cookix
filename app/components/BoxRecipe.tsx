@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOutletContext } from "@remix-run/react";
+import { useFetcher, useOutletContext } from "@remix-run/react";
 import RecipeModal from "./RecipeModal";
 
 export type RecipeType = {
@@ -22,14 +22,46 @@ type BoxRecipeProps = {
 };
 
 export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) {
-    // Nouvel état pour contrôler l'ouverture/fermeture du modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { isAuthenticated } = useOutletContext<any>() || { isAuthenticated: false };
+
+    const menuFetcher = useFetcher();
+    const favoriteFetcher = useFetcher();
+
+    const [isAddingToMenu, setIsAddingToMenu] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(recipe.isFavorite || false);
+
+    const handleAddToMenu = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Empêcher l'ouverture du modal
+        setIsAddingToMenu(true);
+        menuFetcher.submit(
+            { recipeId: recipe.id.toString() },
+            { method: "post", action: "/api/menu" }
+        );
+    };
+
+    const handleToggleFavorite = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Empêcher l'ouverture du modal
+        const newFavoriteState = !isFavorite;
+        setIsFavorite(newFavoriteState);
+
+        favoriteFetcher.submit(
+            {
+                recipeId: recipe.id.toString(),
+                action: newFavoriteState ? "add" : "remove"
+            },
+            { method: "post", action: "/api/favorites" }
+        );
+    };
+
+    if (menuFetcher.state === "idle" && isAddingToMenu) {
+        setIsAddingToMenu(false);
+    }
 
     return (
         <>
             <div
-                className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
+                className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow relative"
                 onClick={() => setIsModalOpen(true)} // Ouvrir le modal au clic
             >
                 {/* Image de la recette */}
@@ -73,6 +105,70 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                         </div>
                     )}
                 </div>
+
+                {/* Conteneur des boutons d'action */}
+                {isAuthenticated && !readOnly && (
+                    <div className="absolute top-2 right-2 z-10 flex space-x-2">
+                        {/* Bouton Favori */}
+                        <button
+                            onClick={handleToggleFavorite}
+                            disabled={favoriteFetcher.state !== "idle"}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center 
+                                ${isFavorite
+                                    ? 'bg-rose-100 text-rose-500'
+                                    : 'bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-400 shadow-md'
+                                }`}
+                            aria-label="Ajouter aux favoris"
+                        >
+                            {favoriteFetcher.state !== "idle" ? (
+                                <svg className="animate-spin h-5 w-5 text-rose-500" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <svg
+                                    className="w-5 h-5"
+                                    fill={isFavorite ? "currentColor" : "none"}
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                                    />
+                                </svg>
+                            )}
+                        </button>
+
+                        {/* Bouton Ajouter au menu */}
+                        <button
+                            onClick={handleAddToMenu}
+                            disabled={isAddingToMenu || recipe.isInMenu}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center 
+                                ${recipe.isInMenu
+                                    ? 'bg-green-100 text-green-600 cursor-default'
+                                    : 'bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-700 shadow-md'
+                                }`}
+                            aria-label="Ajouter au menu"
+                        >
+                            {isAddingToMenu ? (
+                                <svg className="animate-spin h-5 w-5 text-teal-500" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : recipe.isInMenu ? (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            ) : (
+                                <span className="text-lg font-bold">+</span>
+                            )}
+                        </button>
+                    </div>
+                )}
 
                 {/* Informations de la recette */}
                 <div className="p-4 flex-1 flex flex-col">

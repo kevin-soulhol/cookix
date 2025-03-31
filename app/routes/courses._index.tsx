@@ -1,9 +1,16 @@
-import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, MetaFunction, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData, useFetcher } from "@remix-run/react";
 import { useState } from "react";
 import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
 import { getUserId } from "./api.user";
+
+
+export const meta: MetaFunction = () => {
+    return [
+        { title: "Votre liste de course - Cookix" },
+    ];
+};
 
 // Action pour gérer les mises à jour de la liste de courses
 export async function action({ request }: ActionFunctionArgs) {
@@ -295,6 +302,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function ShoppingList() {
     const { shoppingList, items, categorizedItems, error } = useLoaderData<typeof loader>();
+    const [showAddModal, setShowAddModal] = useState(false);
     const [showAddForm, setShowAddForm] = useState(false);
     const [newItemName, setNewItemName] = useState("");
     const [newItemQuantity, setNewItemQuantity] = useState("");
@@ -339,7 +347,7 @@ export default function ShoppingList() {
         setNewItemName("");
         setNewItemQuantity("");
         setNewItemUnit("");
-        setShowAddForm(false);
+        setShowAddModal(false);
     };
 
     return (
@@ -352,26 +360,48 @@ export default function ShoppingList() {
                 ) : (
                     <>
                         {/* En-tête de la liste */}
-                        <div className="flex justify-between items-center mb-6">
-                            <h1 className="text-2xl font-bold">Liste de courses</h1>
+                        <div className="flex justify-between items-center mb-8">
+                            <div className="flex items-center space-x-4">
+                                {/* Bouton de suppression des articles cochés */}
+                                {checkedCount > 0 && (
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm("Voulez-vous supprimer tous les articles cochés ?")) {
+                                                clearCheckedFetcher.submit(
+                                                    {
+                                                        _action: "clearChecked",
+                                                        listId: shoppingList.id
+                                                    },
+                                                    { method: "post" }
+                                                );
+                                            }
+                                        }}
+                                        className="group relative inline-flex items-center p-2 bg-white border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors"
+                                    >
+                                        <svg
+                                            className="w-5 h-5 transition-transform group-hover:rotate-6"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            />
+                                        </svg>
+                                    </button>
+                                )}
 
-                            {checkedCount > 0 && (
+                                {/* Bouton de partage élégant */}
                                 <button
-                                    onClick={() => {
-                                        if (window.confirm("Voulez-vous supprimer tous les articles cochés ?")) {
-                                            clearCheckedFetcher.submit(
-                                                {
-                                                    _action: "clearChecked",
-                                                    listId: shoppingList.id
-                                                },
-                                                { method: "post" }
-                                            );
-                                        }
-                                    }}
-                                    className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                    onClick={() => setShowShareModal(true)}
+                                    className="group relative inline-flex items-center p-2 bg-white border border-rose-500 text-rose-500 rounded-full hover:bg-rose-50 transition-colors"
                                 >
                                     <svg
-                                        className="w-5 h-5 mr-1"
+                                        className="w-5 h-5 transition-transform group-hover:rotate-12"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -381,16 +411,16 @@ export default function ShoppingList() {
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
                                             strokeWidth="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
                                         />
                                     </svg>
-                                    Vider les cochés
                                 </button>
-                            )}
+                            </div>
 
+                            {/* Bouton d'ajout d'article */}
                             <button
-                                onClick={() => setShowShareModal(true)}
-                                className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                onClick={() => setShowAddModal(true)}
+                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                             >
                                 <svg
                                     className="w-5 h-5 mr-1"
@@ -403,23 +433,19 @@ export default function ShoppingList() {
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         strokeWidth="2"
-                                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                                     />
                                 </svg>
-                                Partager
+                                Ajouter un article
                             </button>
                         </div>
 
                         {/* Barre de progression */}
                         {items.length > 0 && (
-                            <div className="mb-8">
-                                <div className="flex justify-between text-sm text-gray-600 mb-1">
-                                    <div>{checkedCount} sur {items.length} articles</div>
-                                    <div>{progress}% complété</div>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div className="fixed bottom-[77px] left-0 right-0 z-40">
+                                <div className="w-full bg-gray-200 h-3">
                                     <div
-                                        className="bg-teal-500 h-2.5 rounded-full"
+                                        className="bg-teal-500 h-3 transition-all duration-300 ease-in-out"
                                         style={{ width: `${progress}%` }}
                                     ></div>
                                 </div>
@@ -550,135 +576,104 @@ export default function ShoppingList() {
                             </div>
                         )}
 
-                        {/* Bouton d'ajout d'article */}
-                        {!showAddForm && (
-                            <div className="text-center">
-                                <button
-                                    onClick={() => setShowAddForm(true)}
-                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-                                >
-                                    <svg
-                                        className="w-5 h-5 mr-1"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                        />
-                                    </svg>
-                                    Ajouter un article
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Formulaire d'ajout d'article */}
-                        {showAddForm && (
-                            <div className="bg-white rounded-lg shadow-md p-4 mt-6">
-                                <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un article</h3>
-                                <form onSubmit={handleAddItem}>
-                                    <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                                        <div className="sm:col-span-3">
-                                            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                                                Nom de l'article *
-                                            </label>
-                                            <div className="mt-1">
-                                                <input
-                                                    type="text"
-                                                    id="name"
-                                                    name="name"
-                                                    required
-                                                    value={newItemName}
-                                                    onChange={(e) => setNewItemName(e.target.value)}
-                                                    className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                    placeholder="Ex: Tomates"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="sm:col-span-2">
-                                            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
-                                                Quantité
-                                            </label>
-                                            <div className="mt-1">
-                                                <input
-                                                    type="number"
-                                                    id="quantity"
-                                                    name="quantity"
-                                                    step="0.01"
-                                                    min="0"
-                                                    value={newItemQuantity}
-                                                    onChange={(e) => setNewItemQuantity(e.target.value)}
-                                                    className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                    placeholder="Ex: 500"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="sm:col-span-1">
-                                            <label htmlFor="unit" className="block text-sm font-medium text-gray-700">
-                                                Unité
-                                            </label>
-                                            <div className="mt-1">
-                                                <input
-                                                    type="text"
-                                                    id="unit"
-                                                    name="unit"
-                                                    value={newItemUnit}
-                                                    onChange={(e) => setNewItemUnit(e.target.value)}
-                                                    className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                    placeholder="Ex: g"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-5 flex justify-end space-x-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowAddForm(false)}
-                                            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-                                        >
-                                            Annuler
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-                                        >
-                                            Ajouter
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
-
-                        {/* Lien vers le menu */}
-                        <div className="text-center mt-8">
-                            <Link
-                                to="/menu"
-                                className="inline-flex items-center text-teal-600 hover:text-teal-800"
+                        {showAddModal && (
+                            <div
+                                className="fixed inset-x-0 bottom-0 z-50 transition-all duration-300 ease-in-out"
+                                onClick={(e) => {
+                                    // Fermer la modale si on clique en dehors du contenu
+                                    if (e.target === e.currentTarget) {
+                                        setShowAddModal(false);
+                                    }
+                                }}
                             >
-                                <svg
-                                    className="w-5 h-5 mr-1"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
+                                <div
+                                    className="bg-white rounded-t-xl shadow-2xl max-w-md mx-auto transform transition-transform duration-300 ease-in-out"
+                                    onClick={(e) => e.stopPropagation()} // Empêcher la fermeture quand on clique sur le contenu
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                    />
-                                </svg>
-                                Retour au menu
-                            </Link>
-                        </div>
+                                    <div className="p-6 shadow-lg">
+                                        <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un article</h3>
+                                        <form onSubmit={handleAddItem}>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label
+                                                        htmlFor="name"
+                                                        className="block text-sm font-medium text-gray-700 mb-1"
+                                                    >
+                                                        Nom de l'article *
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        id="name"
+                                                        name="name"
+                                                        required
+                                                        value={newItemName}
+                                                        onChange={(e) => setNewItemName(e.target.value)}
+                                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                                                        placeholder="Ex: Tomates"
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label
+                                                            htmlFor="quantity"
+                                                            className="block text-sm font-medium text-gray-700 mb-1"
+                                                        >
+                                                            Quantité
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            id="quantity"
+                                                            name="quantity"
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={newItemQuantity}
+                                                            onChange={(e) => setNewItemQuantity(e.target.value)}
+                                                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                                                            placeholder="Ex: 500"
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-span-2">
+                                                        <label
+                                                            htmlFor="unit"
+                                                            className="block text-sm font-medium text-gray-700 mb-1"
+                                                        >
+                                                            Unité
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            id="unit"
+                                                            name="unit"
+                                                            value={newItemUnit}
+                                                            onChange={(e) => setNewItemUnit(e.target.value)}
+                                                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                                                            placeholder="Ex: g"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex justify-end space-x-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAddModal(false)}
+                                                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                                    >
+                                                        Annuler
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700"
+                                                    >
+                                                        Ajouter
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Modal de partage */}
                         {showShareModal && (

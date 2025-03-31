@@ -1,7 +1,7 @@
 import { Link, useOutletContext, Form } from "@remix-run/react";
 import { useState } from "react";
 import Footer from "./Footer";
-import { AuthButtonProps } from "./AuthButton";
+import AuthButton, { AuthButtonProps } from "./AuthButton";
 import MobileNavBar from "./MobileNavBar";
 
 type LayoutProps = {
@@ -12,7 +12,7 @@ type LayoutProps = {
 
 export default function Layout({ children, showHomeLink = false, pageTitle }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated } = useOutletContext<AuthButtonProps>() || { isAuthenticated: false };
+  const { isAuthenticated, user } = useOutletContext<AuthButtonProps>() || { isAuthenticated: false, user: null };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -54,7 +54,29 @@ export default function Layout({ children, showHomeLink = false, pageTitle }: La
 
             {/* Menu bureau inchangé */}
             <div className="hidden md:flex items-center space-x-4">
-              {/* ... code existant ... */}
+              <Link
+                to="/"
+                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors"
+              >
+                Toutes les recettes
+              </Link>
+              {isAuthenticated && (
+                <>
+                  <Link
+                    to="/menu"
+                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors"
+                  >
+                    Menu de la semaine
+                  </Link>
+                  <Link
+                    to="/courses"
+                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors"
+                  >
+                    Liste de courses
+                  </Link>
+                </>
+              )}
+              < AuthButton isAuthenticated={isAuthenticated} user={user} />
             </div>
 
             {/* Bouton de profil pour mobile (à la place du menu hamburger) */}
