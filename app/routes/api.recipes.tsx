@@ -116,7 +116,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       where.categoryId = parseInt(categoryId);
     }
 
-    console.log("____________________________", mealType)
     if (mealType) {
       where.meals = {
         some: {

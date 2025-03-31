@@ -118,7 +118,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         currentPage: page,
         totalPages: Math.ceil(totalRecipes / perPage),
         totalRecipes: totalRecipes,
-        hasMore: offset + apiResponse.recipes.length < totalRecipes // Vérifie s'il reste des recettes à charger
+        hasMore: page < Math.ceil(totalRecipes / perPage) // Vérifie s'il reste des recettes à charger
       },
       filters: {
         categoryOptions,
@@ -184,6 +184,7 @@ export default function RecipesIndex() {
   const [recipes, setRecipes] = useState<RecipeType[]>(initialRecipes);
   const [currentPage, setCurrentPage] = useState(pagination.currentPage);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreRecipes, setHasMoreRecipes] = useState(pagination.hasMore);
 
   // États pour les filtres
   const [search, setSearch] = useState(appliedFilters.search);
@@ -205,7 +206,7 @@ export default function RecipesIndex() {
   // Effet pour charger plus de recettes lors du scroll
   const loadMoreRecipes = useCallback(() => {
     // Éviter de charger plus si on est déjà en train de charger ou s'il n'y a plus rien à charger
-    if (!pagination.hasMore ||
+    if (!hasMoreRecipes ||
       moreFetcher.state !== "idle" ||
       isLoadingMore ||
       navigation.state !== "idle") {
@@ -222,21 +223,24 @@ export default function RecipesIndex() {
     // Utiliser le fetcher de Remix
     moreFetcher.load(`/?index&${params.toString()}`);
 
-    console.log("Chargement de la page", nextPage);
-    console.log("URL de chargement:", `/?${params.toString()}`);
-  }, [currentPage, pagination.hasMore, moreFetcher, isLoadingMore, searchParams, navigation.state]);
+  }, [currentPage, hasMoreRecipes, moreFetcher, isLoadingMore, searchParams, navigation.state]);
 
   useEffect(() => {
-    console.log("État du fetcher:", moreFetcher.state);
-    console.log("Données du fetcher:", moreFetcher.data);
+    if (moreFetcher.state === "idle" && isLoadingMore) {
 
-    if (moreFetcher.state === "idle" && moreFetcher.data && isLoadingMore) {
-      const fetcherData = moreFetcher.data;
+      if (moreFetcher.data) {
+        // Mettre à jour l'état hasMoreRecipes avec la nouvelle valeur du serveur
+        if (moreFetcher.data.pagination && moreFetcher.data.pagination.hasMore !== undefined) {
+          setHasMoreRecipes(moreFetcher.data.pagination.hasMore);
+        }
 
-      if (fetcherData.recipes && fetcherData.recipes.length > 0) {
-        // Ajouter les nouvelles recettes
-        setRecipes(prev => [...prev, ...fetcherData.recipes]);
-        setCurrentPage(prev => prev + 1);
+        if (moreFetcher.data.recipes && moreFetcher.data.recipes.length > 0) {
+          setRecipes(prev => [...prev, ...moreFetcher.data.recipes]);
+          setCurrentPage(prev => prev + 1);
+        } else {
+          // Si aucune recette n'est reçue, définir hasMoreRecipes à false
+          setHasMoreRecipes(false);
+        }
       }
 
       setIsLoadingMore(false);
@@ -260,8 +264,9 @@ export default function RecipesIndex() {
       }
     };
 
+    // Dans l'observateur
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) {
+      if (entries[0].isIntersecting && hasMoreRecipes) {
         loadMore();
       }
     }, {
@@ -270,7 +275,7 @@ export default function RecipesIndex() {
     });
 
     const currentElement = bottomElementRef.current;
-    if (currentElement) {
+    if (currentElement && pagination.hasMore) {
       observer.current.observe(currentElement);
     }
 
@@ -280,7 +285,7 @@ export default function RecipesIndex() {
         observer.current.disconnect();
       }
     };
-  }, [loadMoreRecipes, isLoadingMore, pagination.hasMore]);
+  }, [loadMoreRecipes, isLoadingMore, hasMoreRecipes]);
 
 
   // Effet pour soumettre le formulaire lorsque la recherche debouncée change
@@ -305,7 +310,7 @@ export default function RecipesIndex() {
       setCurrentPage(1);
       setRecipes([]); // Vider pour éviter les doublons
     }
-  }, [debouncedSearch, appliedFilters.search, setSearchParams]);
+  }, [debouncedSearch, appliedFilters.search, setSearchParams, category, mealType, maxPreparationTime, sortBy, sortDirection]);
 
   // Effets pour la mise à jour des états lors des changements de filtres
   useEffect(() => {
@@ -557,7 +562,7 @@ export default function RecipesIndex() {
             )}
 
             {/* Élément observé pour le scroll infini */}
-            {pagination.hasMore && recipes.length > 0 && (
+            {hasMoreRecipes && recipes.length > 0 && (
               <div
                 ref={bottomElementRef}
                 className="h-20 w-full my-4 flex justify-center items-center"
