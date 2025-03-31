@@ -1,12 +1,12 @@
 import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
+import {
   Link,
   useFetcher,
   useNavigate,
   useOutletContext
 } from "/build/_shared/chunk-YHAWPGHG.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -39,7 +39,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/components/Footer.tsx"
   );
-  import.meta.hot.lastModified = "1742450333274.2869";
+  import.meta.hot.lastModified = "1743409034114.3547";
 }
 function Footer() {
   return /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("footer", { className: "bg-gray-800 text-white py-12", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", children: [
@@ -76,31 +76,22 @@ function Footer() {
             lineNumber: 36,
             columnNumber: 15
           }, this),
-          /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("li", { children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/recettes", className: "text-gray-300 hover:text-white transition-colors", children: "Recettes" }, void 0, false, {
-            fileName: "app/components/Footer.tsx",
-            lineNumber: 37,
-            columnNumber: 19
-          }, this) }, void 0, false, {
-            fileName: "app/components/Footer.tsx",
-            lineNumber: 37,
-            columnNumber: 15
-          }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("li", { children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/menu", className: "text-gray-300 hover:text-white transition-colors", children: "Menu hebdomadaire" }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 38,
+            lineNumber: 37,
             columnNumber: 19
           }, this) }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 38,
+            lineNumber: 37,
             columnNumber: 15
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("li", { children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/courses", className: "text-gray-300 hover:text-white transition-colors", children: "Liste de courses" }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 39,
+            lineNumber: 38,
             columnNumber: 19
           }, this) }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 39,
+            lineNumber: 38,
             columnNumber: 15
           }, this)
         ] }, void 0, true, {
@@ -116,45 +107,45 @@ function Footer() {
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("h3", { className: "text-lg font-semibold mb-4", children: "\xC0 propos" }, void 0, false, {
           fileName: "app/components/Footer.tsx",
-          lineNumber: 44,
+          lineNumber: 43,
           columnNumber: 13
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("ul", { className: "space-y-2", children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("li", { children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/a-propos", className: "text-gray-300 hover:text-white transition-colors", children: "\xC0 propos de Cookix" }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 46,
+            lineNumber: 45,
             columnNumber: 19
           }, this) }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 46,
+            lineNumber: 45,
             columnNumber: 15
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("li", { children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/contact", className: "text-gray-300 hover:text-white transition-colors", children: "Contact" }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 47,
+            lineNumber: 46,
             columnNumber: 19
           }, this) }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 47,
+            lineNumber: 46,
             columnNumber: 15
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("li", { children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/mentions-legales", className: "text-gray-300 hover:text-white transition-colors", children: "Mentions l\xE9gales" }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 48,
+            lineNumber: 47,
             columnNumber: 19
           }, this) }, void 0, false, {
             fileName: "app/components/Footer.tsx",
-            lineNumber: 48,
+            lineNumber: 47,
             columnNumber: 15
           }, this)
         ] }, void 0, true, {
           fileName: "app/components/Footer.tsx",
-          lineNumber: 45,
+          lineNumber: 44,
           columnNumber: 13
         }, this)
       ] }, void 0, true, {
         fileName: "app/components/Footer.tsx",
-        lineNumber: 43,
+        lineNumber: 42,
         columnNumber: 11
       }, this)
     ] }, void 0, true, {
@@ -168,11 +159,11 @@ function Footer() {
       " Cookix - Tous droits r\xE9serv\xE9s"
     ] }, void 0, true, {
       fileName: "app/components/Footer.tsx",
-      lineNumber: 54,
+      lineNumber: 53,
       columnNumber: 11
     }, this) }, void 0, false, {
       fileName: "app/components/Footer.tsx",
-      lineNumber: 53,
+      lineNumber: 52,
       columnNumber: 9
     }, this)
   ] }, void 0, true, {
@@ -419,7 +410,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/components/Layout.tsx"
   );
-  import.meta.hot.lastModified = "1742742613008.3025";
+  import.meta.hot.lastModified = "1743409039267.454";
 }
 function Layout({
   children,
@@ -468,7 +459,7 @@ function Layout({
           columnNumber: 27
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("div", { className: "hidden md:flex items-center space-x-4", children: [
-          /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/recettes", className: "px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors", children: "Toutes les recettes" }, void 0, false, {
+          /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/", className: "px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500 transition-colors", children: "Toutes les recettes" }, void 0, false, {
             fileName: "app/components/Layout.tsx",
             lineNumber: 57,
             columnNumber: 15
@@ -542,7 +533,7 @@ function Layout({
         columnNumber: 9
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("div", { className: `${isMenuOpen ? "block" : "hidden"} md:hidden`, children: /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)("div", { className: "px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-md", children: [
-        /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/recettes", className: "block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500", onClick: () => setIsMenuOpen(false), children: "Toutes les recettes" }, void 0, false, {
+        /* @__PURE__ */ (0, import_jsx_dev_runtime3.jsxDEV)(Link, { to: "/", className: "block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-rose-500", onClick: () => setIsMenuOpen(false), children: "Toutes les recettes" }, void 0, false, {
           fileName: "app/components/Layout.tsx",
           lineNumber: 91,
           columnNumber: 13
@@ -625,4 +616,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   Layout
 };
-//# sourceMappingURL=/build/_shared/chunk-7EYIA7FC.js.map
+//# sourceMappingURL=/build/_shared/chunk-R6SO4NDQ.js.map

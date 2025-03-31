@@ -1,12 +1,15 @@
 import {
   BoxRecipe
-} from "/build/_shared/chunk-IWHF6S5H.js";
+} from "/build/_shared/chunk-62M4QYSS.js";
 import {
   Layout
-} from "/build/_shared/chunk-7EYIA7FC.js";
+} from "/build/_shared/chunk-R6SO4NDQ.js";
 import {
   require_node
 } from "/build/_shared/chunk-G7CHZRZX.js";
+import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   Form,
   useFetcher,
@@ -15,9 +18,6 @@ import {
   useSearchParams,
   useSubmit
 } from "/build/_shared/chunk-YHAWPGHG.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -30,7 +30,7 @@ import {
   __toESM
 } from "/build/_shared/chunk-PNG5AS42.js";
 
-// app/routes/recettes._index.tsx
+// app/routes/_index.tsx
 var import_node = __toESM(require_node(), 1);
 var import_react2 = __toESM(require_react(), 1);
 var import_jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
@@ -40,7 +40,7 @@ if (!window.$RefreshReg$ || !window.$RefreshSig$ || !window.$RefreshRuntime$) {
   prevRefreshReg = window.$RefreshReg$;
   prevRefreshSig = window.$RefreshSig$;
   window.$RefreshReg$ = (type, id) => {
-    window.$RefreshRuntime$.register(type, '"app/routes/recettes._index.tsx"' + id);
+    window.$RefreshRuntime$.register(type, '"app/routes/_index.tsx"' + id);
   };
   window.$RefreshSig$ = window.$RefreshRuntime$.createSignatureFunctionForTransform;
 }
@@ -51,9 +51,9 @@ var _s2 = $RefreshSig$();
 if (import.meta) {
   import.meta.hot = createHotContext(
     //@ts-expect-error
-    "app/routes/recettes._index.tsx"
+    "app/routes/_index.tsx"
   );
-  import.meta.hot.lastModified = "1743361479615.6384";
+  import.meta.hot.lastModified = "1743410095136.6738";
 }
 function useDebounce(value, delay) {
   _s();
@@ -111,9 +111,13 @@ function RecipesIndex() {
     const nextPage = currentPage + 1;
     const params = new URLSearchParams(searchParams);
     params.set("page", nextPage.toString());
-    moreFetcher.load(`/recettes?${params.toString()}`);
+    moreFetcher.load(`/?index&${params.toString()}`);
+    console.log("Chargement de la page", nextPage);
+    console.log("URL de chargement:", `/?${params.toString()}`);
   }, [currentPage, pagination.hasMore, moreFetcher, isLoadingMore, searchParams, navigation.state]);
   (0, import_react2.useEffect)(() => {
+    console.log("\xC9tat du fetcher:", moreFetcher.state);
+    console.log("Donn\xE9es du fetcher:", moreFetcher.data);
     if (moreFetcher.state === "idle" && moreFetcher.data && isLoadingMore) {
       const fetcherData = moreFetcher.data;
       if (fetcherData.recipes && fetcherData.recipes.length > 0) {
@@ -225,56 +229,56 @@ function RecipesIndex() {
         pagination.totalRecipes,
         " recettes \xE0 d\xE9couvrir"
       ] }, void 0, true, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 377,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 380,
         columnNumber: 11
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("p", { className: "text-sm text-gray-600", children: "Trouvez la recette parfaite pour votre Monsieur Cuisine Smart" }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 380,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 383,
         columnNumber: 11
       }, this)
     ] }, void 0, true, {
-      fileName: "app/routes/recettes._index.tsx",
-      lineNumber: 376,
+      fileName: "app/routes/_index.tsx",
+      lineNumber: 379,
       columnNumber: 9
     }, this),
     /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "sticky top-0 z-10 bg-white pb-3 pt-1 shadow-sm", children: [
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "relative", children: [
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "text", name: "search", id: "search", placeholder: "Rechercher une recette...", value: search, onChange: handleSearchChange, className: "block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 text-base" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 388,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 391,
           columnNumber: 13
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("svg", { className: "h-5 w-5 text-gray-400", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", xmlns: "http://www.w3.org/2000/svg", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "2", d: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 391,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 394,
           columnNumber: 17
         }, this) }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 390,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 393,
           columnNumber: 15
         }, this) }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 389,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 392,
           columnNumber: 13
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("button", { type: "button", onClick: () => setFiltersVisible(true), className: "absolute inset-y-0 right-0 px-3 flex items-center", "aria-label": "Filtrer les recettes", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("svg", { className: "w-5 h-5 text-gray-500", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", xmlns: "http://www.w3.org/2000/svg", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "2", d: "M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 398,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 401,
           columnNumber: 17
         }, this) }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 397,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 400,
           columnNumber: 15
         }, this) }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 396,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 399,
           columnNumber: 13
         }, this)
       ] }, void 0, true, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 387,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 390,
         columnNumber: 11
       }, this),
       (category || mealType || maxPreparationTime) && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "flex flex-wrap gap-2 mt-2", children: [
@@ -284,21 +288,21 @@ function RecipesIndex() {
             setCategory("");
             updateFilter("categoryId", "");
           }, className: "ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-indigo-400 hover:bg-indigo-200 hover:text-indigo-600", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("svg", { className: "h-3 w-3", viewBox: "0 0 12 12", fill: "none", stroke: "currentColor", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("path", { d: "M8 4l-4 4M4 4l4 4", strokeWidth: "2", strokeLinecap: "round" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 412,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 415,
             columnNumber: 23
           }, this) }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 411,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 414,
             columnNumber: 21
           }, this) }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 407,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 410,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 405,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 408,
           columnNumber: 28
         }, this),
         mealType && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { className: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800", children: [
@@ -307,21 +311,21 @@ function RecipesIndex() {
             setMealType("");
             updateFilter("mealType", "");
           }, className: "ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-green-400 hover:bg-green-200 hover:text-green-600", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("svg", { className: "h-3 w-3", viewBox: "0 0 12 12", fill: "none", stroke: "currentColor", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("path", { d: "M8 4l-4 4M4 4l4 4", strokeWidth: "2", strokeLinecap: "round" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 424,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 427,
             columnNumber: 23
           }, this) }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 423,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 426,
             columnNumber: 21
           }, this) }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 419,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 422,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 417,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 420,
           columnNumber: 28
         }, this),
         maxPreparationTime && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { className: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800", children: [
@@ -332,197 +336,197 @@ function RecipesIndex() {
             setMaxPreparationTime(null);
             updateFilter("maxPreparationTime", null);
           }, className: "ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-amber-400 hover:bg-amber-200 hover:text-amber-600", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("svg", { className: "h-3 w-3", viewBox: "0 0 12 12", fill: "none", stroke: "currentColor", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("path", { d: "M8 4l-4 4M4 4l4 4", strokeWidth: "2", strokeLinecap: "round" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 436,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 439,
             columnNumber: 23
           }, this) }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 435,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 438,
             columnNumber: 21
           }, this) }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 431,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 434,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 429,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 432,
           columnNumber: 38
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("button", { type: "button", onClick: resetFilters, className: "text-xs text-gray-500 hover:text-gray-700 underline", children: "Tout effacer" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 441,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 444,
           columnNumber: 15
         }, this)
       ] }, void 0, true, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 404,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 407,
         columnNumber: 60
       }, this)
     ] }, void 0, true, {
-      fileName: "app/routes/recettes._index.tsx",
-      lineNumber: 386,
+      fileName: "app/routes/_index.tsx",
+      lineNumber: 389,
       columnNumber: 9
     }, this),
     error ? /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "my-8 bg-red-50 border-l-4 border-red-500 p-4 text-red-700 text-center", children: error }, void 0, false, {
-      fileName: "app/routes/recettes._index.tsx",
-      lineNumber: 448,
+      fileName: "app/routes/_index.tsx",
+      lineNumber: 451,
       columnNumber: 18
     }, this) : /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(import_jsx_dev_runtime.Fragment, { children: [
       recipes.length === 0 && !isLoading ? /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "text-center py-12 bg-white rounded-lg shadow-md", children: [
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("svg", { className: "mx-auto h-12 w-12 text-gray-400", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", xmlns: "http://www.w3.org/2000/svg", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "2", d: "M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 454,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 457,
           columnNumber: 19
         }, this) }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 453,
-          columnNumber: 17
-        }, this),
-        /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("h3", { className: "mt-2 text-lg font-medium text-gray-900", children: "Aucune recette trouv\xE9e" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
+          fileName: "app/routes/_index.tsx",
           lineNumber: 456,
           columnNumber: 17
         }, this),
+        /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("h3", { className: "mt-2 text-lg font-medium text-gray-900", children: "Aucune recette trouv\xE9e" }, void 0, false, {
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 459,
+          columnNumber: 17
+        }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("p", { className: "mt-1 text-sm text-gray-500", children: "Essayez de modifier vos filtres pour voir plus de r\xE9sultats." }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 457,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 460,
           columnNumber: 17
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "mt-6", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("button", { onClick: resetFilters, className: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500", children: "R\xE9initialiser les filtres" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 461,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 464,
           columnNumber: 19
         }, this) }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 460,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 463,
           columnNumber: 17
         }, this)
       ] }, void 0, true, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 452,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 455,
         columnNumber: 51
       }, this) : /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2", children: recipes.map((recipe, index) => /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(BoxRecipe, { recipe }, `${recipe.id}-${index}`, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 466,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 469,
         columnNumber: 49
       }, this)) }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 465,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 468,
         columnNumber: 24
       }, this),
       pagination.hasMore && recipes.length > 0 && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { ref: bottomElementRef, className: "h-20 w-full my-4 flex justify-center items-center", children: isLoadingMore && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "flex flex-col items-center", children: [
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("svg", { className: "animate-spin h-8 w-8 text-rose-500 mb-2", xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("circle", { className: "opacity-25", cx: "12", cy: "12", r: "10", stroke: "currentColor", strokeWidth: "4" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 473,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 476,
             columnNumber: 23
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("path", { className: "opacity-75", fill: "currentColor", d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 474,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 477,
             columnNumber: 23
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 472,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 475,
           columnNumber: 21
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { className: "text-sm text-gray-500", children: "Chargement d'autres recettes..." }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 476,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 479,
           columnNumber: 21
         }, this)
       ] }, void 0, true, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 471,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 474,
         columnNumber: 35
       }, this) }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 470,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 473,
         columnNumber: 58
       }, this)
     ] }, void 0, true, {
-      fileName: "app/routes/recettes._index.tsx",
-      lineNumber: 450,
+      fileName: "app/routes/_index.tsx",
+      lineNumber: 453,
       columnNumber: 20
     }, this),
     /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Form, { ref: formRef, method: "get", id: "filter-form", className: "hidden", children: [
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "search", value: search }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 483,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 486,
         columnNumber: 11
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "categoryId", value: category }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 484,
-        columnNumber: 11
-      }, this),
-      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "mealType", value: mealType }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 485,
-        columnNumber: 11
-      }, this),
-      maxPreparationTime && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "maxPreparationTime", value: maxPreparationTime }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 486,
-        columnNumber: 34
-      }, this),
-      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "sortBy", value: sortBy }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
+        fileName: "app/routes/_index.tsx",
         lineNumber: 487,
         columnNumber: 11
       }, this),
-      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "sortDirection", value: sortDirection }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
+      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "mealType", value: mealType }, void 0, false, {
+        fileName: "app/routes/_index.tsx",
         lineNumber: 488,
         columnNumber: 11
       }, this),
-      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "random", value: randomEnabled.toString() }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
+      maxPreparationTime && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "maxPreparationTime", value: maxPreparationTime }, void 0, false, {
+        fileName: "app/routes/_index.tsx",
         lineNumber: 489,
+        columnNumber: 34
+      }, this),
+      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "sortBy", value: sortBy }, void 0, false, {
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 490,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "sortDirection", value: sortDirection }, void 0, false, {
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 491,
+        columnNumber: 11
+      }, this),
+      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "random", value: randomEnabled.toString() }, void 0, false, {
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 492,
         columnNumber: 11
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "hidden", name: "page", value: "1" }, void 0, false, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 490,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 493,
         columnNumber: 11
       }, this)
     ] }, void 0, true, {
-      fileName: "app/routes/recettes._index.tsx",
-      lineNumber: 482,
+      fileName: "app/routes/_index.tsx",
+      lineNumber: 485,
       columnNumber: 9
     }, this),
     filtersVisible && /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "bg-white w-full rounded-t-xl p-5 transform transition-transform duration-300 ease-in-out max-h-[90vh] overflow-auto", children: [
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "flex justify-between items-center mb-4", children: [
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("h3", { className: "text-lg font-semibold", children: "Filtres" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 498,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 501,
           columnNumber: 17
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("button", { onClick: () => setFiltersVisible(false), className: "p-2 rounded-full hover:bg-gray-100", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("svg", { className: "w-5 h-5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "2", d: "M6 18L18 6M6 6l12 12" }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 501,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 504,
           columnNumber: 21
         }, this) }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 500,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 503,
           columnNumber: 19
         }, this) }, void 0, false, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 499,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 502,
           columnNumber: 17
         }, this)
       ] }, void 0, true, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 497,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 500,
         columnNumber: 15
       }, this),
       /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "space-y-5", children: [
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("label", { htmlFor: "categoryId", className: "block text-sm font-medium text-gray-700 mb-1", children: "Cat\xE9gorie" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 510,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 513,
             columnNumber: 19
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("select", { id: "categoryId", name: "categoryId", value: category, onChange: (e) => {
@@ -530,29 +534,29 @@ function RecipesIndex() {
             updateFilter("categoryId", e.target.value);
           }, className: "block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm", children: [
             /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "", children: "Toutes les cat\xE9gories" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 517,
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 520,
               columnNumber: 21
             }, this),
             filters.categoryOptions?.map((option) => /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: option.id.toString(), children: option.title }, option.id, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 518,
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 521,
               columnNumber: 61
             }, this))
           ] }, void 0, true, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 513,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 516,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 509,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 512,
           columnNumber: 17
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("label", { htmlFor: "mealType", className: "block text-sm font-medium text-gray-700 mb-1", children: "Type de repas" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 526,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 529,
             columnNumber: 19
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("select", { id: "mealType", name: "mealType", value: mealType, onChange: (e) => {
@@ -560,23 +564,23 @@ function RecipesIndex() {
             updateFilter("mealType", e.target.value);
           }, className: "block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm", children: [
             /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "", children: "Tous les types" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 533,
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 536,
               columnNumber: 21
             }, this),
             filters.mealTypeOptions?.map((option) => /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: option.title, children: option.title }, option.title, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 534,
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 537,
               columnNumber: 61
             }, this))
           ] }, void 0, true, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 529,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 532,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 525,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 528,
           columnNumber: 17
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { children: [
@@ -585,8 +589,8 @@ function RecipesIndex() {
             maxPreparationTime || filters.preparationTimeMax,
             " min)"
           ] }, void 0, true, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 542,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 545,
             columnNumber: 19
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("input", { type: "range", id: "maxPreparationTime", name: "maxPreparationTime", min: "0", max: filters.preparationTimeMax, step: "10", value: maxPreparationTime || filters.preparationTimeMax, onChange: (e) => {
@@ -596,39 +600,39 @@ function RecipesIndex() {
             if (formRef.current)
               submit(formRef.current);
           }, className: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-rose-500" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 545,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 548,
             columnNumber: 19
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "flex justify-between text-xs text-gray-500 mt-1", children: [
             /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { children: "0 min" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 552,
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 555,
               columnNumber: 21
             }, this),
             /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { children: [
               filters.preparationTimeMax,
               " min"
             ] }, void 0, true, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 553,
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 556,
               columnNumber: 21
             }, this)
           ] }, void 0, true, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 551,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 554,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 541,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 544,
           columnNumber: 17
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "flex items-center justify-between", children: [
             /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("label", { htmlFor: "random", className: "text-sm font-medium text-gray-700", children: "Affichage al\xE9atoire" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 560,
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 563,
               columnNumber: 21
             }, this),
             /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("button", { type: "button", onClick: () => {
@@ -638,39 +642,39 @@ function RecipesIndex() {
               }
             }, className: `relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none ${randomEnabled ? "bg-rose-500" : "bg-gray-200"}`, role: "switch", "aria-checked": randomEnabled, children: [
               /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { className: "sr-only", children: "Activer l'affichage al\xE9atoire" }, void 0, false, {
-                fileName: "app/routes/recettes._index.tsx",
-                lineNumber: 569,
+                fileName: "app/routes/_index.tsx",
+                lineNumber: 572,
                 columnNumber: 23
               }, this),
               /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("span", { "aria-hidden": "true", className: `pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${randomEnabled ? "translate-x-5" : "translate-x-0"}` }, void 0, false, {
-                fileName: "app/routes/recettes._index.tsx",
-                lineNumber: 570,
+                fileName: "app/routes/_index.tsx",
+                lineNumber: 573,
                 columnNumber: 23
               }, this)
             ] }, void 0, true, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 563,
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 566,
               columnNumber: 21
             }, this)
           ] }, void 0, true, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 559,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 562,
             columnNumber: 19
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("p", { className: "mt-1 text-xs text-gray-500", children: "Afficher les recettes dans un ordre al\xE9atoire pour favoriser la d\xE9couverte" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 573,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 576,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 558,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 561,
           columnNumber: 17
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("label", { htmlFor: "sort", className: "block text-sm font-medium text-gray-700 mb-1", children: "Trier par" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 580,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 583,
             columnNumber: 19
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("select", { id: "sort", name: "sort", value: `${sortBy}-${sortDirection}`, onChange: (e) => {
@@ -681,82 +685,82 @@ function RecipesIndex() {
               submit(formRef.current);
           }, className: "block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm", children: [
             /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "title-asc", children: "Titre (A-Z)" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 589,
-              columnNumber: 21
-            }, this),
-            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "title-desc", children: "Titre (Z-A)" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 590,
-              columnNumber: 21
-            }, this),
-            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "preparationTime-asc", children: "Temps de pr\xE9paration (croissant)" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
-              lineNumber: 591,
-              columnNumber: 21
-            }, this),
-            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "preparationTime-desc", children: "Temps de pr\xE9paration (d\xE9croissant)" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
+              fileName: "app/routes/_index.tsx",
               lineNumber: 592,
               columnNumber: 21
             }, this),
-            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "note-desc", children: "Note (d\xE9croissant)" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
+            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "title-desc", children: "Titre (Z-A)" }, void 0, false, {
+              fileName: "app/routes/_index.tsx",
               lineNumber: 593,
               columnNumber: 21
             }, this),
-            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "note-asc", children: "Note (croissant)" }, void 0, false, {
-              fileName: "app/routes/recettes._index.tsx",
+            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "preparationTime-asc", children: "Temps de pr\xE9paration (croissant)" }, void 0, false, {
+              fileName: "app/routes/_index.tsx",
               lineNumber: 594,
+              columnNumber: 21
+            }, this),
+            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "preparationTime-desc", children: "Temps de pr\xE9paration (d\xE9croissant)" }, void 0, false, {
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 595,
+              columnNumber: 21
+            }, this),
+            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "note-desc", children: "Note (d\xE9croissant)" }, void 0, false, {
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 596,
+              columnNumber: 21
+            }, this),
+            /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("option", { value: "note-asc", children: "Note (croissant)" }, void 0, false, {
+              fileName: "app/routes/_index.tsx",
+              lineNumber: 597,
               columnNumber: 21
             }, this)
           ] }, void 0, true, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 583,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 586,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 579,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 582,
           columnNumber: 17
         }, this),
         /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "flex space-x-3 pt-3", children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("button", { type: "button", onClick: resetFilters, className: "flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50", children: "R\xE9initialiser" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 600,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 603,
             columnNumber: 19
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("button", { type: "button", onClick: () => setFiltersVisible(false), className: "flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700", children: "Appliquer" }, void 0, false, {
-            fileName: "app/routes/recettes._index.tsx",
-            lineNumber: 603,
+            fileName: "app/routes/_index.tsx",
+            lineNumber: 606,
             columnNumber: 19
           }, this)
         ] }, void 0, true, {
-          fileName: "app/routes/recettes._index.tsx",
-          lineNumber: 599,
+          fileName: "app/routes/_index.tsx",
+          lineNumber: 602,
           columnNumber: 17
         }, this)
       ] }, void 0, true, {
-        fileName: "app/routes/recettes._index.tsx",
-        lineNumber: 507,
+        fileName: "app/routes/_index.tsx",
+        lineNumber: 510,
         columnNumber: 15
       }, this)
     ] }, void 0, true, {
-      fileName: "app/routes/recettes._index.tsx",
-      lineNumber: 495,
+      fileName: "app/routes/_index.tsx",
+      lineNumber: 498,
       columnNumber: 13
     }, this) }, void 0, false, {
-      fileName: "app/routes/recettes._index.tsx",
-      lineNumber: 494,
+      fileName: "app/routes/_index.tsx",
+      lineNumber: 497,
       columnNumber: 28
     }, this)
   ] }, void 0, true, {
-    fileName: "app/routes/recettes._index.tsx",
-    lineNumber: 374,
+    fileName: "app/routes/_index.tsx",
+    lineNumber: 377,
     columnNumber: 7
   }, this) }, void 0, false, {
-    fileName: "app/routes/recettes._index.tsx",
-    lineNumber: 373,
+    fileName: "app/routes/_index.tsx",
+    lineNumber: 376,
     columnNumber: 10
   }, this);
 }
@@ -772,4 +776,4 @@ export {
   RecipesIndex as default,
   meta
 };
-//# sourceMappingURL=/build/routes/recettes._index-QESO3PPN.js.map
+//# sourceMappingURL=/build/routes/_index-LPFNFWVQ.js.map

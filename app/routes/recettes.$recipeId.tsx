@@ -120,7 +120,7 @@ export default function RecipeDetail() {
             La recette que vous recherchez n'existe pas ou a été supprimée.
           </p>
           <Link
-            to="/recettes"
+            to="/"
             className="inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm"
           >
             Voir toutes les recettes

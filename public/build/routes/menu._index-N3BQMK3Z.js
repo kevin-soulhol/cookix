@@ -1,20 +1,20 @@
 import {
   BoxRecipe
-} from "/build/_shared/chunk-IWHF6S5H.js";
+} from "/build/_shared/chunk-62M4QYSS.js";
 import {
   Layout
-} from "/build/_shared/chunk-7EYIA7FC.js";
+} from "/build/_shared/chunk-R6SO4NDQ.js";
 import {
   require_node
 } from "/build/_shared/chunk-G7CHZRZX.js";
+import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   Link,
   useFetcher,
   useLoaderData
 } from "/build/_shared/chunk-YHAWPGHG.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -49,7 +49,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/routes/menu._index.tsx"
   );
-  import.meta.hot.lastModified = "1742742588798.1533";
+  import.meta.hot.lastModified = "1743409044634.5532";
 }
 function WeeklyMenu() {
   _s();
@@ -219,7 +219,7 @@ function WeeklyMenu() {
             lineNumber: 157,
             columnNumber: 17
           }, this),
-          /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "mt-6", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/recettes", className: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500", children: "Explorer les recettes" }, void 0, false, {
+          /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)("div", { className: "mt-6", children: /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/", className: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500", children: "Explorer les recettes" }, void 0, false, {
             fileName: "app/routes/menu._index.tsx",
             lineNumber: 161,
             columnNumber: 19
@@ -678,4 +678,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   WeeklyMenu as default
 };
-//# sourceMappingURL=/build/routes/menu._index-7N6N4ECT.js.map
+//# sourceMappingURL=/build/routes/menu._index-N3BQMK3Z.js.map

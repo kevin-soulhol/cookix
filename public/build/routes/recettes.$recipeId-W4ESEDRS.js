@@ -1,18 +1,18 @@
 import {
   Layout
-} from "/build/_shared/chunk-7EYIA7FC.js";
+} from "/build/_shared/chunk-R6SO4NDQ.js";
 import {
   require_node
 } from "/build/_shared/chunk-G7CHZRZX.js";
+import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   Link,
   useFetcher,
   useLoaderData,
   useOutletContext
 } from "/build/_shared/chunk-YHAWPGHG.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -47,7 +47,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/routes/recettes.$recipeId.tsx"
   );
-  import.meta.hot.lastModified = "1743271318027.964";
+  import.meta.hot.lastModified = "1743409048803.627";
 }
 var meta = ({
   data
@@ -134,7 +134,7 @@ function RecipeDetail() {
         lineNumber: 143,
         columnNumber: 11
       }, this),
-      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/recettes", className: "inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm", children: "Voir toutes les recettes" }, void 0, false, {
+      /* @__PURE__ */ (0, import_jsx_dev_runtime.jsxDEV)(Link, { to: "/", className: "inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm", children: "Voir toutes les recettes" }, void 0, false, {
         fileName: "app/routes/recettes.$recipeId.tsx",
         lineNumber: 146,
         columnNumber: 11
@@ -510,4 +510,4 @@ export {
   RecipeDetail as default,
   meta
 };
-//# sourceMappingURL=/build/routes/recettes.$recipeId-HGXUHWVJ.js.map
+//# sourceMappingURL=/build/routes/recettes.$recipeId-W4ESEDRS.js.map

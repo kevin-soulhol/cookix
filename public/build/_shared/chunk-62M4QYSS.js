@@ -1,10 +1,10 @@
 import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
+import {
   useFetcher,
   useOutletContext
 } from "/build/_shared/chunk-YHAWPGHG.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -723,4 +723,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   BoxRecipe
 };
-//# sourceMappingURL=/build/_shared/chunk-IWHF6S5H.js.map
+//# sourceMappingURL=/build/_shared/chunk-62M4QYSS.js.map

@@ -40,7 +40,6 @@ services:
     volumes:
       - cookix_db_data:/var/lib/mysql
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
-      - ./my.cnf:/etc/mysql/my.cnf
     deploy:
       resources:
         limits:

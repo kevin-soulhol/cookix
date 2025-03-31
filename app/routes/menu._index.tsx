@@ -218,7 +218,7 @@ export default function WeeklyMenu() {
                 </p>
                 <div className="mt-6">
                   <Link
-                    to="/recettes"
+                    to="/"
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
                   >
                     Explorer les recettes

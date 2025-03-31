@@ -2,11 +2,11 @@ import {
   require_client
 } from "/build/_shared/chunk-O4BRYNJ4.js";
 import {
-  RemixBrowser
-} from "/build/_shared/chunk-YHAWPGHG.js";
-import {
   require_jsx_dev_runtime
 } from "/build/_shared/chunk-XGOTYLZ5.js";
+import {
+  RemixBrowser
+} from "/build/_shared/chunk-YHAWPGHG.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -44,4 +44,4 @@ if (import.meta) {
     }, this)
   );
 });
-//# sourceMappingURL=/build/entry.client-7UQLZBUX.js.map
+//# sourceMappingURL=/build/entry.client-FMMUZZW5.js.map

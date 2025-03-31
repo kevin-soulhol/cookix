@@ -3,19 +3,19 @@ import {
 } from "/build/_shared/chunk-KONDUBG3.js";
 import {
   Layout
-} from "/build/_shared/chunk-7EYIA7FC.js";
+} from "/build/_shared/chunk-R6SO4NDQ.js";
 import {
   require_node
 } from "/build/_shared/chunk-G7CHZRZX.js";
+import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   Form,
   useActionData,
   useLoaderData,
   useNavigation
 } from "/build/_shared/chunk-YHAWPGHG.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -657,4 +657,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   Profile as default
 };
-//# sourceMappingURL=/build/routes/profil._index-KNR7QRGS.js.map
+//# sourceMappingURL=/build/routes/profil._index-B3MVLTXN.js.map

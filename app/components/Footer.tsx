@@ -11,17 +11,16 @@ export default function Footer() {
               Votre assistant culinaire pour Monsieur Cuisine Smart. Découvrez de nouvelles recettes, planifiez vos repas et simplifiez vos courses.
             </p>
           </div>
-          
+
           <div>
             <h3 className="text-lg font-semibold mb-4">Navigation</h3>
             <ul className="space-y-2">
               <li><Link to="/" className="text-gray-300 hover:text-white transition-colors">Accueil</Link></li>
-              <li><Link to="/recettes" className="text-gray-300 hover:text-white transition-colors">Recettes</Link></li>
               <li><Link to="/menu" className="text-gray-300 hover:text-white transition-colors">Menu hebdomadaire</Link></li>
               <li><Link to="/courses" className="text-gray-300 hover:text-white transition-colors">Liste de courses</Link></li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="text-lg font-semibold mb-4">À propos</h3>
             <ul className="space-y-2">
@@ -31,7 +30,7 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        
+
         <div className="border-t border-gray-700 pt-8 text-center text-gray-400 text-sm">
           <p>&copy; {new Date().getFullYear()} Cookix - Tous droits réservés</p>
         </div>

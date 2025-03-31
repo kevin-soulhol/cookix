@@ -5,12 +5,12 @@ import {
   require_node
 } from "/build/_shared/chunk-G7CHZRZX.js";
 import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
+import {
   Form,
   useLoaderData
 } from "/build/_shared/chunk-YHAWPGHG.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -257,4 +257,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   InvitationPage as default
 };
-//# sourceMappingURL=/build/routes/invitation.$token-ALUQTYWP.js.map
+//# sourceMappingURL=/build/routes/invitation.$token-IS5MVR6B.js.map

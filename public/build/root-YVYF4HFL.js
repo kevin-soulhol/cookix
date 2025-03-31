@@ -5,6 +5,9 @@ import {
   require_node
 } from "/build/_shared/chunk-G7CHZRZX.js";
 import {
+  require_jsx_dev_runtime
+} from "/build/_shared/chunk-XGOTYLZ5.js";
+import {
   Links,
   LiveReload,
   Meta,
@@ -13,9 +16,6 @@ import {
   ScrollRestoration,
   useLoaderData
 } from "/build/_shared/chunk-YHAWPGHG.js";
-import {
-  require_jsx_dev_runtime
-} from "/build/_shared/chunk-XGOTYLZ5.js";
 import {
   createHotContext
 } from "/build/_shared/chunk-MCH5QMAS.js";
@@ -31,7 +31,7 @@ var import_node = __toESM(require_node(), 1);
 var import_db = __toESM(require_db(), 1);
 
 // app/tailwind.css
-var tailwind_default = "/build/_assets/tailwind-MW22XOEF.css";
+var tailwind_default = "/build/_assets/tailwind-D2Y6CLX4.css";
 
 // app/root.tsx
 var import_jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
@@ -148,4 +148,4 @@ export {
   App as default,
   links
 };
-//# sourceMappingURL=/build/root-DA7TQDWL.js.map
+//# sourceMappingURL=/build/root-YVYF4HFL.js.map
