@@ -585,6 +585,7 @@ export default function RecipesIndex() {
               <div
                 ref={bottomElementRef}
                 className="h-20 w-full my-4 flex justify-center items-center"
+                style={{ border: "1px solid red" }}
               >
                 {isLoadingMore && (
                   <div className="flex flex-col items-center">
@@ -633,9 +634,10 @@ export default function RecipesIndex() {
         {/* Panneau de filtres mobile */}
         {filtersVisible && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
-            onClick={(e) => {
+            onClick={() => {
               setFiltersVisible(false)
-            }} >
+            }}
+          >
             <div onClick={(e) => e.stopPropagation()} className="bg-white w-full rounded-t-xl p-5 transform transition-transform duration-300 ease-in-out max-h-[90vh] overflow-auto">
               {/* En-tête du panneau de filtres */}
               <div className="flex justify-between items-center mb-4">

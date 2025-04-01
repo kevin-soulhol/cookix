@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "@remix-run/react";
 import { useSwipeable } from 'react-swipeable';
@@ -61,35 +62,89 @@ const IngredientsTab = ({ ingredients }: { ingredients?: (RecipeIngredient & { i
 );
 
 // Composant pour l'onglet Instructions
-const InstructionsTab = ({ steps }: { steps?: RecipeStep[] }) => (
-    <div>
-        <h2 className="text-xl font-semibold mb-4">Instructions</h2>
-        {steps && steps.length > 0 ? (
-            <ol className="space-y-6">
-                {steps.map((step) => (
-                    <li key={step.id} className="flex">
-                        <span className="flex-shrink-0 w-8 h-8 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center font-bold mr-4">
-                            {step.stepNumber}
-                        </span>
-                        <div className="pt-1">
-                            <div
-                                className="text-gray-700"
-                                dangerouslySetInnerHTML={{
-                                    __html: step.instruction.replace(
-                                        /<i class="ico icon-rotate_cw_2"><\/i>/g,
-                                        `<svg xmlns="http://www.w3.org/2000/svg" class="inline-block pb-[3px] w-[18px] h-[18px]" viewBox="0 0 512 512"><path d="M48.5 224L40 224c-13.3 0-24-10.7-24-24L16 72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2L98.6 96.6c87.6-86.5 228.7-86.2 315.8 1c87.5 87.5 87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3c-62.2-62.2-162.7-62.5-225.3-1L185 183c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8L48.5 224z"/></svg>`)
-                                }}
-                            />
+const InstructionsTab = ({
+    steps,
+    completedSteps,
+    currentStep,
+    onStepClick,
+}: {
+    steps?: RecipeStep[],
+    completedSteps: number[],
+    currentStep: number | null,
+    onStepClick: (step: number) => void,
+    onNextStep: () => void,
+    onPrevStep: () => void
+}) => {
+    return (
+        <div className="pb-16">
+            <h2 className="text-xl font-semibold mb-4">Instructions</h2>
+            {steps && steps.length > 0 ? (
+                <div className="space-y-2">
+                    <div className="mb-4 text-gray-500 text-sm">
+                        <div className="flex items-center gap-2">
+                            <span className="font-medium">Progression :</span>
+                            <span>{completedSteps.length}/{steps.length} étapes terminées</span>
                         </div>
-                    </li>
-                ))}
-            </ol>
-        ) : (
-            // eslint-disable-next-line react/no-unescaped-entities
-            <p className="text-gray-500 italic">Aucune instruction n'est spécifiée pour cette recette.</p>
-        )}
-    </div>
-);
+                    </div>
+                    <ol className="space-y-6">
+                        {steps.map((step) => {
+                            const isCompleted = completedSteps.includes(step.stepNumber);
+                            const isActive = currentStep === step.stepNumber;
+
+                            return (
+                                <li
+                                    id={`recipe-step-${step.stepNumber}`}
+                                    key={step.id}
+                                    className={`flex p-3 rounded-lg transition-colors cursor-pointer ${isActive ? 'bg-rose-50 border-l-4 border-rose-500' :
+                                        isCompleted ? 'bg-gray-50' : ''
+                                        }`}
+                                    onClick={() => onStepClick(step.stepNumber)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            onStepClick(step.stepNumber);
+                                        }
+                                    }}
+                                    tabIndex={0}
+                                    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
+                                    role="button"
+                                    aria-pressed={isActive}
+                                >
+                                    <div className="flex items-start">
+                                        <span className={`flex-shrink-0 w-8 h-8 ${isCompleted ? 'bg-gray-200 text-gray-500' :
+                                            isActive ? 'bg-rose-100 text-rose-600' :
+                                                'bg-gray-100 text-gray-600'
+                                            } rounded-full flex items-center justify-center font-bold mr-4 transition-colors`}>
+                                            {isCompleted ? (
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            ) : (
+                                                step.stepNumber
+                                            )}
+                                        </span>
+                                        <div className="pt-1 flex-1">
+                                            <div
+                                                className={`${isCompleted ? 'text-gray-400 opacity-70' : 'text-gray-700'} transition-colors`}
+                                                dangerouslySetInnerHTML={{
+                                                    __html: step.instruction.replace(
+                                                        /<i class="ico icon-rotate_cw_2"><\/i>/g,
+                                                        `<svg xmlns="http://www.w3.org/2000/svg" class="inline-block pb-[3px] w-[18px] h-[18px]" viewBox="0 0 512 512"><path d="M48.5 224L40 224c-13.3 0-24-10.7-24-24L16 72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2L98.6 96.6c87.6-86.5 228.7-86.2 315.8 1c87.5 87.5 87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3c-62.2-62.2-162.7-62.5-225.3-1L185 183c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8L48.5 224z"/></svg>`)
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ol>
+                </div>
+            ) : (
+                // eslint-disable-next-line react/no-unescaped-entities
+                <p className="text-gray-500 italic">Aucune instruction n'est spécifiée pour cette recette.</p>
+            )}
+        </div>
+    );
+};
 
 // Composant pour l'onglet Description
 const DescriptionTab = ({ description }: { description?: string }) => (
@@ -118,7 +173,8 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
     const modalRef = useRef<HTMLDivElement>(null);
     const [selectedTab, setSelectedTab] = useState<TabType>('ingredients');
     const tabs: TabType[] = ['ingredients', 'instructions', 'description'];
-    //const currentTabIndex: number = tabs.indexOf(selectedTab);
+    const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+    const [currentStep, setCurrentStep] = useState<number | null>(null);
     const [currentTabIndex, setCurrentTabIndex] = useState<number>(0);
     const [isAnimating, setIsAnimating] = useState(false);
     const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -231,6 +287,89 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
         );
     };
 
+    // Ajoutez ces fonctions dans votre composant RecipeModal
+    const navigateToNextStep = () => {
+        if (!recipe.steps || recipe.steps.length === 0) return;
+
+        // Si une étape est active, la marquer comme complétée avant de passer à la suivante
+        if (currentStep) {
+            setCompletedSteps(prev => {
+                if (!prev.includes(currentStep)) {
+                    return [...prev, currentStep];
+                }
+                return prev;
+            });
+        }
+
+        // Trouver l'étape suivante
+        const currentIndex = currentStep ? recipe.steps.findIndex(step => step.stepNumber === currentStep) : -1;
+        const nextIndex = currentIndex + 1;
+
+        // S'il existe une étape suivante, la définir comme étape actuelle
+        if (nextIndex < recipe.steps.length) {
+            const nextStepNumber = recipe.steps[nextIndex].stepNumber;
+            setCurrentStep(nextStepNumber);
+
+            // Faire défiler vers cette étape
+            const stepElement = document.getElementById(`recipe-step-${nextStepNumber}`);
+            if (stepElement) {
+                stepElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    };
+
+    const handleStepClick = (stepNumber: number) => {
+        // Si on clique sur une étape déjà complétée, la décocher
+        if (completedSteps.includes(stepNumber)) {
+            setCompletedSteps(prev => prev.filter(step => step !== stepNumber));
+            // La définir comme étape active si elle n'est pas déjà active
+            if (currentStep !== stepNumber) {
+                setCurrentStep(stepNumber);
+            }
+            return;
+        }
+
+        // Si on clique sur une étape différente de l'étape actuelle
+        if (currentStep && currentStep !== stepNumber) {
+            // Si on clique sur une étape après l'étape actuelle, marquer l'étape actuelle comme complétée
+            const currentIndex = recipe.steps?.findIndex(step => step.stepNumber === currentStep) ?? -1;
+            const clickedIndex = recipe.steps?.findIndex(step => step.stepNumber === stepNumber) ?? -1;
+
+            if (clickedIndex > currentIndex) {
+                // Si on avance, marquer l'étape actuelle comme complétée
+                setCompletedSteps(prev => {
+                    if (!prev.includes(currentStep)) {
+                        return [...prev, currentStep];
+                    }
+                    return prev;
+                });
+            }
+        }
+
+        // Définir la nouvelle étape actuelle
+        setCurrentStep(stepNumber);
+    };
+
+    const navigateToPrevStep = () => {
+        if (!recipe.steps || recipe.steps.length === 0) return;
+
+        // Trouver l'étape précédente
+        const currentIndex = currentStep ? recipe.steps.findIndex(step => step.stepNumber === currentStep) : recipe.steps.length;
+        const prevIndex = currentIndex - 1;
+
+        // S'il existe une étape précédente, la définir comme étape actuelle
+        if (prevIndex >= 0) {
+            const prevStepNumber = recipe.steps[prevIndex].stepNumber;
+            setCurrentStep(prevStepNumber);
+
+            // Faire défiler vers cette étape
+            const stepElement = document.getElementById(`recipe-step-${prevStepNumber}`);
+            if (stepElement) {
+                stepElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    };
+
     // Retour anticipé si modal fermé ou pas de recette
     if (!isOpen || !recipe) return null;
 
@@ -288,7 +427,14 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
                                 {/* Onglet Instructions */}
                                 <div className="flex-grow w-full overflow-y-auto">
                                     <div className="p-6">
-                                        <InstructionsTab steps={recipe.steps} />
+                                        <InstructionsTab
+                                            steps={recipe.steps}
+                                            completedSteps={completedSteps}
+                                            currentStep={currentStep}
+                                            onStepClick={handleStepClick}
+                                            onNextStep={navigateToNextStep}
+                                            onPrevStep={navigateToPrevStep}
+                                        />
                                     </div>
                                 </div>
 
