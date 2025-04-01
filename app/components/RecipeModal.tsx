@@ -170,7 +170,7 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
     }, [isOpen, onClose]);
 
     // Configuration du handler de swipe
-    const progressWipeForValidate = 30; // Pourcentage nécessaire pour changer d'onglet
+    const progressWipeForValidate = 20; // Pourcentage nécessaire pour changer d'onglet
 
     const swipeHandlers = useSwipeable({
         onSwipeStart: () => {
@@ -257,14 +257,14 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
                 <RecipeMetadata recipe={recipe} />
 
                 {/* Onglets de navigation */}
-                <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="flex-1 overflow-hidden overflow-y-auto flex flex-col">
                     <TabNavigation
                         selectedTab={selectedTab}
                         setSelectedTab={setSelectedTab}
                     />
 
                     {/* Contenu des onglets avec support du swipe et animation */}
-                    <div className="flex-1 overflow-hidden" {...swipeHandlers}>
+                    <div className={`flex-1 overflow-hidden`} {...swipeHandlers}>
                         {isLoading ? (
                             <LoadingSpinner />
                         ) : (
@@ -279,18 +279,24 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
                                 }}
                             >
                                 {/* Onglet Ingrédients */}
-                                <div className="p-6 flex-grow w-full">
-                                    <IngredientsTab ingredients={recipe.ingredients} />
+                                <div className="flex-grow w-full overflow-y-auto">
+                                    <div className="p-6">
+                                        <IngredientsTab ingredients={recipe.ingredients} />
+                                    </div>
                                 </div>
 
                                 {/* Onglet Instructions */}
-                                <div className="p-6 flex-grow w-full">
-                                    <InstructionsTab steps={recipe.steps} />
+                                <div className="flex-grow w-full overflow-y-auto">
+                                    <div className="p-6">
+                                        <InstructionsTab steps={recipe.steps} />
+                                    </div>
                                 </div>
 
                                 {/* Onglet Description */}
-                                <div className="p-6 flex-grow w-full">
-                                    <DescriptionTab description={recipe?.description || undefined} />
+                                <div className="flex-grow w-full overflow-y-auto">
+                                    <div className="p-6">
+                                        <DescriptionTab description={recipe?.description || undefined} />
+                                    </div>
                                 </div>
                             </div>
                         )}
