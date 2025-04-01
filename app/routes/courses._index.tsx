@@ -502,14 +502,14 @@ export default function ShoppingList() {
                         <div className="mb-8">
                             <h2 className="text-lg font-semibold mb-3 flex items-center">
                                 <span className="text-gray-600">{totalCount} articles</span>
-                                {firstMarketplaceCount > 0 && (
+                                {secondMarketplaceCount > 0 && (
                                     <span className="ml-2 text-sm text-teal-600">
-                                        {firstMarketplaceCount} du marché
+                                        {secondMarketplaceCount} du marché
                                     </span>
                                 )}
-                                {secondMarketplaceCount > 0 && (
+                                {firstMarketplaceCount > 0 && (
                                     <span className="ml-2 text-sm text-indigo-600">
-                                        {secondMarketplaceCount} autres
+                                        {firstMarketplaceCount} autres
                                     </span>
                                 )}
                             </h2>

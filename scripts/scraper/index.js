@@ -5,7 +5,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const AuthorizedOnlyTypeMeal = ['Plat principal', "Accompagnement", "Boisson", "Apéritif", "Dessert", "Entrée", "Petit déjeuner"]
-const OnlyTypeMeal = process.argv[2] ||false ;
+const StartByTypeMeal = process.argv[2] ||false ;
 // Initialisation avec gestion des erreurs
 let prisma;
 try {
@@ -83,30 +83,29 @@ async function scrapeCookomix(browser) {
     //Récupérer les types de plats
     const mealTypeLinks = await getAndSaveMealType(page);
 
-    /* let mainMealCategoryRandom = {};
-    if(OnlyTypeMeal && AuthorizedOnlyTypeMeal.includes(OnlyTypeMeal)){
-      mainMealCategoryRandom = mealTypeLinks.find(type => type.title === OnlyTypeMeal);
-    } else {
-      mainMealCategoryRandom = getRandomElement(mealTypeLinks);
-    } */
-
       const trouverIndexParTitre = function(tableau, titreRecherche) {
         return tableau.findIndex(objet => objet.title === titreRecherche);
       }
 
     let startAt = 0;
-    if(OnlyTypeMeal){
-      startAt = trouverIndexParTitre(categoryLinks, OnlyTypeMeal);
-    }
-
-    logWithTimestamp(`Start scrap by ${OnlyTypeMeal}:${startAt}`)
-
-    for(let d = startAt; d < categoryLinks.length; d++){
-      const recipesInPage = await getAllLinkRecipeBy(page, categoryLinks[d]);
-      for (let i = 0; i < recipesInPage.length; i++) {
-        await scrapeRecipeDetailsAndSave(page, recipesInPage[i], i, categoryLinks.length);
+    if(StartByTypeMeal){
+      //commence par une des catégories
+      startAt = trouverIndexParTitre(categoryLinks, StartByTypeMeal);
+      for(let d = startAt; d < categoryLinks.length; d++){
+        const recipesInPage = await getAllLinkRecipeBy(page, categoryLinks[d]);
+        for (let i = 0; i < recipesInPage.length; i++) {
+          await scrapeRecipeDetailsAndSave(page, recipesInPage[i], i, categoryLinks.length);
+        }
       }
+    } else {
+      // Sinon, en random
+      const CategoryRandom = getRandomElement(categoryLinks);
+      await scrapeRecipeDetailsAndSave(page, CategoryRandom, 1, 1);
     }
+
+    logWithTimestamp(`Start scrap by ${StartByTypeMeal}:${startAt}`)
+
+
     
   } catch (error) {
     console.error('Error scraping Cookomix:', error);

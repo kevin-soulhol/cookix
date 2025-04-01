@@ -1,7 +1,7 @@
 import { json, type ActionFunctionArgs, type LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
-import { requireUserId, getUserId } from "~/routes/api.user";
-import { useState, useRef } from "react";
+import { Form, useActionData, useFetcher, useLoaderData, useNavigation } from "@remix-run/react";
+import { requireUserId } from "~/routes/api.user";
+import { useState, useRef, useEffect } from "react";
 import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
 
@@ -63,6 +63,7 @@ export async function action({ request }: ActionFunctionArgs) {
         body: formData
     });
 
+
     // Appeler l'API utilisateur et retourner sa réponse
     const response = await fetch(apiRequest);
     return response;
@@ -78,13 +79,31 @@ export default function Profile() {
     const [showUpdatePasswordForm, setShowUpdatePasswordForm] = useState(false);
     const [showDeleteAccountForm, setShowDeleteAccountForm] = useState(false);
 
+    // Gestion des erreurs
+    const [errorUpdate, setErrorUpdate] = useState(false);
+
     // Références pour les formulaires
     const updateEmailFormRef = useRef<HTMLFormElement>(null);
     const updatePasswordFormRef = useRef<HTMLFormElement>(null);
     const deleteAccountFormRef = useRef<HTMLFormElement>(null);
 
+    const userFetcher = useFetcher()
+
     // État de soumission
     const isSubmitting = navigation.state === "submitting";
+
+    useEffect(() => {
+        if (userFetcher.state === "idle" && userFetcher.data) {
+            console.log(userFetcher)
+            if (userFetcher.data?.errors) {
+                setErrorUpdate(userFetcher.data?.errors)
+
+            } else {
+                setShowUpdateEmailForm(false);
+                setShowUpdatePasswordForm(false);
+            }
+        }
+    }, [userFetcher])
 
     return (
         <Layout>
@@ -138,7 +157,7 @@ export default function Profile() {
                             <h3 className="text-lg leading-6 font-medium text-gray-900">Modifier votre adresse email</h3>
                         </div>
                         <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-                            <Form ref={updateEmailFormRef} method="post" className="space-y-6">
+                            <userFetcher.Form ref={updateEmailFormRef} method="post" action="/api/user" className="space-y-6">
                                 <input type="hidden" name="_action" value="updateProfile" />
 
                                 <div>
@@ -155,8 +174,8 @@ export default function Profile() {
                                             required
                                             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
                                         />
-                                        {actionData?.errors?.email && (
-                                            <p className="mt-2 text-sm text-red-600">{actionData.errors.email}</p>
+                                        {errorUpdate?.email && (
+                                            <p className="mt-2 text-sm text-red-600">{errorUpdate.email}</p>
                                         )}
                                     </div>
                                 </div>
@@ -177,7 +196,7 @@ export default function Profile() {
                                         {isSubmitting ? "Enregistrement..." : "Enregistrer"}
                                     </button>
                                 </div>
-                            </Form>
+                            </userFetcher.Form>
                         </div>
                     </div>
                 )}
@@ -189,7 +208,7 @@ export default function Profile() {
                             <h3 className="text-lg leading-6 font-medium text-gray-900">Modifier votre mot de passe</h3>
                         </div>
                         <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-                            <Form ref={updatePasswordFormRef} method="post" className="space-y-6">
+                            <userFetcher.Form ref={updatePasswordFormRef} method="post" className="space-y-6" action="/api/user">
                                 <input type="hidden" name="_action" value="updateProfile" />
 
                                 <div>
@@ -205,8 +224,8 @@ export default function Profile() {
                                             required
                                             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
                                         />
-                                        {actionData?.errors?.currentPassword && (
-                                            <p className="mt-2 text-sm text-red-600">{actionData.errors.currentPassword}</p>
+                                        {errorUpdate?.currentPassword && (
+                                            <p className="mt-2 text-sm text-red-600">{errorUpdate.currentPassword}</p>
                                         )}
                                     </div>
                                 </div>
@@ -224,8 +243,8 @@ export default function Profile() {
                                             required
                                             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
                                         />
-                                        {actionData?.errors?.newPassword && (
-                                            <p className="mt-2 text-sm text-red-600">{actionData.errors.newPassword}</p>
+                                        {errorUpdate?.newPassword && (
+                                            <p className="mt-2 text-sm text-red-600">{errorUpdate.newPassword}</p>
                                         )}
                                     </div>
                                 </div>
@@ -243,8 +262,8 @@ export default function Profile() {
                                             required
                                             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
                                         />
-                                        {actionData?.errors?.newPasswordConfirm && (
-                                            <p className="mt-2 text-sm text-red-600">{actionData.errors.newPasswordConfirm}</p>
+                                        {errorUpdate?.newPasswordConfirm && (
+                                            <p className="mt-2 text-sm text-red-600">{errorUpdate.newPasswordConfirm}</p>
                                         )}
                                     </div>
                                 </div>
@@ -265,7 +284,9 @@ export default function Profile() {
                                         {isSubmitting ? "Enregistrement..." : "Enregistrer"}
                                     </button>
                                 </div>
-                            </Form>
+                                <input type="hidden" name="_action" value="updateProfile" />
+
+                            </userFetcher.Form>
                         </div>
                     </div>
                 )}
