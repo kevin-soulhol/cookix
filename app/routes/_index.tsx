@@ -585,7 +585,6 @@ export default function RecipesIndex() {
               <div
                 ref={bottomElementRef}
                 className="h-20 w-full my-4 flex justify-center items-center"
-                style={{ border: "1px solid red" }}
               >
                 {isLoadingMore && (
                   <div className="flex flex-col items-center">
