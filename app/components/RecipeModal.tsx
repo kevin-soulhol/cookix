@@ -170,7 +170,7 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
     }, [isOpen, onClose]);
 
     // Configuration du handler de swipe
-    const progressWipeForValidate = 50; // Pourcentage nécessaire pour changer d'onglet
+    const progressWipeForValidate = 40; // Pourcentage nécessaire pour changer d'onglet
 
     const swipeHandlers = useSwipeable({
         onSwipeStart: () => {
