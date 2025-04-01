@@ -84,13 +84,12 @@ async function scrapeCookomix(browser) {
     const mealTypeLinks = await getAndSaveMealType(page);
 
       const trouverIndexParTitre = function(tableau, titreRecherche) {
-        return tableau.findIndex(objet => objet.title === titreRecherche);
+        return tableau.findIndex(objet => objet?.title === titreRecherche);
       }
 
-    let startAt = 0;
     if(StartByTypeMeal){
       //commence par une des catégories
-      startAt = trouverIndexParTitre(categoryLinks, StartByTypeMeal);
+      const startAt = trouverIndexParTitre(categoryLinks, StartByTypeMeal);
       for(let d = startAt; d < categoryLinks.length; d++){
         const recipesInPage = await getAllLinkRecipeBy(page, categoryLinks[d]);
         for (let i = 0; i < recipesInPage.length; i++) {
