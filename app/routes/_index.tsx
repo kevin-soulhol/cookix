@@ -386,7 +386,7 @@ export default function RecipesIndex() {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [debouncedSearch, currentPage, hasMoreRecipes, category, mealType, maxPreparationTime, sortBy, sortDirection, randomEnabled]);
+  }, [debouncedSearch, currentPage, hasMoreRecipes, category, mealType, maxPreparationTime, sortBy, sortDirection, randomEnabled, moreFetcher]);
 
   // Effet pour mettre à jour les recettes quand les données sont chargées
   useEffect(() => {

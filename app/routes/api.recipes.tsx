@@ -1,9 +1,6 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/utils/db.server";
 import { getUserId } from "./api.user";
-import { LoaderFunctionArgs, json } from "@remix-run/node";
-import { prisma } from "~/utils/db.server";
-import { getUserId } from "./api.user";
 
 /**
  * Normalise un texte en retirant les accents et en convertissant en minuscules
