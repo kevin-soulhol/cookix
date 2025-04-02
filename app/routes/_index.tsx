@@ -2,13 +2,36 @@ import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/nod
 import { Form, useLoaderData, useSubmit, useNavigation, useSearchParams, useFetcher } from "@remix-run/react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import BoxRecipe, { RecipeType } from "~/components/BoxRecipe";
+import FilterPanel, { FilterPanelType, MealAndCategoryTypeOption, SortDirection, SortOption } from "~/components/FilterPanel";
 import Layout from "~/components/Layout";
+import SearchBar, { ActiveFilters, EmptyState, LoadingIndicator } from "~/components/SearchBarIndex";
 
-// Type pour nos filtres
-type SortOption = 'title' | 'preparationTime' | 'note';
-type SortDirection = 'asc' | 'desc';
+type LoaderReturnType = {
+  recipes: RecipeType[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalRecipes: number;
+    hasMore: boolean;
+  };
+  filters: {
+    categoryOptions: MealAndCategoryTypeOption[];
+    mealTypeOptions: MealAndCategoryTypeOption[];
+    preparationTimeMax: number;
+  };
+  appliedFilters: {
+    search: string;
+    maxPreparationTime: number | null;
+    categoryId: number | null;
+    mealType: string;
+    sortBy: string;
+    sortDirection: string;
+    randomEnabled: boolean;
+  };
+  error: boolean | string;
+};
 
-// Hook pour le debounce (recherche)
+// Hook personnalisé pour le debounce (recherche)
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -41,90 +64,65 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const maxPreparationTime = url.searchParams.get("maxPreparationTime") || null;
   const sortBy = url.searchParams.get("sortBy") || "note";
   const sortDirection = url.searchParams.get("sortDirection") || "desc";
-  const randomParam = url.searchParams.get("random") || "false"; // Par défaut à "true"
-  const random = randomParam === "false";
-  // Paramètres pour le scroll infini
+  const randomEnabled = url.searchParams.get("random") !== "false";
+
+  // Paramètres pour la pagination
   const page = parseInt(url.searchParams.get("page") || "1");
-  const perPage = 12; // Nombre réduit pour un chargement mobile optimal
+  const perPage = 12;
   const offset = (page - 1) * perPage;
 
-  // Construire l'URL de l'API recipes avec tous les paramètres
+  // Construire l'URL de l'API avec tous les paramètres
   const apiUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/recipes`);
 
   // Ajouter les paramètres de filtrage à l'URL de l'API
   if (searchQuery) apiUrl.searchParams.append("search", searchQuery);
   if (categoryId) apiUrl.searchParams.append("categoryId", categoryId);
   if (mealType) apiUrl.searchParams.append("mealType", mealType);
-  if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime.toString());
-  if (random) apiUrl.searchParams.append("random", "false");
+  if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime);
+  if (!randomEnabled) apiUrl.searchParams.append("random", "false");
 
-  // Ajouter les paramètres de tri
+  // Ajouter les paramètres de tri et pagination
   apiUrl.searchParams.append("sort", sortBy);
   apiUrl.searchParams.append("dir", sortDirection);
-
-  // Ajouter les paramètres de pagination adaptés au scroll infini
   apiUrl.searchParams.append("limit", perPage.toString());
   apiUrl.searchParams.append("offset", offset.toString());
 
-  // Envoyer la requête à l'API
-  const cookies = request.headers.get("Cookie");
   try {
+    // Récupérer les données des recettes
+    const cookies = request.headers.get("Cookie");
     const response = await fetch(apiUrl.toString(), {
       method: "GET",
-      headers: {
-        Cookie: cookies || "",
-      },
+      headers: { Cookie: cookies || "" },
     });
 
     const apiResponse = await response.json();
-
     if (!apiResponse.success) {
       throw new Error(apiResponse.message || "Erreur lors du chargement des recettes");
     }
 
-    // Récupérer les catégories
-    const apiUrlForCategories = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/categories`);
-    const categoriesResponse = await fetch(apiUrlForCategories.toString(), {
-      headers: {
-        Cookie: cookies || "",
-      },
-    });
-
-    let categoryOptions = [];
-    if (categoriesResponse.ok) {
-      const categoriesData = await categoriesResponse.json();
-      categoryOptions = categoriesData.categories || [];
-    }
-
-    // Récupérer les types de repas
-    const apiUrlForMealTypes = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/mealtypes`);
-    const mealTypesResponse = await fetch(apiUrlForMealTypes.toString(), {
-      headers: {
-        Cookie: cookies || "",
-      },
-    });
-
-    let mealTypeOptions = [];
-    if (mealTypesResponse.ok) {
-      const mealTypesData = await mealTypesResponse.json();
-      mealTypeOptions = mealTypesData.mealTypes || [];
-    }
+    // Récupérer les options de filtrage (catégories et types de repas)
+    const [categoryOptions, mealTypeOptions] = await Promise.all([
+      fetchCategories(request),
+      fetchMealTypes(request)
+    ]);
 
     const totalRecipes = apiResponse.pagination.total;
+
+    const filters: FilterPanelType = {
+      categoryOptions,
+      mealTypeOptions,
+      preparationTimeMax: 120
+    }
 
     return json({
       recipes: apiResponse.recipes,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(totalRecipes / perPage),
-        totalRecipes: totalRecipes,
-        hasMore: page < Math.ceil(totalRecipes / perPage) // Vérifie s'il reste des recettes à charger
+        totalRecipes,
+        hasMore: page < Math.ceil(totalRecipes / perPage)
       },
-      filters: {
-        categoryOptions,
-        mealTypeOptions,
-        preparationTimeMax: 120
-      },
+      filters,
       appliedFilters: {
         search: searchQuery,
         maxPreparationTime: maxPreparationTime ? parseInt(maxPreparationTime) : null,
@@ -132,36 +130,69 @@ export async function loader({ request }: LoaderFunctionArgs) {
         mealType,
         sortBy,
         sortDirection,
-        random
+        randomEnabled
       },
       error: false
     });
-
   } catch (error) {
     console.error("Erreur lors du chargement des recettes:", error);
+    const filters: FilterPanelType = { categoryOptions: [], mealTypeOptions: [], preparationTimeMax: 120 }
     return json({
       recipes: [],
-      pagination: {
-        currentPage: 1,
-        totalPages: 0,
-        totalRecipes: 0,
-        hasMore: false
-      },
-      filters: {
-        categoryOptions: [],
-        mealTypeOptions: [],
-        preparationTimeMax: 120
-      },
+      pagination: { currentPage: 1, totalPages: 0, totalRecipes: 0, hasMore: false },
+      filters,
       appliedFilters: {
         search: searchQuery,
         mealType,
         categoryId: null,
         maxPreparationTime: maxPreparationTime ? parseInt(maxPreparationTime) : null,
-        sortBy: "title",
-        sortDirection: "asc"
+        sortBy: "note",
+        sortDirection: "desc",
+        randomEnabled: true
       },
       error: error instanceof Error ? error.message : "Impossible de charger les recettes."
     });
+  }
+}
+
+// Fonctions utilitaires pour extraire la logique du loader
+async function fetchCategories(request: Request) {
+  const apiUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/categories`);
+  const cookies = request.headers.get("Cookie");
+
+  try {
+    const response = await fetch(apiUrl.toString(), {
+      headers: { Cookie: cookies || "" }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.categories || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des catégories:", error);
+    return [];
+  }
+}
+
+async function fetchMealTypes(request: Request) {
+  const apiUrl = new URL(`${request.url.split('/').slice(0, 3).join('/')}/api/mealtypes`);
+  const cookies = request.headers.get("Cookie");
+
+  try {
+    const response = await fetch(apiUrl.toString(), {
+      headers: { Cookie: cookies || "" }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.mealTypes || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des types de repas:", error);
+    return [];
   }
 }
 
@@ -177,8 +208,7 @@ export default function RecipesIndex() {
   const navigation = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   const submit = useSubmit();
-
-  const moreFetcher = useFetcher();
+  const moreFetcher = useFetcher<LoaderReturnType>();
 
   // États pour gérer le scroll infini
   const [recipes, setRecipes] = useState<RecipeType[]>(initialRecipes);
@@ -194,50 +224,192 @@ export default function RecipesIndex() {
   const [mealType, setMealType] = useState(appliedFilters.mealType);
   const [sortBy, setSortBy] = useState<SortOption>(appliedFilters.sortBy as SortOption);
   const [sortDirection, setSortDirection] = useState<SortDirection>(appliedFilters.sortDirection as SortDirection);
-  const [randomEnabled, setRandomEnabled] = useState(appliedFilters.random !== false);
+  const [randomEnabled, setRandomEnabled] = useState(appliedFilters.randomEnabled);
 
   // Debounce la recherche
   const debouncedSearch = useDebounce(search, 400);
 
-  // Référence pour le formulaire
+  // Références
   const formRef = useRef<HTMLFormElement>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const bottomElementRef = useRef<HTMLDivElement | null>(null);
 
-  // Effet pour charger plus de recettes lors du scroll
+  // État de chargement
+  const isLoading = navigation.state === "loading" || navigation.state === "submitting";
+
+  // Gestionnaires d'événements
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const handleSearchClear = () => {
+    setSearch("");
+  };
+
+  const updateFilter = useCallback((key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+
+    params.set("page", "1");
+    setSearchParams(params);
+  }, [searchParams, setSearchParams]);
+
+  const resetFilters = useCallback(() => {
+    setSearch("");
+    setMaxPreparationTime(null);
+    setCategory("");
+    setMealType("");
+    setSortBy("note");
+    setSortDirection("desc");
+    setRandomEnabled(true);
+
+    setSearchParams({
+      sortBy: "note",
+      sortDirection: "desc",
+      random: "true",
+      page: "1"
+    });
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    // Réinitialiser l'état de pagination lorsque la recherche change
+    if (debouncedSearch !== appliedFilters.search) {
+      setHasMoreRecipes(pagination.hasMore);
+    }
+  }, [debouncedSearch, appliedFilters.search, pagination.hasMore]);
+
+  useEffect(() => {
+    if (navigation.state === 'idle') {
+      setHasMoreRecipes(pagination.hasMore);
+    }
+  }, [navigation.state, pagination.hasMore]);
+
+  // Fonction pour charger plus de recettes (scroll infini)
   const loadMoreRecipes = useCallback(() => {
-    // Éviter de charger plus si on est déjà en train de charger ou s'il n'y a plus rien à charger
-    if (!hasMoreRecipes ||
-      moreFetcher.state !== "idle" ||
-      isLoadingMore ||
-      navigation.state !== "idle") {
+    // Assouplir les conditions pour le débogage
+    if (moreFetcher.state !== "idle") {
       return;
     }
 
     setIsLoadingMore(true);
     const nextPage = currentPage + 1;
 
-    // Construire la recherche pour la page suivante
-    const params = new URLSearchParams(searchParams);
+    // Créer un objet URLSearchParams frais au lieu d'utiliser searchParams
+    const params = new URLSearchParams();
     params.set("page", nextPage.toString());
 
-    // Utiliser le fetcher de Remix
+    // Ajoutez explicitement tous les paramètres actuels
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (category) params.set("categoryId", category);
+    if (mealType) params.set("mealType", mealType);
+    if (maxPreparationTime) params.set("maxPreparationTime", maxPreparationTime.toString());
+    params.set("sortBy", sortBy);
+    params.set("sortDirection", sortDirection);
+    params.set("random", randomEnabled ? "true" : "false");
+
     moreFetcher.load(`/?index&${params.toString()}`);
+  }, [
+    currentPage,
+    moreFetcher,
+    debouncedSearch,
+    category,
+    mealType,
+    maxPreparationTime,
+    sortBy,
+    sortDirection,
+    randomEnabled
+  ]);
 
-  }, [currentPage, hasMoreRecipes, moreFetcher, isLoadingMore, searchParams, navigation.state]);
+  // Effet pour la recherche
+  useEffect(() => {
+    if (debouncedSearch !== appliedFilters.search) {
+      const params = new URLSearchParams();
 
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (category) params.set("categoryId", category);
+      if (mealType) params.set("mealType", mealType);
+      if (maxPreparationTime) params.set("maxPreparationTime", maxPreparationTime.toString());
+      params.set("sortBy", sortBy);
+      params.set("sortDirection", sortDirection);
+      params.set("random", randomEnabled ? "true" : "false");
+      params.set("page", "1");
+
+      // Réinitialiser explicitement les états
+      setCurrentPage(1);
+      setRecipes([]);
+
+      setSearchParams(params);
+    }
+  }, [debouncedSearch, appliedFilters.search, category, mealType, maxPreparationTime, sortBy, sortDirection, randomEnabled, setSearchParams]);
+
+  // Effet spécifique pour réinitialiser l'observer après une recherche
+  useEffect(() => {
+    // Attendre un moment pour que le DOM soit mis à jour
+    const timeoutId = setTimeout(() => {
+      if (observer.current) {
+        observer.current.disconnect();
+        observer.current = null;
+      }
+
+      observer.current = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && hasMoreRecipes) {
+          const nextPage = currentPage + 1;
+          const params = new URLSearchParams();
+          params.set("page", nextPage.toString());
+          if (debouncedSearch) params.set("search", debouncedSearch);
+          if (category) params.set("categoryId", category);
+          if (mealType) params.set("mealType", mealType);
+          if (maxPreparationTime) params.set("maxPreparationTime", maxPreparationTime.toString());
+          params.set("sortBy", sortBy);
+          params.set("sortDirection", sortDirection);
+          params.set("random", randomEnabled ? "true" : "false");
+
+          setIsLoadingMore(true);
+          moreFetcher.load(`/?index&${params.toString()}`);
+        }
+      }, {
+        rootMargin: '200px',
+        threshold: 0.1
+      });
+
+      const currentElement = bottomElementRef.current;
+      if (currentElement) {
+        observer.current.observe(currentElement);
+      }
+    }, 300); // 300ms est généralement suffisant
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [debouncedSearch, currentPage, hasMoreRecipes, category, mealType, maxPreparationTime, sortBy, sortDirection, randomEnabled]);
+
+  // Effet pour mettre à jour les recettes quand les données sont chargées
+  useEffect(() => {
+    if (navigation.state === "idle") {
+      if (pagination.currentPage === 1) {
+        setRecipes(initialRecipes);
+      }
+    }
+  }, [initialRecipes, navigation.state, pagination.currentPage]);
+
+  // Effet pour traiter les résultats du moreFetcher (scroll infini)
   useEffect(() => {
     if (moreFetcher.state === "idle" && isLoadingMore) {
-
-      if (moreFetcher.data) {
-        // Mettre à jour l'état hasMoreRecipes avec la nouvelle valeur du serveur
-        if (moreFetcher.data.pagination && moreFetcher.data.pagination.hasMore !== undefined) {
-          setHasMoreRecipes(moreFetcher.data.pagination.hasMore);
+      const data = moreFetcher.data;
+      if (data) {
+        if (data?.pagination && 'hasMore' in data.pagination) {
+          setHasMoreRecipes(data.pagination.hasMore);
         }
 
-        if (moreFetcher.data.recipes && moreFetcher.data.recipes.length > 0) {
-          setRecipes(prev => [...prev, ...moreFetcher.data.recipes]);
+        if (data !== undefined && data?.recipes && Array.isArray(data.recipes) && data.recipes.length > 0) {
+          setRecipes(prev => [...prev, ...data.recipes]);
           setCurrentPage(prev => prev + 1);
         } else {
-          // Si aucune recette n'est reçue, définir hasMoreRecipes à false
           setHasMoreRecipes(false);
         }
       }
@@ -246,375 +418,103 @@ export default function RecipesIndex() {
     }
   }, [moreFetcher.state, moreFetcher.data, isLoadingMore]);
 
-  // Ref pour l'intersection observer (détecter quand on atteint le bas de la page)
-  // Définir un observateur d'intersection simplifié
-  const observer = useRef<IntersectionObserver | null>(null);
-  const bottomElementRef = useRef<HTMLDivElement | null>(null);
-
-  // Configurer l'observateur
+  // Configuration de l'intersection observer pour le scroll infini
   useEffect(() => {
+    // Toujours déconnecter l'observer précédent
     if (observer.current) {
       observer.current.disconnect();
+      observer.current = null;
     }
 
-    const loadMore = () => {
-      if (!isLoadingMore && pagination.hasMore) {
-        loadMoreRecipes();
-      }
-    };
+    // Créer un nouvel observer seulement si on a plus de recettes à charger
+    if (hasMoreRecipes) {
+      observer.current = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          loadMoreRecipes();
+        }
+      }, {
+        rootMargin: '300px', // Augmenter la marge pour déclencher plus tôt
+        threshold: 0.1
+      });
 
-    // Dans l'observateur
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMoreRecipes) {
-        loadMore();
+      const currentElement = bottomElementRef.current;
+      if (currentElement) {
+        observer.current.observe(currentElement);
       }
-    }, {
-      rootMargin: '100px',
-      threshold: 0.1
-    });
-
-    const currentElement = bottomElementRef.current;
-    if (currentElement && pagination.hasMore) {
-      observer.current.observe(currentElement);
     }
 
     return () => {
-      if (observer.current && currentElement) {
-        observer.current.unobserve(currentElement);
+      if (observer.current) {
         observer.current.disconnect();
+        observer.current = null;
       }
     };
-  }, [loadMoreRecipes, isLoadingMore, hasMoreRecipes]);
+  }, [loadMoreRecipes, hasMoreRecipes, debouncedSearch]);
 
-
-  // Effet pour soumettre le formulaire lorsque la recherche debouncée change
+  // Effet pour réinitialiser les recettes lors des changements de filtres
   useEffect(() => {
-    if (debouncedSearch !== appliedFilters.search && formRef.current) {
-      // Construire une nouvelle URL avec les paramètres de recherche
-      const params = new URLSearchParams();
-
-      // Ajouter les paramètres non vides
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      if (category) params.set("categoryId", category);
-      if (mealType) params.set("mealType", mealType);
-      if (maxPreparationTime) params.set("maxPreparationTime", maxPreparationTime.toString());
-      params.set("sortBy", sortBy);
-      params.set("sortDirection", sortDirection);
-      params.set("page", "1"); // Retour à la première page lors d'une recherche
-
-      // Mettre à jour les params de l'URL
-      setSearchParams(params);
-
-      // Réinitialiser l'état local
-      setCurrentPage(1);
-      setRecipes([]); // Vider pour éviter les doublons
-    }
-  }, [debouncedSearch, appliedFilters.search, setSearchParams, category, mealType, maxPreparationTime, sortBy, sortDirection]);
-
-  // Effets pour la mise à jour des états lors des changements de filtres
-  useEffect(() => {
-    if (navigation.state === "idle") {
-      // Mise à jour des recettes lorsque les données sont rechargées
-      if (pagination.currentPage === 1) {
-        setRecipes(initialRecipes);
-      }
-    }
-  }, [initialRecipes, navigation.state, pagination.currentPage]);
-
-  // Gestion des changements de recherche
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
-
-  //Gestion des filtres de la recherche
-  const updateFilter = useCallback((key: string, value: string | null) => {
-    const params = new URLSearchParams(searchParams);
-
-    // Mettre à jour ou supprimer le paramètre selon la valeur
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-
-    // Réinitialiser la page à 1 lors d'un changement de filtre
-    params.set("page", "1");
-
-    // Mettre à jour l'URL
-    setSearchParams(params);
-  }, [searchParams, setSearchParams]);
-
-  // Réinitialiser les filtres
-  const resetFilters = useCallback(() => {
-    setSearch("");
-    setMaxPreparationTime(null);
-    setCategory("");
-    setMealType("");
-    setSortBy("title");
-    setSortDirection("asc");
-    setRandomEnabled(false);
-
-    // Soumettre le formulaire avec des valeurs vides
-    setSearchParams({
-      sortBy: "title",
-      sortDirection: "asc",
-      random: "true",
-      page: "1"
-    });
-  }, [setSearchParams]);
-
-  // État de chargement
-  const isLoading = navigation.state === "loading" || navigation.state === "submitting";
-
-  useEffect(() => {
-    // Réinitialiser les recettes lors de changements de filtres
     if (navigation.state === "loading" && navigation.formData) {
-      setRecipes([]); // Vider le tableau lorsqu'une nouvelle requête est en cours
+      setRecipes([]);
       setCurrentPage(1);
     }
-
-    // Mise à jour des recettes lorsque les données sont rechargées
-    if (navigation.state === "idle" && initialRecipes) {
-      if (pagination.currentPage === 1) {
-        setRecipes(initialRecipes);
-      }
-    }
-  }, [navigation.state, navigation.formData, initialRecipes, pagination.currentPage]);
+  }, [navigation.state, navigation.formData]);
 
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        {/* Barre de recherche */}
+        <SearchBar
+          value={search}
+          onChange={handleSearchChange}
+          onClear={handleSearchClear}
+          onFilterClick={() => setFiltersVisible(true)}
+          totalRecipes={pagination.totalRecipes}
+        />
 
-        {/* Barre de recherche sticky en haut */}
-        <div className="sticky top-[4rem] z-20 pb-3 pt-4 shadow-sm">
-          <div className="relative">
-            <input
-              type="text"
-              name="search"
-              id="search"
-              placeholder="Rechercher une recette..."
-              value={search}
-              onChange={handleSearchChange}
-              className="block w-full pl-10 pr-16 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 text-base"
-            />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-              {search ? (
-                <button
-                  type="button"
-                  className="pr-3 flex items-center"
-                  onClick={() => setSearch("")}
-                >
-                  <svg
-                    className="h-5 w-5 text-gray-400 hover:text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              ) : (
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              )}
-
-            </div>
-
-            {/* Badge de nombre de recettes */}
-            <div className="absolute inset-y-0 right-7 pr-3 flex items-center text-xs text-gray-500">
-              {pagination.totalRecipes} recettes
-            </div>
-
-            {/* Bouton pour afficher les filtres */}
-            <button
-              type="button"
-              onClick={() => setFiltersVisible(true)}
-              className="absolute inset-y-0 right-0 px-3 flex items-center"
-              aria-label="Filtrer les recettes"
-            >
-              <svg
-                className="w-5 h-5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* Badges de filtres actifs */}
-          {(category || mealType || maxPreparationTime) && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {category && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                  {filters.categoryOptions.find(c => c.id.toString() === category)?.title || 'Catégorie'}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCategory("");
-                      updateFilter("categoryId", "");
-                    }}
-                    className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-indigo-400 hover:bg-indigo-200 hover:text-indigo-600"
-                  >
-                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
-                      <path d="M8 4l-4 4M4 4l4 4" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </span>
-              )}
-
-              {mealType && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  {mealType}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMealType("");
-                      updateFilter("mealType", "");
-                    }}
-                    className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-green-400 hover:bg-green-200 hover:text-green-600"
-                  >
-                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
-                      <path d="M8 4l-4 4M4 4l4 4" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </span>
-              )}
-
-              {maxPreparationTime && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                  Max {maxPreparationTime} min
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMaxPreparationTime(null);
-                      updateFilter("maxPreparationTime", null);
-                    }}
-                    className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-amber-400 hover:bg-amber-200 hover:text-amber-600"
-                  >
-                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
-                      <path d="M8 4l-4 4M4 4l4 4" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </span>
-              )}
-
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
-              >
-                Tout effacer
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Badges de filtres actifs */}
+        <ActiveFilters
+          category={category}
+          mealType={mealType}
+          maxPreparationTime={maxPreparationTime}
+          categoryOptions={filters.categoryOptions}
+          onCategoryRemove={() => {
+            setCategory("");
+            updateFilter("categoryId", "");
+          }}
+          onMealTypeRemove={() => {
+            setMealType("");
+            updateFilter("mealType", "");
+          }}
+          onPrepTimeRemove={() => {
+            setMaxPreparationTime(null);
+            updateFilter("maxPreparationTime", null);
+          }}
+          onResetAll={resetFilters}
+        />
 
         {/* Affichage des recettes */}
         {error ? (
           <div className="my-8 bg-red-50 border-l-4 border-red-500 p-4 text-red-700 text-center">
             {error}
           </div>
+        ) : recipes.length === 0 && !isLoading ? (
+          <EmptyState onReset={resetFilters} />
         ) : (
-          <>
-            {/* Grille des recettes - optimisée pour mobile */}
-            {recipes.length === 0 && !isLoading ? (
-              <div className="text-center py-12 bg-white rounded-lg shadow-md">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <h3 className="mt-2 text-lg font-medium text-gray-900">Aucune recette trouvée</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Essayez de modifier vos filtres pour voir plus de résultats.
-                </p>
-                <div className="mt-6">
-                  <button
-                    onClick={resetFilters}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
-                  >
-                    Réinitialiser les filtres
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {recipes.map((recipe, index) => (
-                  <BoxRecipe key={`${recipe.id}-${index}`} recipe={recipe} />
-                ))}
-              </div>
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {recipes.map((recipe, index) => (
+              <BoxRecipe key={`${recipe.id}-${index}`} recipe={recipe} />
+            ))}
+          </div>
+        )}
 
-            {/* Élément observé pour le scroll infini */}
-            {hasMoreRecipes && recipes.length > 0 && (
-              <div
-                ref={bottomElementRef}
-                className="h-20 w-full my-4 flex justify-center items-center"
-                style={{ border: "1px solid red" }}
-              >
-                {isLoadingMore && (
-                  <div className="flex flex-col items-center">
-                    <svg
-                      className="animate-spin h-8 w-8 text-rose-500 mb-2"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    <span className="text-sm text-gray-500">Chargement d'autres recettes...</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </>
+        {/* Élément observé pour le scroll infini */}
+        {hasMoreRecipes && recipes.length > 0 && (
+          <div
+            ref={bottomElementRef}
+            className="h-20 w-full my-4 flex justify-center items-center"
+          >
+            {isLoadingMore && <LoadingIndicator />}
+          </div>
         )}
 
         {/* Formulaire caché pour les filtres */}
@@ -623,7 +523,7 @@ export default function RecipesIndex() {
           <input type="hidden" name="categoryId" value={category} />
           <input type="hidden" name="mealType" value={mealType} />
           {maxPreparationTime && (
-            <input type="hidden" name="maxPreparationTime" value={maxPreparationTime} />
+            <input type="hidden" name="maxPreparationTime" value={maxPreparationTime.toString()} />
           )}
           <input type="hidden" name="sortBy" value={sortBy} />
           <input type="hidden" name="sortDirection" value={sortDirection} />
@@ -632,182 +532,29 @@ export default function RecipesIndex() {
         </Form>
 
         {/* Panneau de filtres mobile */}
-        {filtersVisible && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
-            onClick={() => {
-              setFiltersVisible(false)
-            }}
-          >
-            <div onClick={(e) => e.stopPropagation()} className="bg-white w-full rounded-t-xl p-5 transform transition-transform duration-300 ease-in-out max-h-[90vh] overflow-auto">
-              {/* En-tête du panneau de filtres */}
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Filtres</h3>
-                <button
-                  onClick={() => setFiltersVisible(false)}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Contenu des filtres */}
-              <div className="space-y-5">
-                {/* Filtre de catégories */}
-                <div>
-                  <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
-                    Catégorie
-                  </label>
-                  <select
-                    id="categoryId"
-                    name="categoryId"
-                    value={category}
-                    onChange={(e) => {
-                      setCategory(e.target.value);
-                      updateFilter("categoryId", e.target.value);
-                    }}
-                    className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
-                  >
-                    <option value="">Toutes les catégories</option>
-                    {filters.categoryOptions?.map((option) => (
-                      <option key={option.id} value={option.id.toString()}>
-                        {option.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Filtre de type de repas */}
-                <div>
-                  <label htmlFor="mealType" className="block text-sm font-medium text-gray-700 mb-1">
-                    Type de repas
-                  </label>
-                  <select
-                    id="mealType"
-                    name="mealType"
-                    value={mealType}
-                    onChange={(e) => {
-                      setMealType(e.target.value);
-                      updateFilter("mealType", e.target.value);
-                    }}
-                    className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
-                  >
-                    <option value="">Tous les types</option>
-                    {filters.mealTypeOptions?.map((option) => (
-                      <option key={option.title} value={option.title}>
-                        {option.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Temps de préparation */}
-                <div>
-                  <label htmlFor="maxPreparationTime" className="block text-sm font-medium text-gray-700 mb-1">
-                    Temps de préparation (max {maxPreparationTime || filters.preparationTimeMax} min)
-                  </label>
-                  <input
-                    type="range"
-                    id="maxPreparationTime"
-                    name="maxPreparationTime"
-                    min="0"
-                    max={filters.preparationTimeMax}
-                    step="10"
-                    value={maxPreparationTime || filters.preparationTimeMax}
-                    onChange={(e) => {
-                      const newMaxTime = parseInt(e.target.value);
-                      setMaxPreparationTime(newMaxTime);
-                      updateFilter("maxPreparationTime", newMaxTime.toString());
-                      if (formRef.current) submit(formRef.current);
-                    }}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>0 min</span>
-                    <span>{filters.preparationTimeMax} min</span>
-                  </div>
-                </div>
-
-                {/* Option de tri aléatoire */}
-                <div>
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="random" className="text-sm font-medium text-gray-700">
-                      Affichage aléatoire
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRandomEnabled(!randomEnabled);
-                        if (formRef.current) {
-                          setTimeout(() => submit(formRef.current), 0);
-                        }
-                      }}
-                      className={`relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none ${randomEnabled ? 'bg-rose-500' : 'bg-gray-200'
-                        }`}
-                      role="switch"
-                      aria-checked={false}
-                    >
-                      <span className="sr-only">Activer l'affichage aléatoire</span>
-                      <span
-                        aria-hidden="true"
-                        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${randomEnabled ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                      ></span>
-                    </button>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Afficher les recettes dans un ordre aléatoire pour favoriser la découverte
-                  </p>
-                </div>
-
-                {/* Tri */}
-                <div>
-                  <label htmlFor="sort" className="block text-sm font-medium text-gray-700 mb-1">
-                    Trier par
-                  </label>
-                  <select
-                    id="sort"
-                    name="sort"
-                    value={`${sortBy}-${sortDirection}`}
-                    onChange={(e) => {
-                      const [newSortBy, newSortDirection] = e.target.value.split("-") as [SortOption, SortDirection];
-                      setSortBy(newSortBy);
-                      setSortDirection(newSortDirection);
-                      if (formRef.current) submit(formRef.current);
-                    }}
-                    className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
-                  >
-                    <option value="title-asc">Titre (A-Z)</option>
-                    <option value="title-desc">Titre (Z-A)</option>
-                    <option value="preparationTime-asc">Temps de préparation (croissant)</option>
-                    <option value="preparationTime-desc">Temps de préparation (décroissant)</option>
-                    <option value="note-desc">Note (décroissant)</option>
-                    <option value="note-asc">Note (croissant)</option>
-                  </select>
-                </div>
-
-                {/* Boutons d'action */}
-                <div className="flex space-x-3 pt-3">
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                    className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                  >
-                    Réinitialiser
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFiltersVisible(false)}
-                    className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700"
-                  >
-                    Appliquer
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <FilterPanel
+          isVisible={filtersVisible}
+          onClose={() => setFiltersVisible(false)}
+          filters={filters}
+          filterValues={{
+            category,
+            mealType,
+            maxPreparationTime,
+            sortBy,
+            sortDirection,
+            randomEnabled
+          }}
+          onUpdateFilter={updateFilter}
+          onReset={resetFilters}
+          formRef={formRef}
+          onSubmit={submit}
+          setCategory={setCategory}
+          setMealType={setMealType}
+          setMaxPreparationTime={setMaxPreparationTime}
+          setSortBy={setSortBy}
+          setSortDirection={setSortDirection}
+          setRandomEnabled={setRandomEnabled}
+        />
       </div>
     </Layout>
   );

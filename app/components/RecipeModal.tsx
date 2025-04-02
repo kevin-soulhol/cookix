@@ -86,7 +86,7 @@ const InstructionsTab = ({
                             <span>{completedSteps.length}/{steps.length} étapes terminées</span>
                         </div>
                     </div>
-                    <ol className="space-y-6">
+                    <ol className="space-y-2">
                         {steps.map((step) => {
                             const isCompleted = completedSteps.includes(step.stepNumber);
                             const isActive = currentStep === step.stepNumber;
@@ -752,7 +752,7 @@ const RecipeSource = ({ url }: RecipeSourceProps): JSX.Element => (
             className="text-rose-500 hover:underline"
             onClick={(e) => e.stopPropagation()}
         >
-            {new URL(url).hostname}
+            {' ' + new URL(url).hostname}
         </a>
     </div >
 );
