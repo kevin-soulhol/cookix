@@ -270,70 +270,91 @@ export default function WeeklyMenu() {
               </div>
             )}
 
-            {/* Liste des menus offerts par quelqu'un d'autres */}
-            {isSharedMenu && (
-              <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">Partagés avec moi</h2>
+            {/* Partagés avec moi */}
+            <div className="mb-12">
+              <h2 className="text-xl font-semibold mb-4">Partagés avec moi</h2>
 
-                {sharedWithMe?.length > 0 ? (
-                  <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                    <ul className="divide-y divide-gray-200">
-                      {sharedWithMe.map((share) => (
-                        <li key={share.id} className="p-4 hover:bg-gray-50">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-medium text-gray-900">{share.menu.name}</h3>
-                              <p className="text-sm text-gray-500">
-                                Partagé par: {share.sharedByUser.email}
-                              </p>
-                              {share.includeShoppingList && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 mt-2">
-                                  Inclut la liste de courses
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex space-x-2">
-                              <Link
-                                to={`/menu?id=${share.menu.id}`}
-                                className="inline-flex items-center px-3 py-1.5 border border-rose-500 text-xs font-medium rounded-md text-rose-500 bg-white hover:bg-rose-50"
-                              >
-                                Voir le menu
-                              </Link>
-
-                              {share.includeShoppingList && share.shoppingList && (
-                                <Link
-                                  to={`/courses?listId=${share.shoppingList.id}`}
-                                  className="inline-flex items-center px-3 py-1.5 border border-teal-500 text-xs font-medium rounded-md text-teal-500 bg-white hover:bg-teal-50"
-                                >
-                                  Voir la liste
-                                </Link>
-                              )}
-
-                              <deleteFetcher.Form method="post" action="/api/share">
-                                <input type="hidden" name="_action" value="deleteShare" />
-                                <input type="hidden" name="shareId" value={share.id} />
-                                <button
-                                  type="submit"
-                                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                  onClick={() => confirm("Êtes-vous sûr de vouloir supprimer ce partage ?")}
-                                >
-                                  Supprimer
-                                </button>
-                              </deleteFetcher.Form>
-                            </div>
+              {sharedWithMe?.length > 0 ? (
+                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                  <ul className="divide-y divide-gray-200">
+                    {sharedWithMe.map((share) => (
+                      <li key={share.id} className="p-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium text-gray-900">{share.menu.name}</h3>
+                            <p className="text-sm text-gray-500">
+                              Partagé par: {share.sharedByUser.email}
+                            </p>
+                            {share.includeShoppingList && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 mt-2">
+                                Inclut la liste de courses
+                              </span>
+                            )}
                           </div>
-                        </li>
-                      ))}
-                    </ul>
+
+                          <div className="flex space-x-2">
+                            <Link
+                              to={`/menu?id=${share.menu.id}`}
+                              className="inline-flex items-center px-3 py-1.5 border border-rose-500 text-xs font-medium rounded-md text-rose-500 bg-white hover:bg-rose-50"
+                            >
+                              Voir le menu
+                            </Link>
+
+                            {share.includeShoppingList && share.shoppingList && (
+                              <Link
+                                to={`/courses?listId=${share.shoppingList.id}`}
+                                className="inline-flex items-center px-3 py-1.5 border border-teal-500 text-xs font-medium rounded-md text-teal-500 bg-white hover:bg-teal-50"
+                              >
+                                Voir la liste
+                              </Link>
+                            )}
+
+                            <deleteFetcher.Form method="post" action="/api/share">
+                              <input type="hidden" name="_action" value="deleteShare" />
+                              <input type="hidden" name="shareId" value={share.id} />
+                              <button
+                                type="submit"
+                                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                onClick={() => confirm("Êtes-vous sûr de vouloir supprimer ce partage ?")}
+                              >
+                                Supprimer
+                              </button>
+                            </deleteFetcher.Form>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
+                  Aucun menu n'est partagé avec vous pour le moment.
+                </p>
+              )}
+            </div>
+
+            {/* Suggestions de recettes favorites */}
+            {favoriteRecipes.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-xl font-semibold mb-4">Ajouter depuis vos favoris</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {favoriteRecipes.map((recipe: RecipeType) => (
+                    <BoxRecipe key={recipe.id} recipe={recipe} />
+                  ))}
+                </div>
+                {favoriteRecipes.length > 3 && (
+                  <div className="text-center mt-6">
+                    <Link
+                      to="/favoris"
+                      className="text-rose-500 hover:text-rose-700 font-medium"
+                    >
+                      Voir tous vos favoris
+                    </Link>
                   </div>
-                ) : (
-                  <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
-                    Aucun menu n'est partagé avec vous pour le moment.
-                  </p>
                 )}
               </div>
             )}
+
 
             {/* Invitations en attente */}
             <div className="mb-12">
@@ -429,28 +450,6 @@ export default function WeeklyMenu() {
                     ))}
                   </ul>
                 </div>
-              </div>
-            )}
-
-            {/* Suggestions de recettes favorites */}
-            {favoriteRecipes.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Ajouter depuis vos favoris</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {favoriteRecipes.map((recipe: RecipeType) => (
-                    <BoxRecipe key={recipe.id} recipe={recipe} />
-                  ))}
-                </div>
-                {favoriteRecipes.length > 3 && (
-                  <div className="text-center mt-6">
-                    <Link
-                      to="/favoris"
-                      className="text-rose-500 hover:text-rose-700 font-medium"
-                    >
-                      Voir tous vos favoris
-                    </Link>
-                  </div>
-                )}
               </div>
             )}
           </>

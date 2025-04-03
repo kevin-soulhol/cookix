@@ -1,5 +1,5 @@
 import { json, ActionFunctionArgs, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { createCookieSessionStorage, SessionStorage } from "@remix-run/node";
+import { createCookieSessionStorage } from "@remix-run/node";
 import bcrypt from "bcryptjs";
 import { prisma } from "~/utils/db.server";
 
