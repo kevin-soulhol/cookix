@@ -33,7 +33,7 @@ RUN if [ ! -d "/ms-playwright/chromium" ]; then \
 RUN npx prisma generate
 
 # Exécuter à 2h du matin tous les dimanches
-RUN echo "0 2 * * 0 cd /app && node index.js >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper-cron
+RUN echo "0 2 * * * cd /app && node index.js >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper-cron
 RUN chmod 0644 /etc/cron.d/scraper-cron
 RUN crontab /etc/cron.d/scraper-cron
 
