@@ -83,26 +83,31 @@ async function scrapeCookomix(browser) {
     //Récupérer les types de plats
     const mealTypeLinks = await getAndSaveMealType(page);
 
-      const trouverIndexParTitre = function(tableau, titreRecherche) {
-        return tableau.findIndex(objet => objet?.title === titreRecherche);
-      }
+    const trouverIndexParTitre = function(tableau, titreRecherche) {
+      return tableau.findIndex(objet => objet?.title === titreRecherche);
+    }
 
     if(StartByTypeMeal){
-      //commence par une des catégories
-      const startAt = trouverIndexParTitre(categoryLinks, StartByTypeMeal);
-      for(let d = startAt; d < categoryLinks.length; d++){
-        const recipesInPage = await getAllLinkRecipeBy(page, categoryLinks[d]);
-        for (let i = 0; i < recipesInPage.length; i++) {
-          await scrapeRecipeDetailsAndSave(page, recipesInPage[i], i, categoryLinks.length);
-        }
+      let startAt = trouverIndexParTitre(categoryLinks, StartByTypeMeal);
+      let links = categoryLinks;
+      if(startAt <= -1){
+        startAt = trouverIndexParTitre(mealTypeLinks, StartByTypeMeal);
+        links = mealTypeLinks;
       }
+
+      if(startAt <= -1){
+        logWithTimestamp("Aucune catégorie ne correspond à la donnée entrée");
+        return;
+      }
+
+      await scrapeAllRecipeFromCategory(page, links[startAt]);
     } else {
       // Sinon, en random
       const CategoryRandom = getRandomElement(categoryLinks);
-      await scrapeRecipeDetailsAndSave(page, CategoryRandom, 1, 1);
+      await scrapeAllRecipeFromCategory(page, CategoryRandom);
     }
 
-    logWithTimestamp(`Start scrap by ${StartByTypeMeal}:${startAt}`)
+    logWithTimestamp(`Start scrap by ${StartByTypeMeal}`)
 
 
     
@@ -110,6 +115,13 @@ async function scrapeCookomix(browser) {
     console.error('Error scraping Cookomix:', error);
   } finally {
     await page.close();
+  }
+}
+
+async function scrapeAllRecipeFromCategory(page, category){
+  const recipesInPage = await getAllLinkRecipeBy(page, category);
+  for (let i = 0; i < recipesInPage.length; i++) {
+    await scrapeRecipeDetailsAndSave(page, recipesInPage[i], i, recipesInPage.length);
   }
 }
 
