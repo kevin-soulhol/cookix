@@ -260,6 +260,7 @@ export default function RecipesIndex() {
           <div
             ref={infiniteScrollRef}
             className="h-20 w-full my-4 flex justify-center items-center"
+            style={{ border: "1px solid red" }}
           >
             {isLoadingMore && <LoadingIndicator />}
           </div>

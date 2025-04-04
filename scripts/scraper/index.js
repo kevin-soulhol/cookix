@@ -95,6 +95,11 @@ async function scrapeCookomix(browser) {
         links = mealTypeLinks;
       }
 
+      if(startAt <= -1 && StartByTypeMeal.includes('https')){
+        await scrapeRecipeDetailsAndSave(page, { sourceUrl : StartByTypeMeal }, 1, 1 )
+        return;
+      }
+
       if(startAt <= -1){
         logWithTimestamp("Aucune catégorie ne correspond à la donnée entrée");
         return;
@@ -238,6 +243,9 @@ async function scrapeRecipeDetailsAndSave(page, recipe, number, maxRecipe) {
         // Fonction pour nettoyer le texte
         const cleanText = text => text ? text.trim().replace(/\s+/g, ' ') : null;
         
+        //Extraire le titre
+        const title = document.querySelector('.entry-title').textContent
+
         // Extraire la description
         const descriptionElement = document.querySelector('.recipe-container .recipe-content .intro');
         const description = descriptionElement ? descriptionElement.innerHTML : null;
@@ -327,6 +335,7 @@ async function scrapeRecipeDetailsAndSave(page, recipe, number, maxRecipe) {
 
         
         return {
+          title,
           description,
           preparationTime,
           cookingTime,
@@ -342,7 +351,6 @@ async function scrapeRecipeDetailsAndSave(page, recipe, number, maxRecipe) {
         };
       });
 
-      recipeData.title = recipe.title;
       recipeData.sourceUrl = recipe.sourceUrl;
       
       // Enregistrer la recette dans la base de données
