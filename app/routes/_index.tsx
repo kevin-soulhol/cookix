@@ -256,15 +256,19 @@ export default function RecipesIndex() {
         )}
 
         {/* Élément observé pour le scroll infini */}
-        {hasMoreRecipes && recipes.length > 0 && (
-          <div
-            ref={infiniteScrollRef}
-            className="h-20 w-full my-4 flex justify-center items-center"
-            style={{ border: "1px solid red" }}
-          >
-            {isLoadingMore && <LoadingIndicator />}
-          </div>
-        )}
+        <div
+          ref={infiniteScrollRef}
+          className="h-20 w-full my-4 flex justify-center items-center"
+          id="infinite-scroll-target" // Ajouter un ID pour faciliter le débogage
+        >
+          {isLoadingMore ? (
+            <LoadingIndicator />
+          ) : hasMoreRecipes ? (
+            <div>Scroll pour plus de résultats</div>
+          ) : (
+            <div>Fin des résultats</div>
+          )}
+        </div>
 
         {/* Formulaire caché pour les filtres */}
         <Form ref={formRef} method="get" id="filter-form" className="hidden">

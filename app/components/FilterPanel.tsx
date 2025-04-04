@@ -56,13 +56,11 @@ export default function FilterPanel({
     setCategory,
     setMealType,
     setMaxPreparationTime,
-    setSortBy,
-    setSortDirection,
     setRandomEnabled
 }: FilterPanelProps) {
     if (!isVisible) return null;
 
-    const { category, mealType, maxPreparationTime, sortBy, sortDirection, randomEnabled } = filterValues;
+    const { category, mealType, maxPreparationTime, randomEnabled } = filterValues;
 
     return (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
