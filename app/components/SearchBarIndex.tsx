@@ -15,7 +15,7 @@ type SearchBarProps = {
 
 export default function SearchBar({ value, onChange, onClear, onFilterClick, totalRecipes }: SearchBarProps) {
     return (
-        <div className="sticky top-[4rem] z-20 pb-3 pt-4 shadow-sm">
+        <div className="sticky top-[4rem] z-20 pb-1 pt-4">
             <div className="relative">
                 <input
                     type="text"
@@ -124,7 +124,7 @@ export function ActiveFilters({
     if (!category && !mealType && !maxPreparationTime) return null;
 
     return (
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="flex flex-wrap gap-2 mt-2 mb-2">
             {category && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                     {categoryOptions.find(c => c.id.toString() === category)?.title || 'Catégorie'}

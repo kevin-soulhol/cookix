@@ -1,6 +1,19 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
 import { prisma } from "~/utils/db.server";
 import { getUserId } from "./api.user";
+import { Ingredient, Recipe, RecipeIngredient, RecipeStep } from "@prisma/client";
+
+export type RecipeType = Recipe & {
+  favorites?: any[];
+  menuItems?: any[];
+}
+
+type RecipeWithRelations = RecipeType & {
+  ingredients?: (RecipeIngredient & { ingredient: Ingredient })[];
+  steps?: RecipeStep[];
+  isFavorite?: boolean;
+  isInMenu?: boolean;
+};
 
 /**
  * Normalise un texte en retirant les accents et en convertissant en minuscules
@@ -162,6 +175,68 @@ function calculateRelevanceScore(recipe: any, searchTerms: string[], fullSearch:
 }
 
 /**
+ * FCalcule le score de pertinence d'une recette par rapport à son vote et aux nombres de vote
+ */
+function calculateRelevanceScoreByRating(recipe: any): number {
+  // Seuil de confiance minimal (nombre de votes considéré comme significatif)
+  const CONFIDENCE_THRESHOLD = 4000;
+  // Seuil bas de votes (en dessous duquel les recettes sont fortement pénalisées)
+  const LOW_VOTES_THRESHOLD = 10;
+  // Seuil élevé pour considérer qu'une recette a beaucoup de votes
+  const HIGH_VOTES_THRESHOLD = 2000;
+  // Seuil pour les notes excellentes (4.5/5 et plus)
+  const EXCELLENT_RATING_THRESHOLD = 4.5;
+
+  const rating = parseFloat(recipe.note) || 0;
+  const votes = parseInt(recipe.voteNumber) || 0;
+
+  // Normaliser la note sur une échelle de 0 à 1
+  const normalizedRating = rating / 5;
+
+  // Pénalité spéciale pour les recettes avec très peu de votes
+  let lowVotesPenalty = 0;
+  if (votes < LOW_VOTES_THRESHOLD) {
+    // Appliquer une pénalité sévère qui diminue progressivement jusqu'au seuil
+    // Cette formule donne une pénalité de 0.4 pour 0 vote, et qui diminue vers 0 à mesure qu'on approche du seuil
+    lowVotesPenalty = 0, 4 * (1 - votes / LOW_VOTES_THRESHOLD);
+  }
+
+  // Calculer un facteur de confiance basé sur le nombre de votes
+  // Ce facteur tend vers 1 quand le nombre de votes augmente
+  const confidenceFactor = votes / (votes + CONFIDENCE_THRESHOLD);
+
+  // Ajuster la note en fonction du nombre de votes
+  // Une note avec peu de votes sera tirée vers la moyenne (0.5)
+  const adjustedRating = confidenceFactor * normalizedRating + (1 - confidenceFactor) * 0.5;
+
+  // Ajouter un bonus pour les recettes avec beaucoup de votes
+  // Ce bonus est significatif seulement pour les recettes bien notées
+  let votesBonus = normalizedRating > 0.7 ?
+    Math.log10(1 + votes / 10) * 0.05 : 0;
+
+  // Bonus supplémentaire pour les notes excellentes avec beaucoup de votes
+  if (rating >= EXCELLENT_RATING_THRESHOLD) {
+    // Intensifier l'impact du nombre de votes pour les excellentes notes
+    // Cette formule crée une différence substantielle entre 100 et 1000+ votes
+    const excellenceBonus = Math.min(0.2, Math.log10(votes / HIGH_VOTES_THRESHOLD) * 0.1);
+
+    // N'appliquer ce bonus que si le nombre de votes dépasse le seuil élevé
+    if (votes > HIGH_VOTES_THRESHOLD) {
+      votesBonus += excellenceBonus;
+    }
+  }
+
+  // Stocker pour le débogage
+  recipe._rating = rating;
+  recipe._votes = votes;
+  recipe._adjustedRating = adjustedRating;
+  recipe._votesBonus = votesBonus;
+
+  // Score final combinant note ajustée et bonus de votes
+  return adjustedRating + votesBonus - lowVotesPenalty;
+}
+
+/**
  * Extraire les termes de recherche significatifs
  */
 function extractSearchTerms(search: string): string[] {
@@ -188,7 +263,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const categoryId = url.searchParams.get("categoryId");
   const mealType = url.searchParams.get("mealType");
   const maxPreparationTime = url.searchParams.get("maxPreparationTime");
-  const sort = url.searchParams.get("sort") || "title";
+  const sort = url.searchParams.get("sort") || "note";
   const dir = url.searchParams.get("dir") || "asc";
   const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit") as string) : 50;
   const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset") as string) : 0;
@@ -378,32 +453,33 @@ async function getRecipesBySearch(where: any, search: string, userId: number | n
   }
 
   // Calculer un score de pertinence pour chaque recette
-  const scoredRecipes = recipes.map(recipe => {
-    const score = calculateRelevanceScore(recipe, searchTerms, normalizedSearch);
-    return { ...recipe, searchScore: score };
+  let notedRecipes = recipes.map(recipe => {
+    return { ...recipe, searchScore: calculateRelevanceScore(recipe, searchTerms, normalizedSearch) };
   });
 
-  // Trier les recettes par score de pertinence décroissant
-  scoredRecipes.sort((a, b) => b.searchScore - a.searchScore);
+  notedRecipes = notedRecipes.map(recipe => {
+    return { ...recipe, noteScore: calculateRelevanceScoreByRating(recipe) };
 
-  // Filtrer par score minimal (ajusté plus bas pour être plus inclusif)
-  // Plus de termes = score minimal plus élevé
+  });
+
+  const NOTE_IMPORTANCE = 100;
+  notedRecipes = notedRecipes.map(recipe => {
+    const totalScore = recipe.searchScore + (recipe.noteScore * NOTE_IMPORTANCE);
+    return { ...recipe, totalScore: totalScore }
+  })
+
+  // Trier les recettes par score de pertinence décroissant
+  notedRecipes.sort((a, b) => b.totalScore - a.totalScore);
+
   const minScore = Math.max(5, searchTerms.length * 3);
-  const filteredRecipes = scoredRecipes.filter(recipe => recipe.searchScore >= minScore);
+  const filteredRecipes = notedRecipes.filter(recipe => recipe.totalScore >= minScore);
+
 
   // Appliquer la pagination sur les résultats filtrés
   const paginatedRecipes = filteredRecipes.slice(offset, offset + limit);
 
   // Transformer pour le client
-  const transformedRecipes = paginatedRecipes.map(recipe => ({
-    ...recipe,
-    isFavorite: !!recipe.favorites?.length,
-    isInMenu: !!(recipe.menuItems?.length && userId),
-    favorites: undefined,
-    menuItems: undefined,
-    ingredients: undefined, // Ne pas renvoyer les ingrédients détaillés dans les résultats de recherche
-    searchScore: undefined,
-  }));
+  const transformedRecipes = santizeData(paginatedRecipes, userId)
 
   return json({
     success: true,
@@ -422,14 +498,27 @@ async function getRecipesBySearch(where: any, search: string, userId: number | n
 async function getRecipesByFilters(where: any, sort: string, dir: string, random: boolean,
   diversityLevel: string, userId: number | null,
   limit: number, offset: number, totalRecipes: number) {
-  // Tri standard
-  const orderBy = { [sort]: dir };
+
+  // Configuration du tri
+  let orderBy: any;
+
+  // Si tri par note, gérer manuellement le tri après récupération des données
+  const byRating = true;
+
+  if (!byRating) {
+    // Tri standard pour les autres critères
+    orderBy = { [sort]: dir };
+  } else {
+    // Pour le tri par note, toujours récupérer les données dans l'ordre décroissant des notes d'abord
+    // Le tri avancé sera appliqué après
+    orderBy = { note: 'desc' };
+  }
 
   const recipes = await prisma.recipe.findMany({
     where,
     orderBy,
-    take: limit,
-    skip: offset,
+    take: byRating ? undefined : limit, // Si tri par note, récupérer toutes les recettes pour le tri personnalisé
+    skip: byRating ? 0 : offset,        // Si tri par note, pas de pagination à ce stade
     select: {
       id: true,
       title: true,
@@ -461,18 +550,22 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
   });
 
   // Appliquer la randomisation si demandée
+  let sortedRecipes = recipes;
   if (random) {
-    shuffleRecipesByDiversity(recipes, diversityLevel);
+    sortedRecipes = shuffleRecipesByDiversity(recipes, diversityLevel);
+  } else {
+    // Appliquer le tri personnalisé par note+votes
+    sortedRecipes = sortRecipesByRatingAndVotes(recipes);
   }
+  console.log("_____________________ is random", sortedRecipes.length)
+
+  // Appliquer la pagination manuellement après le tri
+  const paginatedRecipes = sortedRecipes.slice(offset, offset + limit);
+  sortedRecipes.length = 0; // Vider le tableau original
+  sortedRecipes.push(...paginatedRecipes); // Le remplir avec les éléments paginés
 
   // Transformer les données pour le client
-  const transformedRecipes = recipes.map(recipe => ({
-    ...recipe,
-    isFavorite: !!recipe.favorites?.length,
-    isInMenu: !!(recipe.menuItems?.length && userId),
-    favorites: undefined,
-    menuItems: undefined,
-  }));
+  const transformedRecipes = santizeData(sortedRecipes, userId)
 
   return json({
     success: true,
@@ -527,11 +620,46 @@ function shuffleRecipesByDiversity(recipes: any[], diversityLevel: string) {
       (randomFactor * RANDOM_WEIGHT);
   };
 
-  recipes.sort((a, b) => {
+  return recipes.sort((a, b) => {
     const scoreA = calculateScore(a);
     const scoreB = calculateScore(b);
     return scoreB - scoreA;
   });
+}
+
+/**
+ * Fonction de tri qui combine la note et le nombre de votes
+ * Avec une formule optimisée pour la pertinence
+ */
+function sortRecipesByRatingAndVotes(recipes: any[]) {
+  // Calculer le score combiné pour chaque recette
+  let notedRecipes = recipes.map(recipe => {
+    const score = calculateRelevanceScoreByRating(recipe)
+    return { ...recipe, noteScore: score };
+
+  });
+
+  // Tri basé sur le score combiné
+  notedRecipes = notedRecipes.sort((a, b) => {
+    const scoreA = a.noteScore || 0;
+    const scoreB = b.noteScore || 0;
+
+    return scoreB - scoreA
+  });
+
+  return notedRecipes;
+}
+
+function santizeData(recipes: RecipeType[], userId: number | null) {
+  return recipes.map(recipe => ({
+    ...recipe,
+    isFavorite: !!recipe.favorites?.length,
+    isInMenu: !!(recipe.menuItems?.length && userId),
+    favorites: undefined,
+    menuItems: undefined,
+    ingredients: undefined, // Ne pas renvoyer les ingrédients détaillés dans les résultats de recherche
+    searchScore: undefined,
+  }));
 }
 
 /**

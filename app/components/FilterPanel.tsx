@@ -131,7 +131,7 @@ export default function FilterPanel({
                     />
 
                     {/* Tri */}
-                    <SortingOptions
+                    {/* <SortingOptions
                         value={`${sortBy}-${sortDirection}`}
                         onChange={(value) => {
                             const [newSortBy, newSortDirection] = value.split("-") as [SortOption, SortDirection];
@@ -139,7 +139,7 @@ export default function FilterPanel({
                             setSortDirection(newSortDirection);
                             if (formRef.current) onSubmit(formRef.current);
                         }}
-                    />
+                    /> */}
 
                     {/* Boutons d'action */}
                     <div className="flex space-x-3 pt-3">
