@@ -268,6 +268,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit") as string) : 50;
   const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset") as string) : 0;
   const random = url.searchParams.get("random") === "true";
+  const onlyVege = url.searchParams.get("onlyVege") === "true";
   const diversityLevel = url.searchParams.get("diversity") || "medium";
 
   try {
@@ -277,7 +278,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // Cas 2: Recherche de recettes avec filtres
-    const where: any = buildWhereClause(search, difficulty, categoryId, mealType, maxPreparationTime);
+    const where: any = buildWhereClause(search, difficulty, categoryId, mealType, maxPreparationTime, onlyVege);
 
     // Compter le nombre total de recettes (pour la pagination)
     const totalRecipes = await prisma.recipe.count({ where });
@@ -357,7 +358,7 @@ async function getRecipeById(recipeId: number, userId: number | null) {
  * Construit la clause WHERE pour Prisma
  */
 function buildWhereClause(search: string | null, difficulty: string | null, categoryId: string | null,
-  mealType: string | null, maxPreparationTime: string | null): any {
+  mealType: string | null, maxPreparationTime: string | null, onlyVege: boolean | null): any {
   const where: any = {};
 
   // Pour la recherche textuelle, utiliser une approche très inclusive
@@ -385,6 +386,11 @@ function buildWhereClause(search: string | null, difficulty: string | null, cate
   // Filtre par difficulté
   if (difficulty) {
     where.difficulty = difficulty;
+  }
+
+  // Filtre par difficulté
+  if (onlyVege) {
+    where.isVege = true;
   }
 
   // Filtre par catégorie
@@ -534,6 +540,7 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
       createdAt: true,
       updatedAt: true,
       voteNumber: true,
+      isVege: true,
       ...(userId ? {
         favorites: {
           where: { userId },
@@ -557,8 +564,6 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
     // Appliquer le tri personnalisé par note+votes
     sortedRecipes = sortRecipesByRatingAndVotes(recipes);
   }
-  console.log("_____________________ is random", sortedRecipes.length)
-
   // Appliquer la pagination manuellement après le tri
   const paginatedRecipes = sortedRecipes.slice(offset, offset + limit);
   sortedRecipes.length = 0; // Vider le tableau original

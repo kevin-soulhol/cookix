@@ -27,6 +27,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const sortBy = url.searchParams.get("sortBy") || "note";
   const sortDirection = url.searchParams.get("sortDirection") || "asc";
   const randomEnabled = url.searchParams.get("random") === "true";
+  const onlyVege = url.searchParams.get("onlyVege") === "true";
 
   // Paramètres pour la pagination
   const page = parseInt(url.searchParams.get("page") || "1");
@@ -42,6 +43,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (mealType) apiUrl.searchParams.append("mealType", mealType);
   if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime);
   if (randomEnabled) apiUrl.searchParams.append("random", "true");
+  if (onlyVege) apiUrl.searchParams.append("onlyVege", "true");
 
   // Ajouter les paramètres de tri et pagination
   apiUrl.searchParams.append("sort", sortBy);
@@ -73,7 +75,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const filters: FilterPanelType = {
       categoryOptions,
       mealTypeOptions,
-      preparationTimeMax: 120
+      preparationTimeMax: 120,
+      onlyVege
     }
 
     return json({
@@ -92,13 +95,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
         mealType,
         sortBy,
         sortDirection,
-        randomEnabled
+        randomEnabled,
+        onlyVege
       },
       error: false
     });
   } catch (error) {
     console.error("Erreur lors du chargement des recettes:", error);
-    const filters: FilterPanelType = { categoryOptions: [], mealTypeOptions: [], preparationTimeMax: 120 }
+    const filters: FilterPanelType = { categoryOptions: [], mealTypeOptions: [], preparationTimeMax: 120, onlyVege: false }
     return json({
       recipes: [],
       pagination: { currentPage: 1, totalPages: 0, totalRecipes: 0, hasMore: false },
@@ -110,7 +114,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         maxPreparationTime: maxPreparationTime ? parseInt(maxPreparationTime) : null,
         sortBy: "note",
         sortDirection: "asc",
-        randomEnabled: null
+        randomEnabled: null,
+        onlyVege: null
       },
       error: error instanceof Error ? error.message : "Impossible de charger les recettes."
     });
@@ -179,7 +184,8 @@ export default function RecipesIndex() {
     maxPreparationTime: appliedFilters.maxPreparationTime,
     sortBy: appliedFilters.sortBy as any,
     sortDirection: appliedFilters.sortDirection as any,
-    randomEnabled: appliedFilters.randomEnabled
+    randomEnabled: appliedFilters.randomEnabled,
+    onlyVege: appliedFilters.onlyVege
   });
 
   // Utiliser le hook de pagination
@@ -225,6 +231,7 @@ export default function RecipesIndex() {
           mealType={filterState.mealType}
           maxPreparationTime={filterState.maxPreparationTime}
           categoryOptions={filters.categoryOptions}
+          onyVegeEnabled={filters.onlyVege}
           onCategoryRemove={() => {
             filterActions.setCategory("");
             filterActions.updateFilter("categoryId", "");
@@ -236,6 +243,10 @@ export default function RecipesIndex() {
           onPrepTimeRemove={() => {
             filterActions.setMaxPreparationTime(null);
             filterActions.updateFilter("maxPreparationTime", null);
+          }}
+          onOnlyVegeRemove={() => {
+            filterActions.setOnlyVege(false);
+            filterActions.updateFilter("onlyVege", null);
           }}
           onResetAll={filterActions.resetFilters}
         />
@@ -281,6 +292,7 @@ export default function RecipesIndex() {
           <input type="hidden" name="sortBy" value={filterState.sortBy} />
           <input type="hidden" name="sortDirection" value={filterState.sortDirection} />
           <input type="hidden" name="random" value={filterState.randomEnabled.toString()} />
+          <input type="hidden" name="onlyVege" value={filterState.onlyVege.toString()} />
           <input type="hidden" name="page" value="1" />
         </Form>
 
@@ -295,7 +307,8 @@ export default function RecipesIndex() {
             maxPreparationTime: filterState.maxPreparationTime,
             sortBy: filterState.sortBy,
             sortDirection: filterState.sortDirection,
-            randomEnabled: filterState.randomEnabled
+            randomEnabled: filterState.randomEnabled,
+            onlyVege: filterState.onlyVege
           }}
           onUpdateFilter={filterActions.updateFilter}
           onReset={filterActions.resetFilters}
@@ -307,6 +320,7 @@ export default function RecipesIndex() {
           setSortBy={filterActions.setSortBy}
           setSortDirection={filterActions.setSortDirection}
           setRandomEnabled={filterActions.setRandomEnabled}
+          setOnlyVege={filterActions.setOnlyVege}
         />
       </div>
     </Layout>

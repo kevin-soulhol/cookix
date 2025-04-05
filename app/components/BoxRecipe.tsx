@@ -120,6 +120,21 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                             <span className="font-light text-gray-700 text-xs pl-1">{`(${recipe.voteNumber})`}</span>
                         </div>
                     )}
+
+                    {/* Badge végétarien */}
+                    {recipe.isVege && (
+                        <div className="absolute bottom-2 right-2 bg-green-100 bg-opacity-90 text-green-600 font-semibold text-xs rounded-md px-2 py-1 flex items-center">
+                            <svg
+                                className="w-4 h-4 mr-1"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path fillRule="evenodd" d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                            Végé
+                        </div>
+                    )}
                 </div>
 
                 {/* Conteneur des boutons d'action */}
@@ -189,7 +204,6 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                 {/* Informations de la recette */}
                 <div className="p-4 flex-1 flex flex-col">
                     <h3 className="text-lg font-semibold leading-tight mb-2 text-gray-900 line-clamp-1 overflow-hidden text-ellipsis">{recipe.title}</h3>
-
                     <div className="mt-auto flex justify-between text-xs text-gray-500">
                         <div>
                             {recipe.preparationTime && <span>{recipe.preparationTime} min</span>}

@@ -297,6 +297,12 @@ async function scrapeRecipeDetailsAndSave(page, recipe, number, maxRecipe) {
           })
         })
 
+        //extraire le vege
+        const isVege = Array.from(document.querySelectorAll('.recipe-themes .profile'))?.some(el => {
+          return el?.textContent === "Végétarien"
+        })
+
+
         // Extraire les ingrédients
         const ingredients = [];
         const tmpIngredients = document.querySelectorAll('#sidebar .ingredients dt');
@@ -347,12 +353,13 @@ async function scrapeRecipeDetailsAndSave(page, recipe, number, maxRecipe) {
           ingredients,
           steps,
           meals,
-          category: categories[0]
+          category: categories[0],
+          isVege
         };
       });
 
       recipeData.sourceUrl = recipe.sourceUrl;
-      
+
       // Enregistrer la recette dans la base de données
       await saveRecipe(recipeData);
       
@@ -427,6 +434,7 @@ async function saveRecipe(recipeData) {
         voteNumber: recipeData.voteNumber,
         imageUrl: recipeData.imageUrl,
         sourceUrl: recipeData?.sourceUrl,
+        isVege: recipeData.isVege,
         steps: {
           create: recipeData.steps
         },
@@ -455,6 +463,7 @@ async function saveRecipe(recipeData) {
         note: recipeData.note,
         voteNumber: recipeData.voteNumber,
         imageUrl: recipeData.imageUrl,
+        isVege: recipeData.isVege
       }
     }
 

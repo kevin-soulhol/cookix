@@ -104,9 +104,11 @@ type ActiveFiltersProps = {
     mealType: string;
     maxPreparationTime: number | null;
     categoryOptions: MealAndCategoryTypeOption[];
+    onyVegeEnabled: boolean;
     onCategoryRemove: () => void;
     onMealTypeRemove: () => void;
     onPrepTimeRemove: () => void;
+    onOnlyVegeRemove: () => void;
     onResetAll: () => void;
 };
 
@@ -115,13 +117,15 @@ export function ActiveFilters({
     mealType,
     maxPreparationTime,
     categoryOptions,
+    onyVegeEnabled,
     onCategoryRemove,
     onMealTypeRemove,
     onPrepTimeRemove,
+    onOnlyVegeRemove,
     onResetAll
 }: ActiveFiltersProps) {
     // Si aucun filtre actif, ne pas afficher ce composant
-    if (!category && !mealType && !maxPreparationTime) return null;
+    if (!category && !mealType && !maxPreparationTime && !onyVegeEnabled) return null;
 
     return (
         <div className="flex flex-wrap gap-2 mt-2 mb-2">
@@ -162,6 +166,21 @@ export function ActiveFilters({
                         type="button"
                         onClick={onPrepTimeRemove}
                         className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-amber-400 hover:bg-amber-200 hover:text-amber-600"
+                    >
+                        <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
+                            <path d="M8 4l-4 4M4 4l4 4" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                    </button>
+                </span>
+            )}
+
+            {onyVegeEnabled && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Végé uniquement
+                    <button
+                        type="button"
+                        onClick={onOnlyVegeRemove}
+                        className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-green-400 hover:bg-green-200 hover:text-amber-600"
                     >
                         <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
                             <path d="M8 4l-4 4M4 4l4 4" strokeWidth="2" strokeLinecap="round" />

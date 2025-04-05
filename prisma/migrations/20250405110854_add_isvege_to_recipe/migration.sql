@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Recipe` ADD COLUMN `isVege` BOOLEAN NOT NULL DEFAULT false;

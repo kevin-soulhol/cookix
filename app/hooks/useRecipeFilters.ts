@@ -11,6 +11,7 @@ interface FilterState {
   sortBy: SortOption;
   sortDirection: SortDirection;
   randomEnabled: boolean;
+  onlyVege: boolean;
 }
 
 interface FilterActions {
@@ -21,6 +22,7 @@ interface FilterActions {
   setSortBy: (value: SortOption) => void;
   setSortDirection: (value: SortDirection) => void;
   setRandomEnabled: (value: boolean) => void;
+  setOnlyVege: (value: boolean) => void;
   clearSearch: () => void;
   resetFilters: () => void;
   updateFilter: (key: string, value: string | null) => void;
@@ -35,6 +37,8 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
   const [sortBy, setSortBy] = useState<SortOption>(initialState.sortBy);
   const [sortDirection, setSortDirection] = useState<SortDirection>(initialState.sortDirection);
   const [randomEnabled, setRandomEnabled] = useState(initialState.randomEnabled);
+  const [onlyVege, setOnlyVege] = useState(initialState.onlyVege);
+  
   
   // Debounce la recherche
   const debouncedSearch = useDebounce(search, 400);
@@ -53,11 +57,12 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
       params.set("sortBy", sortBy);
       params.set("sortDirection", sortDirection);
       params.set("random", randomEnabled ? "true" : "false");
+      params.set("onlyVege", onlyVege ? "true" : "false");
       params.set("page", "1");
 
       setSearchParams(params);
     }
-  }, [debouncedSearch, initialState.search, category, mealType, maxPreparationTime, sortBy, sortDirection, randomEnabled, setSearchParams, searchParams]);
+  }, [debouncedSearch, initialState.search, category, mealType, maxPreparationTime, sortBy, sortDirection, randomEnabled, onlyVege, setSearchParams, searchParams]);
 
   // Fonctions pour modifier les filtres
   const updateFilter = useCallback((key: string, value: string | null) => {
@@ -81,6 +86,7 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
     setSortBy("note");
     setSortDirection("asc");
     setRandomEnabled(false);
+    setOnlyVege(false);
 
     setSearchParams({
       sortBy: "note",
@@ -103,6 +109,7 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
     sortBy,
     sortDirection,
     randomEnabled,
+    onlyVege
   };
 
   const actions: FilterActions = {
@@ -113,6 +120,7 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
     setSortBy,
     setSortDirection,
     setRandomEnabled,
+    setOnlyVege,
     clearSearch,
     resetFilters,
     updateFilter,

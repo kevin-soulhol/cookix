@@ -16,6 +16,7 @@ export type FilterPanelType = {
     categoryOptions: MealAndCategoryTypeOption[];
     mealTypeOptions: MealAndCategoryTypeOption[];
     preparationTimeMax: number;
+    onlyVege: boolean;
 
 }
 
@@ -31,6 +32,7 @@ type FilterPanelProps = {
         sortBy: SortOption;
         sortDirection: SortDirection;
         randomEnabled: boolean;
+        onlyVege: boolean;
     };
     onUpdateFilter: (key: string, value: string | null) => void;
     onReset: () => void;
@@ -42,6 +44,7 @@ type FilterPanelProps = {
     setSortBy: (value: SortOption) => void;
     setSortDirection: (value: SortDirection) => void;
     setRandomEnabled: (value: boolean) => void;
+    setOnlyVege: (value: boolean) => void;
 };
 
 export default function FilterPanel({
@@ -56,11 +59,12 @@ export default function FilterPanel({
     setCategory,
     setMealType,
     setMaxPreparationTime,
-    setRandomEnabled
+    setRandomEnabled,
+    setOnlyVege
 }: FilterPanelProps) {
     if (!isVisible) return null;
 
-    const { category, mealType, maxPreparationTime, randomEnabled } = filterValues;
+    const { category, mealType, maxPreparationTime, randomEnabled, onlyVege } = filterValues;
 
     return (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
@@ -117,10 +121,26 @@ export default function FilterPanel({
                     />
 
                     {/* Option de tri aléatoire */}
-                    <RandomToggle
+                    <Toggle
+                        label="Affichage aléatoire"
+                        text="Activer l'affichage aléatoire"
                         enabled={randomEnabled}
                         onChange={() => {
                             setRandomEnabled(!randomEnabled);
+                            const form = formRef.current;
+                            if (form !== null && form) {
+                                setTimeout(() => onSubmit(form), 0);
+                            }
+                        }}
+                    />
+
+                    {/* Option de végétarien */}
+                    <Toggle
+                        label="Seulement les plats végé"
+                        text="Activer l'affichage des plats végétariens uniquement"
+                        enabled={onlyVege}
+                        onChange={() => {
+                            setOnlyVege(!onlyVege);
                             const form = formRef.current;
                             if (form !== null && form) {
                                 setTimeout(() => onSubmit(form), 0);
@@ -263,10 +283,14 @@ function PreparationTimeFilter({
 }
 
 // Interrupteur pour le tri aléatoire
-function RandomToggle({
+function Toggle({
+    label,
+    text,
     enabled,
     onChange
 }: {
+    label: string,
+    text: string,
     enabled: boolean,
     onChange: () => void
 }) {
@@ -274,7 +298,7 @@ function RandomToggle({
         <div>
             <div className="flex items-center justify-between">
                 <label htmlFor="random" className="text-sm font-medium text-gray-700">
-                    Affichage aléatoire
+                    {label}
                 </label>
                 <button
                     type="button"
@@ -284,7 +308,7 @@ function RandomToggle({
                     role="switch"
                     aria-checked={enabled}
                 >
-                    <span className="sr-only">Activer l'affichage aléatoire</span>
+                    <span className="sr-only">{text}</span>
                     <span
                         aria-hidden="true"
                         className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${enabled ? 'translate-x-5' : 'translate-x-0'
@@ -293,7 +317,7 @@ function RandomToggle({
                 </button>
             </div>
             <p className="mt-1 text-xs text-gray-500">
-                Afficher les recettes dans un ordre aléatoire pour favoriser la découverte
+                {text}
             </p>
         </div>
     );
