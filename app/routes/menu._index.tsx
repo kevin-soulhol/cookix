@@ -45,7 +45,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   });
   const dataShare = await responseShare.json();
-  console.log(dataShare)
 
 
   return json({
@@ -90,10 +89,10 @@ export default function WeeklyMenu() {
   );
 
   return (
-    <Layout pageTitle="Menu de la semaine">
+    <Layout pageTitle="Menu de la semaine" optionelClass={isSharedMenu && 'bg-blue-50'}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {isSharedMenu && (
-          <div className="mb-4 bg-blue-50 border-l-4 border-blue-500 p-4">
+          <div className="mb-4 bg-blue-50 p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -144,25 +143,28 @@ export default function WeeklyMenu() {
                 </Link>
 
                 {/* Bouton de partage élégant */}
-                <button
-                  onClick={() => setShowShareModal(true)}
-                  className="group relative inline-flex items-center p-2 bg-white border border-rose-500 text-rose-500 rounded-full hover:bg-rose-50 transition-colors"
-                >
-                  <svg
-                    className="w-5 h-5 transition-transform group-hover:rotate-12"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
+                {!isSharedMenu && (
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="group relative inline-flex items-center p-2 bg-white border border-rose-500 text-rose-500 rounded-full hover:bg-rose-50 transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      className="w-5 h-5 transition-transform group-hover:rotate-12"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                      />
+                    </svg>
+                  </button>
+                )}
+
               </div>
 
               {/* Recherche dans le menu */}
@@ -232,10 +234,10 @@ export default function WeeklyMenu() {
                 <p className="text-gray-500">Aucune recette ne correspond à votre recherche.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-12">
                 {filteredRecipes.map((recipe: RecipeType) => (
                   <div key={recipe.id} className="relative">
-                    <BoxRecipe recipe={recipe} readOnly={true} />
+                    <BoxRecipe recipe={recipe} readOnly={true} compact={true} />
 
                     {/* Bouton suppression */}
                     {canEdit && (
@@ -271,75 +273,92 @@ export default function WeeklyMenu() {
             )}
 
             {/* Partagés avec moi */}
-            <div className="mb-12">
-              <h2 className="text-xl font-semibold mb-4">Partagés avec moi</h2>
+            {!isSharedMenu && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">Partagés avec moi</h2>
 
-              {sharedWithMe?.length > 0 ? (
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <ul className="divide-y divide-gray-200">
-                    {sharedWithMe.map((share) => (
-                      <li key={share.id} className="p-4 hover:bg-gray-50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium text-gray-900">{share.menu.name}</h3>
-                            <p className="text-sm text-gray-500">
-                              Partagé par: {share.sharedByUser.email}
-                            </p>
-                            {share.includeShoppingList && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 mt-2">
-                                Inclut la liste de courses
-                              </span>
-                            )}
-                          </div>
+                {sharedWithMe?.length > 0 ? (
+                  <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <ul className="divide-y divide-gray-200">
+                      {sharedWithMe.map((share) => (
+                        <li key={share.id} className="relative hover:bg-gray-50 group">
+                          {/* Lien englobant vers le menu */}
+                          <Link
+                            to={`/menu?id=${share.menu.id}`}
+                            className="block p-4"
+                          >
+                            <div className="flex items-center justify-between"> {/* Espace pour le bouton de suppression */}
+                              <h3 className="font-medium text-gray-900 inline-flex w-full">{share.sharedByUser.email}</h3>
 
-                          <div className="flex space-x-2">
-                            <Link
-                              to={`/menu?id=${share.menu.id}`}
-                              className="inline-flex items-center px-3 py-1.5 border border-rose-500 text-xs font-medium rounded-md text-rose-500 bg-white hover:bg-rose-50"
-                            >
-                              Voir le menu
-                            </Link>
+                              {share.includeShoppingList && (
+                                <div className="flex flex-shrink-0 ">
+                                  {share.shoppingList && (
+                                    <div
+                                      className="px-2.5 py-0.5 text-xs hover:text-teal-600 rounded-full text-xs font-medium bg-teal-100 text-teal-800"
+                                    >
+                                      Inclut la liste
+                                    </div>
+                                  )}
+                                </div>
+                              )}
 
-                            {share.includeShoppingList && share.shoppingList && (
-                              <Link
-                                to={`/courses?listId=${share.shoppingList.id}`}
-                                className="inline-flex items-center px-3 py-1.5 border border-teal-500 text-xs font-medium rounded-md text-teal-500 bg-white hover:bg-teal-50"
+                              {/* Bouton de suppression (icône) */}
+                              <deleteFetcher.Form
+                                method="post"
+                                action="/api/share"
+                                className="right-3"
                               >
-                                Voir la liste
-                              </Link>
-                            )}
+                                <input type="hidden" name="_action" value="deleteShare" />
+                                <input type="hidden" name="shareId" value={share.id} />
+                                <button
+                                  type="submit"
+                                  className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!confirm("Êtes-vous sûr de vouloir supprimer ce partage ?")) {
+                                      e.preventDefault();
+                                    }
+                                  }}
+                                  aria-label="Supprimer"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
+                                </button>
+                              </deleteFetcher.Form>
+                            </div>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
+                    Aucun menu n'est partagé avec vous pour le moment.
+                  </p>
+                )}
+              </div>
+            )}
 
-                            <deleteFetcher.Form method="post" action="/api/share">
-                              <input type="hidden" name="_action" value="deleteShare" />
-                              <input type="hidden" name="shareId" value={share.id} />
-                              <button
-                                type="submit"
-                                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                                onClick={() => confirm("Êtes-vous sûr de vouloir supprimer ce partage ?")}
-                              >
-                                Supprimer
-                              </button>
-                            </deleteFetcher.Form>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
-                  Aucun menu n'est partagé avec vous pour le moment.
-                </p>
-              )}
-            </div>
 
             {/* Suggestions de recettes favorites */}
-            {favoriteRecipes.length > 0 && (
+            {!isSharedMenu && favoriteRecipes.length > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Ajouter depuis vos favoris</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-3 md:grid-cols-3 gap-3">
                   {favoriteRecipes.map((recipe: RecipeType) => (
-                    <BoxRecipe key={recipe.id} recipe={recipe} />
+                    <BoxRecipe key={recipe.id} recipe={recipe} compact={true} />
                   ))}
                 </div>
                 {favoriteRecipes.length > 3 && (
@@ -357,66 +376,69 @@ export default function WeeklyMenu() {
 
 
             {/* Invitations en attente */}
-            <div className="mb-12">
-              <h2 className="text-xl font-semibold mb-4">Invitations en attente</h2>
+            {!isSharedMenu && (
+              <div className="mb-12">
+                <h2 className="text-xl font-semibold mb-4">Invitations en attente</h2>
 
-              {pendingInvitations?.length > 0 ? (
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <ul className="divide-y divide-gray-200">
-                    {pendingInvitations.map((invitation) => (
-                      <li key={invitation.id} className="p-4 hover:bg-gray-50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium text-gray-900">
-                              Invitation de {invitation.sharedByUser.email}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              {invitation.includeShoppingList
-                                ? "Menu et liste de courses"
-                                : "Menu uniquement"}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              Reçue le {new Date(invitation.createdAt).toLocaleDateString()}
-                            </p>
+                {pendingInvitations?.length > 0 ? (
+                  <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <ul className="divide-y divide-gray-200">
+                      {pendingInvitations.map((invitation) => (
+                        <li key={invitation.id} className="p-4 hover:bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-medium text-gray-900">
+                                Invitation de {invitation.sharedByUser.email}
+                              </h3>
+                              <p className="text-sm text-gray-500">
+                                {invitation.includeShoppingList
+                                  ? "Menu et liste de courses"
+                                  : "Menu uniquement"}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                Reçue le {new Date(invitation.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+
+                            <div className="flex space-x-2">
+                              <acceptFetcher.Form method="post" action="/api/share">
+                                <input type="hidden" name="_action" value="acceptShare" />
+                                <input type="hidden" name="token" value={invitation.token} />
+                                <button
+                                  type="submit"
+                                  className="inline-flex items-center px-3 py-1.5 border border-green-500 text-xs font-medium rounded-md text-green-500 bg-white hover:bg-green-50"
+                                >
+                                  Accepter
+                                </button>
+                              </acceptFetcher.Form>
+
+                              <deleteFetcher.Form method="post" action="/api/share">
+                                <input type="hidden" name="_action" value="deleteShare" />
+                                <input type="hidden" name="shareId" value={invitation.id} />
+                                <button
+                                  type="submit"
+                                  className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-md text-red-500 bg-white hover:bg-red-50"
+                                >
+                                  Refuser
+                                </button>
+                              </deleteFetcher.Form>
+                            </div>
                           </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
+                    Vous n'avez aucune invitation en attente.
+                  </p>
+                )}
+              </div>
+            )}
 
-                          <div className="flex space-x-2">
-                            <acceptFetcher.Form method="post" action="/api/share">
-                              <input type="hidden" name="_action" value="acceptShare" />
-                              <input type="hidden" name="token" value={invitation.token} />
-                              <button
-                                type="submit"
-                                className="inline-flex items-center px-3 py-1.5 border border-green-500 text-xs font-medium rounded-md text-green-500 bg-white hover:bg-green-50"
-                              >
-                                Accepter
-                              </button>
-                            </acceptFetcher.Form>
-
-                            <deleteFetcher.Form method="post" action="/api/share">
-                              <input type="hidden" name="_action" value="deleteShare" />
-                              <input type="hidden" name="shareId" value={invitation.id} />
-                              <button
-                                type="submit"
-                                className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-md text-red-500 bg-white hover:bg-red-50"
-                              >
-                                Refuser
-                              </button>
-                            </deleteFetcher.Form>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
-                  Vous n'avez aucune invitation en attente.
-                </p>
-              )}
-            </div>
 
             {/* Liste des partages actifs */}
-            {menuShares.length > 0 && (
+            {!isSharedMenu && menuShares.length > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Menu partagé avec</h2>
                 <div className="bg-white rounded-lg shadow-md p-4">

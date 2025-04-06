@@ -109,7 +109,6 @@ const InstructionsTab = ({
                         {steps.map((step) => {
                             const isCompleted = completedSteps.includes(step.stepNumber);
                             const isActive = currentStep === step.stepNumber;
-                            console.log("----------------------- step.instruction", step.instruction)
 
                             return (
                                 <li

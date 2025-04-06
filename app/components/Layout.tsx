@@ -8,14 +8,15 @@ type LayoutProps = {
   children: React.ReactNode;
   showHomeLink?: boolean;
   pageTitle?: string;
+  optionelClass?: string;
 };
 
-export default function Layout({ children, showHomeLink = false, pageTitle }: LayoutProps) {
+export default function Layout({ children, showHomeLink = false, pageTitle, optionelClass }: LayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user } = useOutletContext<AuthButtonProps>() || { isAuthenticated: false, user: null };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className={`min-h-screen flex flex-col ${optionelClass}`}>
       {/* Header */}
       <header className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

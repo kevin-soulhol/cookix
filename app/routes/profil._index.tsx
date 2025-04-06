@@ -94,7 +94,6 @@ export default function Profile() {
 
     useEffect(() => {
         if (userFetcher.state === "idle" && userFetcher.data) {
-            console.log(userFetcher)
             if (userFetcher.data?.errors) {
                 setErrorUpdate(userFetcher.data?.errors)
 

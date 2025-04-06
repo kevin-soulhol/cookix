@@ -15,9 +15,10 @@ export type RecipeType = Recipe & {
 type BoxRecipeProps = {
     recipe: RecipeType;
     readOnly?: boolean;
+    compact?: boolean;
 };
 
-export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) {
+export default function BoxRecipe({ recipe, readOnly = false, compact = false }: BoxRecipeProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { isAuthenticated } = useOutletContext<AuthButtonProps>() || { isAuthenticated: false };
 
@@ -80,7 +81,7 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                 role="button"
             >
                 {/* Image de la recette */}
-                <div className="relative h-44">
+                <div className={`relative ${compact ? 'h-24' : 'h-44'}`}>
                     {recipe.imageUrl ? (
                         <div
                             className="h-full w-full bg-cover bg-center"
@@ -106,7 +107,7 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                     )}
 
                     {/* Badge de notation */}
-                    {recipe.note && (
+                    {recipe.note && !compact && (
                         <div className="absolute top-2 left-2 bg-white bg-opacity-90 text-amber-500 font-semibold text-sm rounded-md px-2 py-1 flex items-center">
                             <svg
                                 className="w-4 h-4 mr-1"
@@ -138,8 +139,12 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                 </div>
 
                 {/* Conteneur des boutons d'action */}
-                {isAuthenticated && !readOnly && (
-                    <div className="absolute top-2 right-2 z-10 flex space-x-2">
+                {isAuthenticated && (
+                    <div className={`absolute top-2 z-10 flex space-x-2 
+                        ${compact
+                            ? 'left-2'
+                            : 'right-2'
+                        }`}>
                         {/* Bouton Favori */}
                         <button
                             onClick={handleToggleFavorite}
@@ -148,7 +153,8 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                                 ${isFavorite
                                     ? 'bg-rose-100 text-rose-500'
                                     : 'bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-400 shadow-md'
-                                }`}
+                                }`
+                            }
                             aria-label="Ajouter aux favoris"
                         >
                             {favoriteFetcher.state !== "idle" ? (
@@ -175,35 +181,39 @@ export default function BoxRecipe({ recipe, readOnly = false }: BoxRecipeProps) 
                         </button>
 
                         {/* Bouton Ajouter au menu */}
-                        <button
-                            onClick={handleAddToMenu}
-                            disabled={isAddingToMenu || recipe.isInMenu}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center 
+                        {isAddingToMenu && (
+                            <button
+                                onClick={handleAddToMenu}
+                                disabled={isAddingToMenu || recipe.isInMenu}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center 
                                 ${recipe.isInMenu
-                                    ? 'bg-green-100 text-green-600 cursor-default'
-                                    : 'bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-700 shadow-md'
-                                }`}
-                            aria-label="Ajouter au menu"
-                        >
-                            {isAddingToMenu ? (
-                                <svg className="animate-spin h-5 w-5 text-teal-500" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ) : recipe.isInMenu ? (
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                            ) : (
-                                <span className="text-lg font-bold">+</span>
-                            )}
-                        </button>
+                                        ? 'bg-green-100 text-green-600 cursor-default'
+                                        : 'bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-700 shadow-md'
+                                    }`}
+                                aria-label="Ajouter au menu"
+                            >
+                                {isAddingToMenu ? (
+                                    <svg className="animate-spin h-5 w-5 text-teal-500" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                ) : recipe.isInMenu ? (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                ) : (
+                                    <span className="text-lg font-bold">+</span>
+                                )}
+                            </button>
+                        )}
                     </div>
                 )}
 
                 {/* Informations de la recette */}
                 <div className="p-4 flex-1 flex flex-col">
-                    <h3 className="text-lg font-semibold leading-tight mb-2 text-gray-900 line-clamp-1 overflow-hidden text-ellipsis">{recipe.title}</h3>
+                    <h3 className={`text-lg font-semibold leading-tight mb-2 text-gray-900 line-clamp-1 overflow-hidden text-ellipsis ${compact && 'text-sm line-clamp-2'}`}>
+                        {recipe.title}
+                    </h3>
                     <div className="mt-auto flex justify-between text-xs text-gray-500">
                         <div>
                             {recipe.preparationTime && <span>{recipe.preparationTime} min</span>}

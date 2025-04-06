@@ -131,8 +131,35 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // Récupérer les éléments du menu avec les détails des recettes
     const menuItems = await prisma.menuItem.findMany({
       where: { menuId: activeMenu.id },
-      include: { recipe: true },
+      include: {
+        recipe: {
+          include: {
+            favorites: {
+              where: { userId },
+              select: { id: true }
+            }
+          }
+        }
+      },
       orderBy: { id: 'asc' }
+    });
+
+    const transformedMenuItems = menuItems.map(item => {
+      // Extraire et transformer la recette
+      const transformedRecipe = {
+        ...item.recipe,
+        isFavorite: !!item.recipe.favorites?.length,
+        isInMenu: true // Ces recettes sont déjà dans le menu
+      };
+
+      // Supprimer les relations brutes
+      delete transformedRecipe.favorites;
+
+      // Retourner l'élément de menu avec la recette transformée
+      return {
+        ...item,
+        recipe: transformedRecipe
+      };
     });
 
     // Récupérer les recettes favorites pour suggestions
@@ -141,6 +168,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       include: { recipe: true },
       take: 3
     });
+
+    const transformedFavoriteRecipes = favoriteRecipes.map(fav => fav.recipe).map(fav => ({ ...fav, isFavorite: true }))
 
     // Liste de courses
     let shoppingList = await prisma.shoppingList.findFirst({
@@ -169,11 +198,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
       where: { menuId: activeMenu.id }
     });
 
-
     return json({
       menu: activeMenu,
-      menuItems,
-      favoriteRecipes: favoriteRecipes.map(fav => fav.recipe),
+      menuItems: transformedMenuItems,
+      favoriteRecipes: transformedFavoriteRecipes,
       shoppingListCount: shoppingList._count.items,
       shoppingListId: shoppingList.id,
       menuShares,
@@ -201,15 +229,12 @@ export async function action({ request }: ActionFunctionArgs) {
   const recipeIdData = formData.get("recipeId");
   const recipeId: number | null = parseInt(recipeIdData);
   const method = request.method.toUpperCase();
-  console.log(recipeId, method)
 
   if (!userId) {
     return json({ success: false, message: "Il faut être connecté" }, { status: 400 });
   }
 
   if (!recipeId) {
-    console.log("Pas de recipeId", recipeId)
-
     return json({ success: false, message: "ID de recette manquant" }, { status: 400 });
   }
 
@@ -244,7 +269,6 @@ async function getMenuByUserId(userId: number) {
 
   // Si aucun menu actif n'existe, en créer un nouveau
   if (!activeMenu) {
-    console.log("Aucun Menu déjà existant")
     const currentDate = new Date();
     const endOfWeek = new Date(currentDate);
     endOfWeek.setDate(currentDate.getDate() + (7 - currentDate.getDay()));
@@ -263,8 +287,6 @@ async function getMenuByUserId(userId: number) {
 
 async function addRecipeToMenu(recipeId: number, userId: number) {
   if (!recipeId) {
-    console.log("Pas de recipeId", recipeId)
-
     return json({ success: false, message: "ID de recette manquant" }, { status: 400 });
   }
 
