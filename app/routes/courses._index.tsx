@@ -933,6 +933,7 @@ interface AddItemModalProps {
     setNewItemUnit: (value: string) => void;
     suggestions: Array<{ id: number; name: string }>;
     showSuggestions: boolean;
+    setShowSuggestions: React.Dispatch<React.SetStateAction<boolean>>;
     suggestionsRef: React.RefObject<HTMLDivElement>;
     handleIngredientInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
     selectSuggestion: (suggestion: { id: number; name: string }) => void;
@@ -946,14 +947,12 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
     onClose,
     onSubmit,
     newItemName,
-    setNewItemName,
     newItemQuantity,
     setNewItemQuantity,
     newItemUnit,
     setNewItemUnit,
     suggestions,
-    showSuggestions,
-    suggestionsRef,
+    setShowSuggestions,
     handleIngredientInput,
     selectSuggestion
 }: AddItemModalProps) => {
@@ -961,7 +960,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
 
     return (
         <div
-            className="fixed inset-x-0 bottom-0 z-50 transition-all duration-300 ease-in-out"
+            className="fixed inset-0 z-50 flex flex-col justify-end transition-all duration-300 ease-in-out"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
                     onClose();
@@ -969,7 +968,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             }}
         >
             <div
-                className="bg-white rounded-t-xl shadow-2xl max-w-md mx-auto transform transition-transform duration-300 ease-in-out"
+                className="bg-white rounded-t-xl shadow-2xl max-w-md mx-auto w-full transform transition-transform duration-300 ease-in-out"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="p-6 shadow-lg">
@@ -983,33 +982,14 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                                 >
                                     Nom de l'article *
                                 </label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    required
+                                <MobileAutoComplete
                                     value={newItemName}
                                     onChange={handleIngredientInput}
-                                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
+                                    suggestions={suggestions}
+                                    onSelectSuggestion={selectSuggestion}
+                                    setShowSuggestions={setShowSuggestions}
                                     placeholder="Ex: Tomates"
-                                    autoComplete="off"
                                 />
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <div
-                                        ref={suggestionsRef}
-                                        className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm"
-                                    >
-                                        {suggestions.map((suggestion) => (
-                                            <div
-                                                key={suggestion.id}
-                                                onClick={() => selectSuggestion(suggestion)}
-                                                className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100"
-                                            >
-                                                {suggestion.name}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
 
                             <div className="grid grid-cols-3 gap-3">
@@ -1071,6 +1051,105 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                     </form>
                 </div>
             </div>
+        </div>
+    );
+};
+
+
+interface MobileAutoCompleteProps {
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    suggestions: Array<{ id: number; name: string }>;
+    onSelectSuggestion: (suggestion: { id: number; name: string }) => void;
+    setShowSuggestions: React.Dispatch<React.SetStateAction<boolean>>;
+    placeholder?: string;
+}
+// Composant d'autocomplétion optimisé pour mobile avec création d'éléments
+const MobileAutoComplete = ({
+    value,
+    onChange,
+    suggestions,
+    setShowSuggestions,
+    onSelectSuggestion,
+    placeholder
+}: MobileAutoCompleteProps) => {
+    const wrapperRef = useRef(null);
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [setShowSuggestions]);
+
+    // Fonction pour créer un nouvel élément avec la valeur actuelle
+    const createNewItem = () => {
+        if (value.trim()) {
+            onSelectSuggestion({ id: null, name: value.trim() });
+            setShowSuggestions(false);
+        }
+    };
+
+    return (
+        <div className="relative" ref={wrapperRef}>
+            <div className="flex items-center border border-gray-300 rounded-md shadow-sm focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-teal-500">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={value}
+                    onChange={onChange}
+                    className="block w-full px-3 py-2 border-0 focus:outline-none bg-transparent"
+                    placeholder={placeholder}
+                    autoComplete="off"
+                />
+                {value.trim() && (
+                    <button
+                        type="button"
+                        onClick={createNewItem}
+                        className="p-2 text-teal-500 hover:text-teal-700 focus:outline-none"
+                        aria-label="Valider cette entrée"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </button>
+                )}
+            </div>
+
+            {suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 bg-white shadow-lg rounded-md mt-1 overflow-auto max-h-44 z-20">
+                    {/* Option pour créer un nouvel élément si la valeur ne correspond à aucune suggestion */}
+                    {value.trim() && !suggestions.some(s => s.name.toLowerCase() === value.toLowerCase()) && (
+                        <div
+                            className="p-3 border-b border-gray-100 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 cursor-pointer flex items-center"
+                            onClick={createNewItem}
+                        >
+                            <span className="font-medium flex-1">Ajouter "{value}"</span>
+                            <svg className="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </div>
+                    )}
+
+                    {/* Suggestions existantes */}
+                    {suggestions.map((suggestion) => (
+                        <div
+                            key={suggestion.id}
+                            className="p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                                onSelectSuggestion(suggestion);
+                                setShowSuggestions(false);
+                            }}
+                        >
+                            <div className="font-medium">{suggestion.name}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
@@ -1466,8 +1545,10 @@ export default function ShoppingList() {
         };
 
         document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
         };
     }, []);
 
@@ -1683,6 +1764,7 @@ export default function ShoppingList() {
                             setNewItemUnit={setNewItemUnit}
                             suggestions={suggestions}
                             showSuggestions={showSuggestions}
+                            setShowSuggestions={setShowSuggestions}
                             suggestionsRef={suggestionsRef}
                             handleIngredientInput={handleIngredientInput}
                             selectSuggestion={selectSuggestion}
