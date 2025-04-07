@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
 import { getUserId } from "./api.user";
+import AutocompleteUnits from "~/components/AutocompleteUnits";
 
 // Types pour les données des ingrédients et listes de courses
 interface Ingredient {
@@ -1020,14 +1021,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                                     >
                                         Unité
                                     </label>
-                                    <input
-                                        type="text"
-                                        id="unit"
-                                        name="unit"
+                                    <AutocompleteUnits
                                         value={newItemUnit}
-                                        onChange={(e) => setNewItemUnit(e.target.value)}
-                                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
-                                        placeholder="Ex: g"
+                                        onChange={setNewItemUnit}
                                     />
                                 </div>
                             </div>
