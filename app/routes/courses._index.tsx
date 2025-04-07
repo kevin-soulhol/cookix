@@ -1,5 +1,7 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
 import { json, MetaFunction, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
-import { Link, useLoaderData, useFetcher } from "@remix-run/react";
+import { Link, useLoaderData, useFetcher, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
@@ -28,6 +30,7 @@ export async function action({ request }: ActionFunctionArgs) {
         if (actionType === "toggleItem") {
             const itemId = formData.get("itemId");
             const isChecked = formData.get("isChecked") === "true";
+            const affectAllRelated = formData.get("affectAllRelated") === "true";
 
             if (!itemId) {
                 return json({
@@ -36,15 +39,39 @@ export async function action({ request }: ActionFunctionArgs) {
                 }, { status: 400 });
             }
 
-            // Mettre à jour l'état de l'élément
-            await prisma.shoppingItem.update({
-                where: {
-                    id: parseInt(itemId.toString())
-                },
-                data: {
-                    isChecked: !isChecked
-                }
+            // Trouver l'élément concerné pour obtenir ses détails
+            const item = await prisma.shoppingItem.findUnique({
+                where: { id: parseInt(itemId.toString()) }
             });
+
+            if (!item) {
+                return json({
+                    success: false,
+                    message: "Élément non trouvé"
+                }, { status: 404 });
+            }
+
+            if (affectAllRelated) {
+                // Mettre à jour tous les éléments avec le même ingrédient et la même unité
+                await prisma.shoppingItem.updateMany({
+                    where: {
+                        shoppingListId: item.shoppingListId,
+                        ingredientId: item.ingredientId,
+                        unit: item.unit
+                    },
+                    data: {
+                        isChecked: !isChecked
+                    }
+                });
+            } else {
+                // Mettre à jour seulement l'élément spécifique
+                await prisma.shoppingItem.update({
+                    where: { id: parseInt(itemId.toString()) },
+                    data: {
+                        isChecked: !isChecked
+                    }
+                });
+            }
 
             return json({
                 success: true,
@@ -55,6 +82,7 @@ export async function action({ request }: ActionFunctionArgs) {
         // Action pour supprimer un élément
         if (actionType === "removeItem") {
             const itemId = formData.get("itemId");
+            const removeAllRelated = formData.get("removeAllRelated") === "true";
 
             if (!itemId) {
                 return json({
@@ -63,17 +91,43 @@ export async function action({ request }: ActionFunctionArgs) {
                 }, { status: 400 });
             }
 
-            // Supprimer l'élément
-            await prisma.shoppingItem.delete({
-                where: {
-                    id: parseInt(itemId.toString())
-                }
+            // Trouver l'élément à supprimer pour obtenir ses détails
+            const item = await prisma.shoppingItem.findUnique({
+                where: { id: parseInt(itemId.toString()) }
             });
 
-            return json({
-                success: true,
-                message: "Élément supprimé de la liste"
-            });
+            if (!item) {
+                return json({
+                    success: false,
+                    message: "Élément non trouvé"
+                }, { status: 404 });
+            }
+
+            if (removeAllRelated) {
+                // Supprimer tous les éléments avec le même ingrédient et la même unité
+                await prisma.shoppingItem.deleteMany({
+                    where: {
+                        shoppingListId: item.shoppingListId,
+                        ingredientId: item.ingredientId,
+                        unit: item.unit
+                    }
+                });
+
+                return json({
+                    success: true,
+                    message: "Tous les éléments similaires ont été supprimés de la liste"
+                });
+            } else {
+                // Supprimer uniquement l'élément spécifique
+                await prisma.shoppingItem.delete({
+                    where: { id: parseInt(itemId.toString()) }
+                });
+
+                return json({
+                    success: true,
+                    message: "Élément supprimé de la liste"
+                });
+            }
         }
 
         // Action pour ajouter un élément manuellement
@@ -82,6 +136,7 @@ export async function action({ request }: ActionFunctionArgs) {
             const quantity = formData.get("quantity");
             const unit = formData.get("unit");
             const listId = formData.get("listId");
+            const marketplace = formData.get("marketplace") === "true";
 
             if (!name || !listId) {
                 return json({
@@ -106,17 +161,41 @@ export async function action({ request }: ActionFunctionArgs) {
                 });
             }
 
-            // Ajouter l'élément à la liste de courses
-            await prisma.shoppingItem.create({
-                data: {
+            // Vérifier si un élément manuel avec le même ingrédient et la même unité existe déjà
+            const existingManualItem = await prisma.shoppingItem.findFirst({
+                where: {
                     shoppingListId: parseInt(listId.toString()),
                     ingredientId: ingredient.id,
-                    quantity: quantity ? parseFloat(quantity.toString()) : null,
                     unit: unit ? unit.toString() : null,
-                    marketplace: formData.get("marketplace") === "true",
-                    isChecked: false
+                    recipeId: null // Élément ajouté manuellement
                 }
             });
+
+            if (existingManualItem) {
+                // Mettre à jour l'élément existant
+                await prisma.shoppingItem.update({
+                    where: { id: existingManualItem.id },
+                    data: {
+                        quantity: quantity
+                            ? (existingManualItem.quantity || 0) + parseFloat(quantity.toString())
+                            : existingManualItem.quantity,
+                        marketplace
+                    }
+                });
+            } else {
+                // Ajouter l'élément à la liste de courses sans recipeId (ajout manuel)
+                await prisma.shoppingItem.create({
+                    data: {
+                        shoppingListId: parseInt(listId.toString()),
+                        ingredientId: ingredient.id,
+                        quantity: quantity ? parseFloat(quantity.toString()) : null,
+                        unit: unit ? unit.toString() : null,
+                        marketplace,
+                        recipeId: null, // Explicitement null pour indiquer un ajout manuel
+                        isChecked: false
+                    }
+                });
+            }
 
             return json({
                 success: true,
@@ -127,6 +206,7 @@ export async function action({ request }: ActionFunctionArgs) {
         // Action pour vider les articles cochés
         if (actionType === "clearChecked") {
             const listId = formData.get("listId");
+            const preserveRecipes = formData.get("preserveRecipes") === "true";
 
             if (!listId) {
                 return json({
@@ -135,24 +215,54 @@ export async function action({ request }: ActionFunctionArgs) {
                 }, { status: 400 });
             }
 
-            // Supprimer tous les éléments cochés
-            await prisma.shoppingItem.deleteMany({
-                where: {
-                    shoppingListId: parseInt(listId.toString()),
-                    isChecked: true
-                }
-            });
+            if (preserveRecipes) {
+                // Option 1: Décocher les articles plutôt que les supprimer
+                // Utile si l'utilisateur veut conserver l'historique des articles de ses recettes
+                await prisma.shoppingItem.updateMany({
+                    where: {
+                        shoppingListId: parseInt(listId.toString()),
+                        isChecked: true,
+                        recipeId: { not: null } // Seulement les articles liés aux recettes
+                    },
+                    data: {
+                        isChecked: false // Décocher plutôt que supprimer
+                    }
+                });
 
-            return json({
-                success: true,
-                message: "Éléments cochés supprimés"
-            });
+                // Supprimer les articles manuels cochés (sans recette associée)
+                await prisma.shoppingItem.deleteMany({
+                    where: {
+                        shoppingListId: parseInt(listId.toString()),
+                        isChecked: true,
+                        recipeId: null // Articles ajoutés manuellement
+                    }
+                });
+
+                return json({
+                    success: true,
+                    message: "Articles cochés des recettes décochés, articles manuels supprimés"
+                });
+            } else {
+                // Option 2: Supprimer tous les articles cochés
+                await prisma.shoppingItem.deleteMany({
+                    where: {
+                        shoppingListId: parseInt(listId.toString()),
+                        isChecked: true
+                    }
+                });
+
+                return json({
+                    success: true,
+                    message: "Articles cochés supprimés"
+                });
+            }
         }
 
         // Action pour passer l'article comme achetable au marché
         if (actionType === "toggleMarketplace") {
             const itemId = formData.get("itemId");
             const currentMarketplace = formData.get("marketplace") === "true";
+            const affectAllRelated = formData.get("affectAllRelated") === "true";
 
             if (!itemId) {
                 return json({
@@ -161,15 +271,39 @@ export async function action({ request }: ActionFunctionArgs) {
                 }, { status: 400 });
             }
 
-            // Mettre à jour le marketplace de l'élément
-            await prisma.shoppingItem.update({
-                where: {
-                    id: parseInt(itemId.toString())
-                },
-                data: {
-                    marketplace: !currentMarketplace
-                }
+            // Trouver l'élément concerné pour obtenir ses détails
+            const item = await prisma.shoppingItem.findUnique({
+                where: { id: parseInt(itemId.toString()) }
             });
+
+            if (!item) {
+                return json({
+                    success: false,
+                    message: "Élément non trouvé"
+                }, { status: 404 });
+            }
+
+            if (affectAllRelated) {
+                // Mettre à jour tous les éléments avec le même ingrédient et la même unité
+                await prisma.shoppingItem.updateMany({
+                    where: {
+                        shoppingListId: item.shoppingListId,
+                        ingredientId: item.ingredientId,
+                        unit: item.unit
+                    },
+                    data: {
+                        marketplace: !currentMarketplace
+                    }
+                });
+            } else {
+                // Mettre à jour seulement l'élément spécifique
+                await prisma.shoppingItem.update({
+                    where: { id: parseInt(itemId.toString()) },
+                    data: {
+                        marketplace: !currentMarketplace
+                    }
+                });
+            }
 
             return json({
                 success: true,
@@ -201,6 +335,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     const url = new URL(request.url);
     const listId = url.searchParams.get("listId");
+    const groupByRecipe = url.searchParams.get("groupBy") === "recipe";
 
     try {
         // Récupérer la liste active ou celle spécifiée par l'ID
@@ -258,32 +393,62 @@ export async function loader({ request }: LoaderFunctionArgs) {
                     select: {
                         name: true
                     }
+                },
+                recipe: {
+                    select: {
+                        id: true,
+                        title: true,
+                        imageUrl: true
+                    }
                 }
             },
-            orderBy: [
-                { isChecked: 'asc' },
-                { marketplace: 'asc' },
-                {
-                    ingredient: {
-                        name: 'asc'
+            orderBy: groupByRecipe
+                ? [
+                    { recipeId: 'asc' }, // D'abord trier par ID de recette
+                    { isChecked: 'asc' },
+                    { marketplace: 'asc' },
+                    {
+                        ingredient: {
+                            name: 'asc'
+                        }
                     }
-                },
-            ]
+                ]
+                : [
+                    { isChecked: 'asc' },
+                    { marketplace: 'asc' },
+                    {
+                        ingredient: {
+                            name: 'asc'
+                        }
+                    }
+                ]
         });
 
-        const checkedItems = items.filter(item => item.isChecked);
-        const firstMarketplaceItems = items.filter(item => !item.isChecked && !item.marketplace);
-        const secondMarketplaceItems = items.filter(item => !item.isChecked && item.marketplace);
+        let groupedItems;
+
+        if (groupByRecipe) {
+            // Grouper par recette
+            groupedItems = groupShoppingItemsByRecipe(items);
+        } else {
+            // Grouper par ingrédient (comportement existant)
+            groupedItems = groupShoppingItemsByIngredient(items);
+        }
+
+        const checkedItems = groupedItems.filter(item => item.isChecked);
+        const firstMarketplaceItems = groupedItems.filter(item => !item.isChecked && !item.marketplace);
+        const secondMarketplaceItems = groupedItems.filter(item => !item.isChecked && item.marketplace);
 
 
         return json({
             shoppingList,
-            items,
+            items: groupedItems,
+            originalItems: items,
             categorizedItems: {
                 checked: checkedItems,
                 firstMarketplace: firstMarketplaceItems,
                 secondMarketplace: secondMarketplaceItems
             },
+            groupByRecipe,
             error: null
         });
 
@@ -300,6 +465,98 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 }
 
+function groupShoppingItemsByIngredient(items) {
+    // Créer un Map pour regrouper par ingredientId et unit
+    const groupedMap = new Map();
+
+    items.forEach(item => {
+        const key = `${item.ingredientId}-${item.unit || 'none'}`;
+
+        if (!groupedMap.has(key)) {
+            // Premier élément pour cet ingrédient+unité
+            groupedMap.set(key, {
+                ...item,
+                recipeDetails: item.recipe ? [{ id: item.recipe.id, title: item.recipe.title }] : [],
+                quantity: item.quantity || 0,
+                originalItems: [item]
+            });
+        } else {
+            // Regrouper avec des éléments existants
+            const existingItem = groupedMap.get(key);
+
+            // Ajouter la quantité
+            existingItem.quantity += (item.quantity || 0);
+
+            // Ajouter la référence à la recette si elle existe et n'est pas déjà incluse
+            if (item.recipe && !existingItem.recipeDetails.some(r => r.id === item.recipe.id)) {
+                existingItem.recipeDetails.push({ id: item.recipe.id, title: item.recipe.title });
+            }
+
+            // Conserver la référence à l'item original
+            existingItem.originalItems.push(item);
+
+            // Tout ingrédient est considéré comme non-coché si au moins un de ses composants ne l'est pas
+            existingItem.isChecked = existingItem.isChecked && item.isChecked;
+
+            // Pour le marketplace, on prend la valeur la plus fréquente
+            // Ce serait plus précis de le calculer sur tous les items, mais cette approche simple devrait suffire
+            existingItem.marketplace = existingItem.marketplace || item.marketplace;
+        }
+    });
+
+    // Convertir le Map en tableau
+    return Array.from(groupedMap.values());
+}
+
+function groupShoppingItemsByRecipe(items) {
+    // Créer une map pour stocker les recettes et les éléments "sans recette"
+    const recipeGroups = new Map();
+
+    // Groupe spécial pour les éléments sans recette
+    const manualItemsKey = "manual";
+    recipeGroups.set(manualItemsKey, {
+        id: manualItemsKey,
+        title: "Ajouts manuels",
+        imageUrl: null,
+        items: []
+    });
+
+    // Parcourir tous les articles
+    items.forEach(item => {
+        if (item.recipeId) {
+            // Articles provenant d'une recette
+            const recipeId = item.recipeId.toString();
+
+            if (!recipeGroups.has(recipeId)) {
+                recipeGroups.set(recipeId, {
+                    id: item.recipeId,
+                    title: item.recipe.title,
+                    imageUrl: item.recipe.imageUrl,
+                    items: []
+                });
+            }
+
+            // Ajouter l'article au groupe de recette correspondant
+            recipeGroups.get(recipeId).items.push(item);
+        } else {
+            // Articles ajoutés manuellement
+            recipeGroups.get(manualItemsKey).items.push(item);
+        }
+    });
+
+    // Convertir en tableau de groupes
+    const result = Array.from(recipeGroups.values())
+        .filter(group => group.items.length > 0) // Exclure les groupes vides
+        .sort((a, b) => {
+            // Placer les ajouts manuels en dernier
+            if (a.id === manualItemsKey) return 1;
+            if (b.id === manualItemsKey) return -1;
+            return a.title.localeCompare(b.title);
+        });
+
+    return result;
+}
+
 export default function ShoppingList() {
     const { shoppingList, items, categorizedItems, error } = useLoaderData<typeof loader>();
     const [showAddModal, setShowAddModal] = useState(false);
@@ -307,8 +564,11 @@ export default function ShoppingList() {
     const [newItemQuantity, setNewItemQuantity] = useState("");
     const [newItemUnit, setNewItemUnit] = useState("");
     const [showShareModal, setShowShareModal] = useState(false);
+    const [showClearCheckedDialog, setShowClearCheckedDialog] = useState(false);
+    const [preserveRecipes, setPreserveRecipes] = useState(true); // Par défaut, préserver les articles des recettes
     const [email, setEmail] = useState("");
     const shareFetcher = useFetcher();
+    const toggleGroupingFetcher = useFetcher();
 
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -325,6 +585,9 @@ export default function ShoppingList() {
     const secondMarketplaceCount = categorizedItems?.secondMarketplace?.length || 0;
     const checkedCount = categorizedItems.checked?.length || 0;
     const totalCount = firstMarketplaceCount + secondMarketplaceCount;
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const groupByRecipe = searchParams.get("groupBy") === "recipe";
 
 
     // Calculer la progression
@@ -396,6 +659,40 @@ export default function ShoppingList() {
         };
     }, []);
 
+    function onToggleItem(item: any, applyToAll: boolean) {
+        toggleItemFetcher.submit(
+            {
+                _action: "toggleItem",
+                itemId: item.id,
+                isChecked: item.isChecked.toString(),
+                affectAllRelated: applyToAll.toString()
+            },
+            { method: "post" }
+        );
+    }
+
+    function onToggleMarketPlace(item: any, applyToAll: boolean) {
+        toggleMarketplaceFetcher.submit(
+            {
+                _action: "toggleMarketplace",
+                itemId: item.id,
+                marketplace: item.marketplace.toString(),
+                affectAllRelated: applyToAll.toString()
+            },
+            { method: "post" }
+        );
+    }
+
+    const toggleGroupBy = () => {
+        const newParams = new URLSearchParams(searchParams);
+        if (groupByRecipe) {
+            newParams.delete("groupBy"); // Revenir au mode par défaut
+        } else {
+            newParams.set("groupBy", "recipe");
+        }
+        setSearchParams(newParams);
+    };
+
     return (
         <Layout pageTitle="Liste de courses">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -411,17 +708,7 @@ export default function ShoppingList() {
                                 {/* Bouton de suppression des articles cochés */}
                                 {checkedCount > 0 && (
                                     <button
-                                        onClick={() => {
-                                            if (window.confirm("Voulez-vous supprimer tous les articles cochés ?")) {
-                                                clearCheckedFetcher.submit(
-                                                    {
-                                                        _action: "clearChecked",
-                                                        listId: shoppingList.id
-                                                    },
-                                                    { method: "post" }
-                                                );
-                                            }
-                                        }}
+                                        onClick={() => setShowClearCheckedDialog(true)} // Utilisons un état pour contrôler le dialogue
                                         className="group relative inline-flex items-center p-2 bg-white border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors"
                                     >
                                         <svg
@@ -461,6 +748,40 @@ export default function ShoppingList() {
                                         />
                                     </svg>
                                 </button>
+
+                                {/* Bouton pour basculer entre les modes de groupement */}
+                                <button
+                                    onClick={toggleGroupBy}
+                                    type="submit"
+                                    className="group relative inline-flex items-center p-2 bg-white border border-indigo-500 text-indigo-500 rounded-full hover:bg-indigo-50 transition-colors"
+                                    title={groupByRecipe ? "Grouper par ingrédient" : "Grouper par recette"}
+                                >
+                                    <svg
+                                        className="w-5 h-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        {groupByRecipe ? (
+                                            // Icône pour le groupement par ingrédient
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M4 6h16M4 12h16m-7 6h7"
+                                            />
+                                        ) : (
+                                            // Icône pour le groupement par recette
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                                            />
+                                        )}
+                                    </svg>
+                                </button>
                             </div>
 
                             {/* Bouton d'ajout d'article */}
@@ -498,103 +819,88 @@ export default function ShoppingList() {
                             </div>
                         )}
 
-                        {/* Liste des courses */}
-                        <div className="mb-8">
-                            <h2 className="text-lg font-semibold mb-3 flex items-center">
-                                <span className="text-gray-600">{totalCount} articles</span>
-                                {secondMarketplaceCount > 0 && (
-                                    <span className="ml-2 text-sm text-teal-600">
-                                        {secondMarketplaceCount} du marché
-                                    </span>
-                                )}
-                                {firstMarketplaceCount > 0 && (
-                                    <span className="ml-2 text-sm text-indigo-600">
-                                        {firstMarketplaceCount} autres
-                                    </span>
-                                )}
-                            </h2>
 
-                            {totalCount === 0 ? (
-                                <div className="bg-white rounded-lg shadow-md p-4 text-center text-gray-500">
-                                    Aucun article pour le supermarché
-                                </div>
-                            ) : (
-                                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                                    <ul className="divide-y divide-gray-200">
-                                        {categorizedItems.secondMarketplace.map(item => (
-                                            <ShoppingItemWithMarketplace
-                                                key={item.id}
-                                                item={item}
-                                                onToggle={() => {
-                                                    toggleItemFetcher.submit(
-                                                        {
-                                                            _action: "toggleItem",
-                                                            itemId: item.id,
-                                                            isChecked: item.isChecked.toString()
-                                                        },
-                                                        { method: "post" }
-                                                    );
-                                                }}
-                                                onRemove={() => {
-                                                    removeItemFetcher.submit(
-                                                        {
-                                                            _action: "removeItem",
-                                                            itemId: item.id
-                                                        },
-                                                        { method: "post" }
-                                                    );
-                                                }}
-                                                onToggleMarketplace={() => {
-                                                    toggleMarketplaceFetcher.submit(
-                                                        {
-                                                            _action: "toggleMarketplace",
-                                                            itemId: item.id,
-                                                            marketplace: item.marketplace.toString()
-                                                        },
-                                                        { method: "post" }
-                                                    );
-                                                }}
-                                            />
-                                        ))}
-                                        {categorizedItems.firstMarketplace.map(item => (
-                                            <ShoppingItemWithMarketplace
-                                                key={item.id}
-                                                item={item}
-                                                onToggle={() => {
-                                                    toggleItemFetcher.submit(
-                                                        {
-                                                            _action: "toggleItem",
-                                                            itemId: item.id,
-                                                            isChecked: item.isChecked.toString()
-                                                        },
-                                                        { method: "post" }
-                                                    );
-                                                }}
-                                                onRemove={() => {
-                                                    removeItemFetcher.submit(
-                                                        {
-                                                            _action: "removeItem",
-                                                            itemId: item.id
-                                                        },
-                                                        { method: "post" }
-                                                    );
-                                                }}
-                                                onToggleMarketplace={() => {
-                                                    toggleMarketplaceFetcher.submit(
-                                                        {
-                                                            _action: "toggleMarketplace",
-                                                            itemId: item.id,
-                                                            marketplace: item.marketplace.toString()
-                                                        },
-                                                        { method: "post" }
-                                                    );
-                                                }}
-                                            />
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
+                        {/* Liste des courses */}
+                        {groupByRecipe ? (
+                            <RecipeGroupedView
+                                recipeGroups={items}
+                                onToggle={toggleItemFetcher}
+                                onRemove={removeItemFetcher}
+                                onToggleMarketplace={toggleMarketplaceFetcher}
+                            />
+                        ) : (
+                            <div className="mb-8">
+                                <h2 className="text-lg font-semibold mb-3 flex items-center">
+                                    <span className="text-gray-600">{totalCount} articles</span>
+                                    {secondMarketplaceCount > 0 && (
+                                        <span className="ml-2 text-sm text-teal-600">
+                                            {secondMarketplaceCount} du marché
+                                        </span>
+                                    )}
+                                    {firstMarketplaceCount > 0 && (
+                                        <span className="ml-2 text-sm text-indigo-600">
+                                            {firstMarketplaceCount} autres
+                                        </span>
+                                    )}
+                                </h2>
+
+                                {totalCount === 0 ? (
+                                    <div className="bg-white rounded-lg shadow-md p-4 text-center text-gray-500">
+                                        Aucun article pour le supermarché
+                                    </div>
+                                ) : (
+                                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                                        <ul className="divide-y divide-gray-200">
+                                            {categorizedItems.secondMarketplace.map(item => (
+                                                <ShoppingItemWithMarketplace
+                                                    key={item.id}
+                                                    item={item}
+                                                    onToggle={(applyToAll) => {
+                                                        onToggleItem(item, applyToAll)
+                                                    }}
+                                                    onRemove={(removeAllRelated) => {
+                                                        removeItemFetcher.submit(
+                                                            {
+                                                                _action: "removeItem",
+                                                                itemId: item.id,
+                                                                removeAllRelated: removeAllRelated.toString()
+                                                            },
+                                                            { method: "post" }
+                                                        );
+                                                    }}
+                                                    onToggleMarketplace={(applyToAll) => {
+                                                        onToggleMarketPlace(item, applyToAll)
+                                                    }}
+                                                />
+                                            ))}
+                                            {categorizedItems.firstMarketplace.map(item => (
+                                                <ShoppingItemWithMarketplace
+                                                    key={item.id}
+                                                    item={item}
+                                                    onToggle={(applyToAll) => {
+                                                        onToggleItem(item, applyToAll)
+                                                    }}
+                                                    onRemove={(removeAllRelated) => {
+                                                        removeItemFetcher.submit(
+                                                            {
+                                                                _action: "removeItem",
+                                                                itemId: item.id,
+                                                                removeAllRelated: removeAllRelated.toString()
+                                                            },
+                                                            { method: "post" }
+                                                        );
+                                                    }}
+                                                    onToggleMarketplace={(applyToAll) => {
+                                                        onToggleMarketPlace(item, applyToAll)
+                                                    }}
+                                                />
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
 
                         {/* Liste des courses - Articles cochés */}
                         {categorizedItems.checked.length > 0 && (
@@ -606,24 +912,21 @@ export default function ShoppingList() {
                                             <ShoppingItemWithMarketplace
                                                 key={item.id}
                                                 item={item}
-                                                onToggle={() => {
-                                                    toggleItemFetcher.submit(
+                                                onToggle={(applyToAll) => {
+                                                    onToggleItem(item, applyToAll)
+                                                }}
+                                                onRemove={(removeAllRelated) => {
+                                                    removeItemFetcher.submit(
                                                         {
-                                                            _action: "toggleItem",
+                                                            _action: "removeItem",
                                                             itemId: item.id,
-                                                            isChecked: item.isChecked.toString()
+                                                            removeAllRelated: removeAllRelated.toString()
                                                         },
                                                         { method: "post" }
                                                     );
                                                 }}
-                                                onRemove={() => {
-                                                    removeItemFetcher.submit(
-                                                        {
-                                                            _action: "removeItem",
-                                                            itemId: item.id
-                                                        },
-                                                        { method: "post" }
-                                                    );
+                                                onToggleMarketplace={(applyToAll) => {
+                                                    onToggleMarketPlace(item, applyToAll)
                                                 }}
                                             />
                                         ))}
@@ -794,6 +1097,77 @@ export default function ShoppingList() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Dialogue de confirmation clearCheckes */}
+                        {showClearCheckedDialog && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                                <div className="bg-white p-5 rounded-lg shadow-xl max-w-md w-full">
+                                    <h3 className="text-lg font-medium mb-3">Supprimer les articles cochés</h3>
+                                    <p className="mb-4 text-gray-600">
+                                        Comment souhaitez-vous gérer les articles cochés provenant de vos recettes?
+                                    </p>
+
+                                    <div className="space-y-2 mb-4">
+                                        <label className="flex items-start">
+                                            <input
+                                                type="radio"
+                                                name="clearOption"
+                                                checked={preserveRecipes}
+                                                onChange={() => setPreserveRecipes(true)}
+                                                className="mt-1 mr-2"
+                                            />
+                                            <div>
+                                                <span className="font-medium">Décocher les articles des recettes</span>
+                                                <p className="text-xs text-gray-500">
+                                                    Les articles ajoutés manuellement seront supprimés, ceux des recettes seront simplement décochés
+                                                </p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start">
+                                            <input
+                                                type="radio"
+                                                name="clearOption"
+                                                checked={!preserveRecipes}
+                                                onChange={() => setPreserveRecipes(false)}
+                                                className="mt-1 mr-2"
+                                            />
+                                            <div>
+                                                <span className="font-medium">Tout supprimer</span>
+                                                <p className="text-xs text-gray-500">
+                                                    Tous les articles cochés seront supprimés, y compris ceux provenant des recettes
+                                                </p>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <div className="flex justify-end space-x-3">
+                                        <button
+                                            onClick={() => setShowClearCheckedDialog(false)}
+                                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                        >
+                                            Annuler
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                clearCheckedFetcher.submit(
+                                                    {
+                                                        _action: "clearChecked",
+                                                        listId: shoppingList.id,
+                                                        preserveRecipes: preserveRecipes.toString()
+                                                    },
+                                                    { method: "post" }
+                                                );
+                                                setShowClearCheckedDialog(false);
+                                            }}
+                                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                                        >
+                                            Confirmer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
@@ -802,7 +1176,23 @@ export default function ShoppingList() {
 }
 
 // Composant pour les articles non cochés (avec switch de marketplace)
-function ShoppingItemWithMarketplace({ item, onToggle, onRemove, onToggleMarketplace }) {
+function ShoppingItemWithMarketplace({ item, onToggle, onRemove, onToggleMarketplace, showRecipeDetails = true }) {
+    const [showRecipes, setShowRecipes] = useState(false);
+    const [applyToAll, setApplyToAll] = useState(true);
+
+    // Fonction de suppression avec confirmation
+    const handleRemove = () => {
+        onRemove(true);
+    };
+
+    const handleToggle = () => {
+        onToggle(applyToAll);
+    };
+
+    const handleToggleMarketplace = () => {
+        onToggleMarketplace(applyToAll);
+    };
+
     // Définir les icônes et couleurs pour chaque catégorie
     const marketplaceInfo = item.marketplace
         ? {
@@ -825,6 +1215,7 @@ function ShoppingItemWithMarketplace({ item, onToggle, onRemove, onToggleMarketp
     return (
         <li className={`px-4 relative ${item.marketplace ? 'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-green-500' : ''} ${item.isChecked && "bg-gray-50"}`}>
             <div className="flex items-center py-3">
+                {/* Bouton de check */}
                 <button
                     type="button"
                     onClick={onToggle}
@@ -865,8 +1256,39 @@ function ShoppingItemWithMarketplace({ item, onToggle, onRemove, onToggleMarketp
                             </span>
                         )}
                     </div>
+
+                    {/* Afficher les recettes associées si disponibles */}
+                    {item.recipeDetails && item.recipeDetails.length > 0 && (
+                        <div>
+                            <button
+                                onClick={() => setShowRecipes(!showRecipes)}
+                                className="text-xs text-rose-500 mt-1 flex items-center"
+                            >
+                                <span>{showRecipes ? "Masquer" : "Voir"} les recettes ({item.recipeDetails.length})</span>
+                                <svg
+                                    className={`ml-1 w-3 h-3 transition-transform ${showRecipes ? "rotate-180" : ""}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {showRecipes && (
+                                <div className="mt-1 pl-2 border-l-2 border-rose-200">
+                                    {item.recipeDetails.map((recipe, idx) => (
+                                        <div key={idx} className="text-xs text-gray-500">
+                                            • {recipe.title}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
+                {/* Boutons d'action */}
                 <div className="flex items-center space-x-2 flex-shrink-0">
                     {/* Bouton pour changer la catégorie */}
                     <button
@@ -879,9 +1301,10 @@ function ShoppingItemWithMarketplace({ item, onToggle, onRemove, onToggleMarketp
                         {marketplaceInfo.icon}
                     </button>
 
+                    {/* Bouton de supression */}
                     <button
                         type="button"
-                        onClick={onRemove}
+                        onClick={handleRemove}
                         className="text-gray-400 p-1 hover:text-red-500"
                         aria-label="Supprimer"
                     >
@@ -903,5 +1326,92 @@ function ShoppingItemWithMarketplace({ item, onToggle, onRemove, onToggleMarketp
                 </div>
             </div>
         </li>
+    );
+
+}
+
+//Composant d'affichage regroupé par recipe
+function RecipeGroupedView({ recipeGroups, onToggle, onRemove, onToggleMarketplace }) {
+    return (
+        <div className="space-y-8">
+            {recipeGroups.map((group) => (
+                <div key={group.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    {/* En-tête du groupe de recette */}
+                    <div className="bg-gray-50 p-4 border-b border-gray-200 flex items-center">
+                        {group.imageUrl ? (
+                            <div
+                                className="w-12 h-12 rounded-md bg-cover bg-center mr-3 flex-shrink-0"
+                                style={{ backgroundImage: `url(${group.imageUrl})` }}
+                            />
+                        ) : (
+                            <div className="w-12 h-12 rounded-md bg-gray-200 flex items-center justify-center mr-3 flex-shrink-0">
+                                <svg
+                                    className="w-6 h-6 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                    />
+                                </svg>
+                            </div>
+                        )}
+
+                        <div>
+                            <h3 className="font-semibold text-gray-900">{group.title}</h3>
+                            <p className="text-xs text-gray-500">{group.items.length} ingrédient{group.items.length > 1 ? 's' : ''}</p>
+                        </div>
+                    </div>
+
+                    {/* Liste des ingrédients pour cette recette */}
+                    <ul className="divide-y divide-gray-200">
+                        {group.items.map((item) => (
+                            <ShoppingItemWithMarketplace
+                                key={item.id}
+                                item={item}
+                                onToggle={(applyToAll) => {
+                                    onToggle.submit(
+                                        {
+                                            _action: "toggleItem",
+                                            itemId: item.id,
+                                            isChecked: item.isChecked.toString(),
+                                            affectAllRelated: applyToAll.toString()
+                                        },
+                                        { method: "post" }
+                                    );
+                                }}
+                                onRemove={(removeAllRelated) => {
+                                    onRemove.submit(
+                                        {
+                                            _action: "removeItem",
+                                            itemId: item.id,
+                                            removeAllRelated: removeAllRelated.toString()
+                                        },
+                                        { method: "post" }
+                                    );
+                                }}
+                                onToggleMarketplace={(applyToAll) => {
+                                    onToggleMarketplace.submit(
+                                        {
+                                            _action: "toggleMarketplace",
+                                            itemId: item.id,
+                                            marketplace: item.marketplace.toString(),
+                                            affectAllRelated: applyToAll.toString()
+                                        },
+                                        { method: "post" }
+                                    );
+                                }}
+                                showRecipeDetails={false} // Pas besoin de montrer les détails de recette ici
+                            />
+                        ))}
+                    </ul>
+                </div>
+            ))}
+        </div>
     );
 }

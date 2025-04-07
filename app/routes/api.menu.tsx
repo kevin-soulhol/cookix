@@ -287,6 +287,7 @@ async function getMenuByUserId(userId: number) {
 
 async function addRecipeToMenu(recipeId: number, userId: number) {
   if (!recipeId) {
+    console.log("Pas de recipeId", recipeId)
     return json({ success: false, message: "ID de recette manquant" }, { status: 400 });
   }
 
@@ -299,13 +300,10 @@ async function addRecipeToMenu(recipeId: number, userId: number) {
       data: {
         menuId: activeMenu.id,
         recipeId: parseInt(recipeId.toString()),
-        // Vous pourriez ajouter d'autres champs comme le jour de la semaine, le type de repas, etc.
       },
     });
 
-    // Une fois la recette ajoutée au menu, ajoutez automatiquement ses ingrédients à la liste de courses
-
-    // 1. Récupérer ou créer la liste de courses active
+    // Récupérer ou créer la liste de courses active
     let activeShoppingList = await prisma.shoppingList.findFirst({
       where: {
         userId,
@@ -320,7 +318,7 @@ async function addRecipeToMenu(recipeId: number, userId: number) {
       });
     }
 
-    // 2. Récupérer les ingrédients de la recette
+    // Récupérer les ingrédients de la recette
     const recipeIngredients = await prisma.recipeIngredient.findMany({
       where: {
         recipeId: parseInt(recipeId.toString()),
@@ -330,34 +328,36 @@ async function addRecipeToMenu(recipeId: number, userId: number) {
       },
     });
 
-    // 3. Ajouter chaque ingrédient à la liste de courses
+    // Ajouter chaque ingrédient à la liste de courses
     for (const recipeIngredient of recipeIngredients) {
-      // Vérifier si l'ingrédient existe déjà dans la liste
+      // Vérifier si l'ingrédient existe déjà dans la liste POUR CETTE RECETTE SPÉCIFIQUE
       const existingItem = await prisma.shoppingItem.findFirst({
         where: {
           shoppingListId: activeShoppingList.id,
           ingredientId: recipeIngredient.ingredientId,
+          recipeId: parseInt(recipeId.toString()),
+          unit: recipeIngredient.unit,
         },
       });
 
-      if (existingItem && existingItem.unit === recipeIngredient.unit) {
-        // Si l'ingrédient existe déjà et que unit est pareil, mettre à jour la quantité
+      if (existingItem) {
+        // Mettre à jour la quantité si l'ingrédient existe déjà pour cette recette
         await prisma.shoppingItem.update({
           where: {
             id: existingItem.id,
           },
           data: {
-            quantity: existingItem.quantity + recipeIngredient.quantity,
-            // Conserver l'unité existante ou utiliser celle de la nouvelle recette
-            unit: existingItem.unit,
+            quantity: recipeIngredient.quantity,
+            unit: recipeIngredient.unit,
           },
         });
       } else {
-        // Sinon, créer un nouvel élément dans la liste
+        // Créer un nouvel élément avec la référence à la recette
         await prisma.shoppingItem.create({
           data: {
             shoppingListId: activeShoppingList.id,
             ingredientId: recipeIngredient.ingredientId,
+            recipeId: parseInt(recipeId.toString()),
             quantity: recipeIngredient.quantity,
             unit: recipeIngredient.unit,
             isChecked: false,
@@ -407,97 +407,17 @@ async function deleteRecipeFromMenu(recipeId: number, userId: number) {
     });
 
     if (!activeShoppingList) {
-      return json({ success: true, message: "Recette retirée des Menus. Aucune liste de courses trouvée." });
+      return json({ success: true, message: "Recette retirée du menu. Aucune liste de courses trouvée." });
     }
 
-    // Récupérer les ingrédients de la recette supprimée
-    const recipeIngredients = await prisma.recipeIngredient.findMany({
+    await prisma.shoppingItem.deleteMany({
       where: {
-        recipeId: recipeId,
+        shoppingListId: activeShoppingList.id,
+        recipeId: recipeId
       }
     });
 
-    // Pour chaque ingrédient de la recette supprimée
-    for (const recipeIngredient of recipeIngredients) {
-      // Vérifier si l'ingrédient existe dans la liste de courses
-      const shoppingItem = await prisma.shoppingItem.findFirst({
-        where: {
-          shoppingListId: activeShoppingList.id,
-          ingredientId: recipeIngredient.ingredientId,
-          unit: recipeIngredient.unit
-        },
-      });
-
-      if (!shoppingItem) continue; // Si l'ingrédient n'est pas dans la liste, passer au suivant
-
-      // Vérifier si cet ingrédient est utilisé dans d'autres recettes du menu
-      // Récupérer tous les autres éléments du menu
-      const otherMenuItems = await prisma.menuItem.findMany({
-        where: {
-          menuId: activeMenu.id,
-          recipeId: {
-            not: recipeId // Exclure la recette qu'on vient de supprimer
-          }
-        },
-        select: {
-          recipeId: true
-        }
-      });
-
-      // Récupérer les IDs des autres recettes
-      const otherRecipeIds = otherMenuItems.map(item => item.recipeId);
-
-      // Calculer la quantité totale de cet ingrédient dans les autres recettes
-      let quantityInOtherRecipes = 0;
-
-      if (otherRecipeIds.length > 0) {
-        // Trouver les entrées RecipeIngredient pour le même ingrédient dans d'autres recettes
-        const sameIngredientsInOtherRecipes = await prisma.recipeIngredient.findMany({
-          where: {
-            ingredientId: recipeIngredient.ingredientId,
-            unit: recipeIngredient.unit,
-            recipeId: {
-              in: otherRecipeIds
-            }
-          }
-        });
-
-        // Calculer la quantité totale
-        for (const ing of sameIngredientsInOtherRecipes) {
-          if (ing.quantity) {
-            quantityInOtherRecipes += ing.quantity;
-          }
-        }
-      }
-
-      // Si l'ingrédient n'est plus utilisé, le supprimer complètement
-      if (quantityInOtherRecipes === 0) {
-        await prisma.shoppingItem.delete({
-          where: {
-            id: shoppingItem.id
-          }
-        });
-      }
-      // Sinon, ajuster la quantité
-      else {
-        // Nouvelle quantité = max(quantité dans les autres recettes, quantité actuelle - quantité de la recette supprimée)
-        const newQuantity = Math.max(
-          quantityInOtherRecipes,
-          (shoppingItem.quantity || 0) - (recipeIngredient.quantity || 0)
-        );
-
-        await prisma.shoppingItem.update({
-          where: {
-            id: shoppingItem.id
-          },
-          data: {
-            quantity: newQuantity
-          }
-        });
-      }
-    }
-
-    return json({ success: true, message: "Recette retirée des Menus et ingrédients mis à jour dans la liste de courses" });
+    return json({ success: true, message: "Recette retirée du menu et ingrédients correspondants supprimés de la liste de courses" });
 
   } catch (error) {
     console.log("Erreur lors du remove de la recette", error);

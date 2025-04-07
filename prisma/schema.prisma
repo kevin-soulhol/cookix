@@ -30,6 +30,7 @@ model Recipe {
   steps           RecipeStep[]
   category        Category?          @relation(fields: [categoryId], references: [id])
   meals           MealOnRecipe[]
+  ShoppingItem    ShoppingItem[]
 
   // Index pour accélérer les recherches par titre
   @@index([title])
@@ -170,15 +171,18 @@ model ShoppingItem {
   id             Int          @id @default(autoincrement())
   shoppingListId Int
   ingredientId   Int
+  recipeId       Int?
   quantity       Float?
   unit           String?
   isChecked      Boolean      @default(false)
   marketplace    Boolean      @default(false)
   ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
   shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  recipe         Recipe?      @relation(fields: [recipeId], references: [id])
 
-  @@unique([shoppingListId, ingredientId])
+  @@unique([shoppingListId, ingredientId, recipeId])
   @@index([ingredientId], map: "ShoppingItem_ingredientId_fkey")
+  @@index([recipeId], map: "ShoppingItem_recipeId_fkey")
 }
 
 model User {
