@@ -89,7 +89,7 @@ jobs:
         run: |
           npx playwright test --project=chromium
 
-      - name: Run a simple test outside Docker
+      - name: See repertory
         run: |
             ls -la
             ls tests -la
