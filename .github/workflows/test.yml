@@ -89,7 +89,11 @@ jobs:
 
 
       - name: Run a simple test outside Docker
-        run: npx playwright test --reporter=json --output=test-results/report.json --project=chromium
+        id: run_tests
+        run: | 
+            npx playwright test --reporter=json --output=test-results/report.json --project=chromium
+            echo "test_exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
 
       - name: Upload test logs
         if: always()
@@ -102,3 +106,9 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose down
+
+      - name: Check test results
+        if: steps.run_tests.outputs.test_exit_code != '0'
+        run: |
+          echo "Des tests ont échoué. Consultez les artifacts pour plus de détails."
+          exit 1
