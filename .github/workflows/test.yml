@@ -28,31 +28,21 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "SESSION_SECRET=${{ secrets.SESSION_SECRET }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}
-          DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" > .env
+          echo "SESSION_SECRET=${{ secrets.SESSION_SECRET }}" > .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
+          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
 
       - name: Generate Prisma Client
         run: npx prisma generate
 
       - name: Build Docker containers for testing
-        run: docker compose -f docker-compose.yml up -d --build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}    
-
-      - name: Wait for services to be ready
-        run: |
-            # Attendre que les services soient prêts (30 secondes maximum)
-            sleep 30
-            docker compose ps
-            docker compose logs app
+        run: docker compose up -d --build  
 
       - name: Run E2E tests
-        run: docker compose exec -T app npx playwright test
+        run: docker compose exec -ti app npx playwright test
 
       - name: Show logs in case of failure
         if: failure()
