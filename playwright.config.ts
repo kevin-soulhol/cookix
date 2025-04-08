@@ -1,10 +1,16 @@
 import { PlaywrightTestConfig } from '@playwright/test';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',
   timeout: 30000,
+  //globalSetup: path.join(__dirname, 'tests/global-setup.ts'),
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
   use: {
     baseURL: 'http://localhost:3000',
