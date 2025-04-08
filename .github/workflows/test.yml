@@ -88,10 +88,10 @@ jobs:
           EOL"
 
 
-      - name: Run a simple test outside Docker
+      - name: Run tests
         id: run_tests
         run: | 
-            npx playwright test --reporter=json --output=test-results/report.json --project=chromium
+            npx playwright test --reporter=html --output=test-results/report.json --project=chromium
             echo "test_exit_code=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
 
