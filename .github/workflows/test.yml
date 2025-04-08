@@ -49,14 +49,6 @@ jobs:
       - name: Build and start Docker containers
         run: docker compose up -d --build
 
-      - name: Wait for services to be ready
-        run: |
-          # Installer wait-on
-          npm install -g wait-on
-          # Attendre que l'application soit accessible
-          wait-on -t 60000 http://localhost:3000 || (docker compose logs && exit 1)
-          echo "Application is ready"
-
       - name: Update playwright.config.ts for local testing
         run: |
           cat > playwright.config.ts << 'EOL'
