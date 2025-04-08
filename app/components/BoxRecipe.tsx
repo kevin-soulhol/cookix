@@ -76,7 +76,7 @@ export default function BoxRecipe({ recipe, readOnly = false, compact = false }:
     return (
         <>
             <div
-                className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow relative"
+                className="box-recipe bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow relative"
                 onClick={() => openModal()} // Ouvrir le modal au clic
                 role="button"
             >

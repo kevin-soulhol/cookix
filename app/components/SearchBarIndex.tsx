@@ -237,7 +237,7 @@ export function EmptyState({ onReset }: { onReset: () => void }) {
 // Composant pour l'indicateur de chargement infini
 export function LoadingIndicator() {
     return (
-        <div className="flex flex-col items-center">
+        <div className="loader flex flex-col items-center">
             <svg
                 className="animate-spin h-8 w-8 text-rose-500 mb-2"
                 xmlns="http://www.w3.org/2000/svg"

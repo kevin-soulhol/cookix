@@ -19,7 +19,8 @@
     "migrate:dev": "docker compose exec app npx prisma migrate dev --name",
     "migrate:reset": "docker compose exec app npx prisma migrate reset",
     "migrate:deploy": "docker compose exec app npx prisma migrate deploy",
-    "migrate:export": "docker compose exec db mysqldump -u root -p cookix Recipe >/tmp/dump.sql"
+    "migrate:export": "docker compose exec db mysqldump -u root -p cookix Recipe >/tmp/dump.sql",
+    "test": "playwright test"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
@@ -35,6 +36,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.1",
     "@remix-run/dev": "^2.16.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.13.10",

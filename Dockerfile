@@ -9,6 +9,8 @@ WORKDIR /app
 # Copier les fichiers de dépendances
 COPY package.json package-lock.json* ./
 COPY start.sh ./
+COPY playwright.config.ts /app/
+COPY /tests /app/
 RUN chmod +x start.sh
 
 # Installer les dépendances
@@ -30,6 +32,8 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/playwright.config.ts ./
+COPY --from=builder /app/tests ./
 COPY --from=builder /app/prisma ./prisma
 
 COPY --from=builder /app/prisma-migrate.sh ./

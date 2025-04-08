@@ -259,7 +259,7 @@ export default function RecipesIndex() {
         ) : recipes.length === 0 && !isLoading ? (
           <EmptyState onReset={filterActions.resetFilters} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="container-result grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {recipes.map((recipe, index) => (
               <BoxRecipe key={`${recipe.id}-${index}`} recipe={recipe} />
             ))}
