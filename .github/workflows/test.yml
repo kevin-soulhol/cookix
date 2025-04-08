@@ -40,11 +40,9 @@ jobs:
 
       - name: Build Docker containers for testing
         run: npm run build
-
-      - name: Wait for services to be ready
-        run: |
-          # Attendre que l'application soit prête
-          npx wait-on http://localhost:3000 -t 60000 || (docker compose logs && exit 1)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
 
       - name: Run E2E tests
         run: npx playwright test
