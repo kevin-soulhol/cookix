@@ -19,9 +19,9 @@ test('home page - chargement et recherche de base', async ({ page }) => {
   await page.waitForTimeout(400)
   
   // Vérifier qu'il y a des résultats ou un message "Aucune recette trouvée"
-  const results = page.locator('.container-result');
+  const results = page.locator('.container-resultcaca');
   await expect(results).toBeVisible();
   
   // Prendre une capture d'écran des résultats
-  await page.screenshot({ path: 'tests/e2e/home-search-results.png' });
+  await page.screenshot({ path: 'test-results/home-search-results.png' });
 });

@@ -84,19 +84,6 @@ jobs:
           export default config;
           EOL"
 
-      - name: Create a simple test
-        run: |
-          mkdir -p tests/e2e
-          cat > tests/e2e/basic.spec.ts << 'EOL'
-          import { test, expect } from '@playwright/test';
-
-          test('basic check', async ({ page }) => {
-            await page.goto('http://localhost:3000');
-            // Vérifier que la page se charge sans erreur
-            await expect(page.locator('body')).toBeVisible();
-            console.log('La page s\'est chargée correctement');
-          });
-          EOL
 
       # Exécuter un test plus simple d'abord
       - name: Run a simple test outside Docker
@@ -108,7 +95,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: docker-logs
-          path: test-results
+          path: ./test-results
           retention-days: 7
 
       - name: Cleanup
