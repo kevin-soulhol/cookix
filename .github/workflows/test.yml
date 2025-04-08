@@ -89,18 +89,27 @@ jobs:
 
 
       - name: Run a simple test outside Docker
-        run: npx playwright test --reporter=json --output=test-results/report.json --project=chromium
-        continue-on-error: true
-
-      - name: See repertory
-        if: always()
         run: |
-            echo "Contenu du répertoire courant:"
-            ls -la
-            echo "Contenu du répertoire playwright-report (s'il existe):"
-            ls -la playwright-report || echo "Répertoire inexistant"
-            echo "Contenu du répertoire test-results (s'il existe):"
-            ls -la test-results || echo "Répertoire inexistant"
+            npx playwright test --reporter=json --output=test-results/report.json --project=chromium
+
+            # Vérifier si des tests ont échoué
+            if [ -f "playwright-report/index.html" ]; then
+                # Compter les tests échoués (basé sur le rapport JSON)
+                FAILED_TESTS=$(grep -c '"status":"failed"' test-results/report.json || echo "0")
+                
+                echo "Nombre de tests échoués: $FAILED_TESTS"
+                
+                if [ "$FAILED_TESTS" -gt 0 ]; then
+                echo "::error::$FAILED_TESTS tests ont échoué!"
+                exit 1
+                else
+                echo "Tous les tests ont réussi!"
+                fi
+            else
+                echo "::error::Le rapport de test n'a pas été généré!"
+                exit 1
+            fi
+        continue-on-error: true
 
       - name: Upload test logs
         if: always()
