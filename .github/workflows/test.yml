@@ -90,6 +90,7 @@ jobs:
           npx playwright test --project=chromium
 
       - name: See repertory
+        if: always()
         run: |
             ls -la
             ls tests -la
