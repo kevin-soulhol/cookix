@@ -42,7 +42,7 @@ jobs:
         run: docker compose up -d --build  
 
       - name: Run E2E tests
-        run: docker compose exec -ti app npx playwright install --with-deps chromium
+        run: docker compose exec -ti app npx playwright install
 
       - name: Run E2E tests
         run: docker compose exec -ti app npx playwright test
@@ -54,10 +54,10 @@ jobs:
       - name: Copy test reports from container
         if: always()
         run: |
-          # Créer un répertoire local pour les rapports
-          mkdir -p test-results
-          # Copier les rapports depuis le conteneur
-          docker compose cp app:/app/test-results ./
+            # Créer un répertoire local pour les rapports
+            mkdir -p test-results
+            # Copier les rapports depuis le conteneur
+            docker compose cp app:/app/test-results ./
 
       - name: Upload test results
         if: always()
