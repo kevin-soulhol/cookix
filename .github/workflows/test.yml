@@ -39,10 +39,10 @@ jobs:
         run: npx prisma generate
 
       - name: Build Docker containers for testing
-        run: npm run build
+        run: docker compose -f docker-compose.prod.yml up -d --build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}    
 
       - name: Run E2E tests
         run: npx playwright test
