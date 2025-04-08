@@ -46,17 +46,25 @@ jobs:
 
       - name: Wait for services to be ready
         run: |
-          # Installer wait-on
-          npm install -g wait-on
-          # Attendre que la base de données et l'application soient prêtes (ajustez les ports si nécessaire)
-          wait-on -t 60000 tcp:localhost:3000 || (docker compose logs && exit 1)
+            # Attendre que les services soient prêts (30 secondes maximum)
+            sleep 30
+            docker compose ps
+            docker compose logs app
 
       - name: Run E2E tests
-        run: npx playwright test
+        run: docker compose exec -T app npx playwright test
 
       - name: Show logs in case of failure
         if: failure()
         run: docker compose logs
+
+      - name: Copy test reports from container
+        if: always()
+        run: |
+          # Créer un répertoire local pour les rapports
+          mkdir -p test-results
+          # Copier les rapports depuis le conteneur
+          docker compose cp app:/app/test-results ./
 
       - name: Upload test results
         if: always()
