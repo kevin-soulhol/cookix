@@ -85,10 +85,15 @@ jobs:
           EOL"
 
 
-      # Exécuter un test plus simple d'abord
       - name: Run a simple test outside Docker
         run: |
           npx playwright test --project=chromium
+
+      - name: Run a simple test outside Docker
+        run: |
+            ls -la
+            ls tests -la
+            ls test-results
 
       - name: Upload test logs
         if: always()
