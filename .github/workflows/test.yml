@@ -42,7 +42,7 @@ jobs:
         run: docker compose up -d --build  
 
       - name: Run E2E tests
-        run: docker compose exec -ti app npx playwright install
+        run: docker compose exec -ti app npx playwright install chromium
 
       - name: Run E2E tests
         run: docker compose exec -ti app npx playwright test
