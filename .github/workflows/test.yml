@@ -101,14 +101,14 @@ jobs:
       # Exécuter un test plus simple d'abord
       - name: Run a simple test outside Docker
         run: |
-          npx playwright test tests/e2e/basic.spec.ts --project=chromium
+          npx playwright test --project=chromium
 
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: docker-logs
-          path: tests/e2e/docker-logs.txt
+          path: test-results
           retention-days: 7
 
       - name: Cleanup
