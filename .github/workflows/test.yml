@@ -70,6 +70,9 @@ jobs:
             timeout: 30000,
             use: {
               baseURL: 'http://localhost:3000',
+              trace: 'on',  // Capture les traces pour chaque test
+              screenshot: 'on',  // Prend des captures d'écran pour chaque test
+              video: 'on-first-retry'  // Enregistre une vidéo lors de la première tentative échouée
             },
             projects: [
               {
@@ -86,7 +89,7 @@ jobs:
 
 
       - name: Run a simple test outside Docker
-        run: npx playwright test --project=chromium
+        run: npx playwright test --reporter=json --output=test-results/report.json --project=chromium
         continue-on-error: true
 
       - name: See repertory
