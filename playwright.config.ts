@@ -10,16 +10,13 @@ const config: PlaywrightTestConfig = {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    video: 'on-first-retry'
   },
   projects: [
     {
       name: 'chromium',
       use: { browserName: 'chromium' },
-    },
-    {
-      name: 'firefox',
-      use: { browserName: 'firefox' },
-    },
+    }
   ],
 };
 

@@ -203,7 +203,7 @@ export function ActiveFilters({
 // Composant pour l'état vide (aucune recette trouvée)
 export function EmptyState({ onReset }: { onReset: () => void }) {
     return (
-        <div className="text-center py-12 bg-white rounded-lg shadow-md">
+        <div className="container-result-empty text-center py-12 bg-white rounded-lg shadow-md">
             <svg
                 className="mx-auto h-12 w-12 text-gray-400"
                 fill="none"

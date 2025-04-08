@@ -2,5 +2,6 @@ node_modules
 
 /.cache
 /build
+/test-results
 /public/build
 .env

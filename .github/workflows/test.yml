@@ -61,31 +61,7 @@ jobs:
           # Installer Playwright dans le conteneur
           docker compose exec -T app sh -c "cd /app && npm install -D @playwright/test"
           
-          # Configurer Playwright pour fonctionner sans navigateurs téléchargés
-          docker compose exec -T app sh -c "cat > /app/playwright.config.ts << 'EOL'
-          import { PlaywrightTestConfig } from '@playwright/test';
-
-          const config: PlaywrightTestConfig = {
-            testDir: './tests/e2e',
-            timeout: 30000,
-            use: {
-              baseURL: 'http://localhost:3000',
-              trace: 'on',  // Capture les traces pour chaque test
-              screenshot: 'on',  // Prend des captures d'écran pour chaque test
-              video: 'on-first-retry'  // Enregistre une vidéo lors de la première tentative échouée
-            },
-            projects: [
-              {
-                name: 'chromium',
-                use: { 
-                  browserName: 'chromium',
-                },
-              },
-            ],
-          };
-
-          export default config;
-          EOL"
+          docker compose cp playwright.config.ts app:/app/playwright.config.ts
 
 
       - name: Run tests
