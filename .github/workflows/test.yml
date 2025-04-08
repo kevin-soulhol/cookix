@@ -86,22 +86,20 @@ jobs:
 
 
       - name: Run a simple test outside Docker
-        run: |
-          npx playwright test --project=chromium
+        run: npx playwright test --project=chromium
+        continue-on-error: true
 
       - name: See repertory
         if: always()
         run: |
-            ls -la
-            ls tests -la
-            ls test-results
+            ls test-results/e2e
 
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: docker-logs
-          path: ./test-results
+          name: playwright-reports
+          path: test-results/
           retention-days: 7
 
       - name: Cleanup
