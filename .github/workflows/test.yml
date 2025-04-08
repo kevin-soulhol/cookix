@@ -66,10 +66,10 @@ jobs:
       - name: Setup db seed
         run: |
             # Exécuter les migrations sur la base de test
-            docker compose exec -T -e DATABASE_URL="${DATABASE_URL}" app npx prisma migrate deploy
+            docker compose exec -ti app npx prisma migrate deploy
             
             # Exécuter le seed de test
-            docker compose exec -T -e DATABASE_URL="${DATABASE_URL}" app node prisma/seed-test.js
+            docker compose exec -ti app node prisma/seed-test.js
 
 
       - name: Run tests
