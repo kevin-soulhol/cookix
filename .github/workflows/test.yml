@@ -25,17 +25,15 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-        
+
       - name: Create .env file
         run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && echo "
-          SESSION_SECRET=${{ secrets.SESSION_SECRET }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}
-          DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}
-          " > .env'
+          echo "SESSION_SECRET=test-secret" > .env
+          echo "DB_NAME=test_db" >> .env
+          echo "DB_USER=test_user" >> .env
+          echo "DB_PASSWORD=test_password" >> .env
+          echo "ROOT_PASSWORD=test_root_password" >> .env
+          echo "DATABASE_URL=mysql://test_user:test_password@localhost:3306/test_db" >> .env
 
       - name: Generate Prisma Client
         run: npx prisma generate
