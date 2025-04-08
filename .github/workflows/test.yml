@@ -65,9 +65,12 @@ jobs:
 
       - name: Setup db seed
         run: |
-            echo "TEST_DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/cookix_test" >> .env
-    
-            docker compose exec -T -e DATABASE_URL="${TEST_DATABASE_URL}" app node prisma/seed-test.js
+            # Exécuter les migrations sur la base de test
+            docker compose exec -T -e DATABASE_URL="${DATABASE_URL}" app npx prisma migrate deploy
+            
+            # Exécuter le seed de test
+            docker compose exec -T -e DATABASE_URL="${DATABASE_URL}" app node prisma/seed-test.js
+
 
       - name: Run tests
         id: run_tests
