@@ -92,7 +92,12 @@ jobs:
       - name: See repertory
         if: always()
         run: |
-            ls test-results/e2e
+            echo "Contenu du répertoire courant:"
+            ls -la
+            echo "Contenu du répertoire playwright-report (s'il existe):"
+            ls -la playwright-report || echo "Répertoire inexistant"
+            echo "Contenu du répertoire test-results (s'il existe):"
+            ls -la test-results || echo "Répertoire inexistant"
 
       - name: Upload test logs
         if: always()
