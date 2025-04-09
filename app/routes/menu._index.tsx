@@ -361,16 +361,6 @@ export default function WeeklyMenu() {
                     <BoxRecipe key={recipe.id} recipe={recipe} compact={true} />
                   ))}
                 </div>
-                {favoriteRecipes.length > 3 && (
-                  <div className="text-center mt-6">
-                    <Link
-                      to="/favoris"
-                      className="text-rose-500 hover:text-rose-700 font-medium"
-                    >
-                      Voir tous vos favoris
-                    </Link>
-                  </div>
-                )}
               </div>
             )}
 
