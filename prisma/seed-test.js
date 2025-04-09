@@ -42,7 +42,7 @@ async function main() {
   });
   
   // Enregistrer les IDs des données de test dans un fichier pour les récupérer dans les tests
-  const fs = require('fs');
+  /* const fs = require('fs');
   const path = require('path');
   
   const testDataDir = path.join(__dirname, '../tests/e2e/fixtures');
@@ -57,7 +57,7 @@ async function main() {
       categories: [{ id: category.id, title: category.title }],
       recipes: [{ id: recipe.id, title: recipe.title }]
     })
-  );
+  ); */
   
   console.log('Base de données de test initialisée avec succès');
 }
