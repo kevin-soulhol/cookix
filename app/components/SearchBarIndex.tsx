@@ -15,7 +15,7 @@ type SearchBarProps = {
 
 export default function SearchBar({ value, onChange, onClear, onFilterClick, totalRecipes }: SearchBarProps) {
     return (
-        <div className="sticky top-[4rem] z-20 pb-1 pt-4">
+        <div className="searchbar sticky top-[4rem] z-20 pb-1 pt-4">
             <div className="relative">
                 <input
                     type="text"
@@ -67,7 +67,7 @@ export default function SearchBar({ value, onChange, onClear, onFilterClick, tot
                 </div>
 
                 {/* Badge de nombre de recettes */}
-                <div className="absolute inset-y-0 right-7 pr-3 flex items-center text-xs text-gray-500">
+                <div className="recipe-number absolute inset-y-0 right-7 pr-3 flex items-center text-xs text-gray-500">
                     {totalRecipes} recettes
                 </div>
 
@@ -75,7 +75,7 @@ export default function SearchBar({ value, onChange, onClear, onFilterClick, tot
                 <button
                     type="button"
                     onClick={onFilterClick}
-                    className="absolute inset-y-0 right-0 px-3 flex items-center"
+                    className="display-filter absolute inset-y-0 right-0 px-3 flex items-center"
                     aria-label="Filtrer les recettes"
                 >
                     <svg
