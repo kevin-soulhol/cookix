@@ -38,5 +38,20 @@ test.describe('Homepage', () => {
     const results = page.locator('.container-result-empty');
     await expect(results).toBeVisible();
   });
+
+  test('Search - 1 result', async ({ page }) => {
+    // Effectuer une recherche simple
+    const searchBar = page.locator(searchbarSelector);
+    await searchBar.fill('test');
+    await searchBar.press('Enter');
+    
+    // Attendre que les résultats de recherche soient chargés
+    await page.waitForTimeout(400)
+    
+    // Vérifier qu'il y a des résultats ou un message "Aucune recette trouvée"
+    const results = page.locator('.container-result .box-recipe');
+    await expect(results).toBeVisible();
+    await expect(results).toHaveCount(1)
+  });
 });
 
