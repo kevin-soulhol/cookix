@@ -7,7 +7,7 @@ async function main() {
   
   // Créer une catégorie de test
   const category = await prisma.category.create({
-    data: { title: 'Test Category' }
+    data: { title: 'Test Category', sourceUrl: 'https://testcategory.fr' }
   });
   
   // Créer un utilisateur de test
@@ -28,6 +28,7 @@ async function main() {
       servings: 4,
       difficulty: 'facile',
       categoryId: category.id,
+      sourceUrl: 'https://testrecipe.fr',
       imageUrl: 'https://example.com/image.jpg',
       steps: {
         create: [
