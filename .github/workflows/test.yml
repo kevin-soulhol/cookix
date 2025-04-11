@@ -69,7 +69,7 @@ jobs:
             docker compose exec -ti app npx prisma migrate deploy
             
             # Exécuter le seed de test
-            docker compose exec -ti app node prisma/seed-test.js
+            docker compose exec -ti app node prisma/seed.test.js
 
 
       - name: Run tests
