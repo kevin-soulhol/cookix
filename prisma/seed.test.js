@@ -67,19 +67,19 @@ async function seedTestData() {
     data: [
       {
         recipeId: recipe1.id,
-        ingredientId: ingredients.find(i => i.name === 'Farine')!.id,
+        ingredientId: ingredients.find(i => i.name === 'Farine')?.id,
         quantity: 200,
         unit: 'g'
       },
       {
         recipeId: recipe1.id,
-        ingredientId: ingredients.find(i => i.name === 'Œufs')!.id,
+        ingredientId: ingredients.find(i => i.name === 'Œufs')?.id,
         quantity: 3,
         unit: null
       },
       {
         recipeId: recipe1.id,
-        ingredientId: ingredients.find(i => i.name === 'Sucre')!.id,
+        ingredientId: ingredients.find(i => i.name === 'Sucre')?.id,
         quantity: 150,
         unit: 'g'
       }

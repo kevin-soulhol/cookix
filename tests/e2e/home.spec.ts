@@ -117,6 +117,8 @@ test.describe('Homepage', () => {
       }
     })
 
+    await scrollPageToBottom(page);
+
     const results = page.locator('.container-result .box-recipe');
     await expect(results).toHaveCount(expectedCount);
   });

@@ -48,7 +48,7 @@ COPY --from=builder /app/start.sh ./
 RUN chmod +x ./start.sh
 
 # Configuration des ports et commandes
-EXPOSE 3000 5555
+EXPOSE 3000 5555 3306
 
 # Commande pour exécuter l'application
 ENTRYPOINT ["./start.sh"]
