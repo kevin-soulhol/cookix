@@ -32,7 +32,7 @@ RUN if [ ! -d "/ms-playwright/chromium" ]; then \
 # Régénération du client Prisma avec les bons binaryTargets
 RUN npx prisma generate
 
-# Exécuter à 2h du matin tous les dimanches
+# Exécuter à 2h du matin tous les jours
 RUN echo "0 2 * * * cd /app && node index.js >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper-cron
 RUN chmod 0644 /etc/cron.d/scraper-cron
 RUN crontab /etc/cron.d/scraper-cron

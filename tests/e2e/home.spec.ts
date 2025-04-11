@@ -52,7 +52,7 @@ test.describe('Homepage', () => {
     
     // Vérifier qu'il y a des résultats ou un message "Aucune recette trouvée"
     const results = page.locator('.container-result .box-recipe');
-    await expect(results).toHaveCount(1)
+    await expect(results).toHaveCount(process.env.NODE_ENV === "production" ? 1 : 12)
   });
 
   test('Filter by category', async ({ page }) => {
@@ -97,6 +97,29 @@ test.describe('Homepage', () => {
     const results = page.locator('.container-result .box-recipe');
     await expect(results).toHaveCount(expectedCount);
   }); */
+
+  test('Filter by vegetarian', async ({ page }) => {
+    await openFilterPanel(page);
+
+    const btnVege = page.locator(`.isVegeOption`);
+    await expect(btnVege).toBeVisible();
+
+    await btnVege.click();
+    await expect(btnVege).toBeChecked();
+
+    // Cliquer sur Appliquer
+    const applyButton = page.locator('.filter-panel .valid-panel');
+    await applyButton.click();
+
+    const expectedCount = await prisma.recipe.count({
+      where: {
+        isVege: true
+      }
+    })
+
+    const results = page.locator('.container-result .box-recipe');
+    await expect(results).toHaveCount(expectedCount);
+  });
 
 
   async function openFilterPanel(page : Page){

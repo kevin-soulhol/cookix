@@ -139,6 +139,7 @@ export default function FilterPanel({
                         label="Seulement les plats végé"
                         text="Activer l'affichage des plats végétariens uniquement"
                         enabled={onlyVege}
+                        classes="isVegeOption"
                         onChange={() => {
                             setOnlyVege(!onlyVege);
                             const form = formRef.current;
@@ -287,11 +288,13 @@ function Toggle({
     label,
     text,
     enabled,
+    classes,
     onChange
 }: {
     label: string,
     text: string,
     enabled: boolean,
+    classes?: string,
     onChange: () => void
 }) {
     return (
@@ -303,7 +306,7 @@ function Toggle({
                 <button
                     type="button"
                     onClick={onChange}
-                    className={`relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none ${enabled ? 'bg-rose-500' : 'bg-gray-200'
+                    className={`${classes} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none ${enabled ? 'bg-rose-500' : 'bg-gray-200'
                         }`}
                     role="switch"
                     aria-checked={enabled}
