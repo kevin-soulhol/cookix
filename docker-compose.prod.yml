@@ -62,6 +62,7 @@ services:
       - db
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - NODE_ENV="production"
     volumes:
       - ./scripts/scraper:/app
       - /app/node_modules

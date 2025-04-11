@@ -166,7 +166,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const favoriteRecipes = await prisma.favorite.findMany({
       where: { userId },
       include: { recipe: true },
-      take: 3
     });
 
     const transformedFavoriteRecipes = favoriteRecipes.map(fav => fav.recipe).map(fav => ({ ...fav, isFavorite: true }))
