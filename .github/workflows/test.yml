@@ -34,6 +34,7 @@ jobs:
           echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
           # Utiliser db comme hostname pour les connexions dans Docker
           echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
+          echo "DATABASE_URL_TEST=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}" >> .env
 
       - name: Generate Prisma Client
         run: npx prisma generate
