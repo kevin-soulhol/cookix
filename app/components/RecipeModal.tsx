@@ -26,7 +26,7 @@ type TabType = 'ingredients' | 'instructions' | 'description';
 
 // Composant pour l'onglet Ingrédients
 const IngredientsTab = ({ ingredients }: { ingredients?: (RecipeIngredient & { ingredient: Ingredient })[] }) => (
-    <div>
+    <div className="ingredients-tab">
         <h2 className="text-xl font-semibold mb-4">Ingrédients</h2>
         {ingredients && ingredients.length > 0 ? (
             <ul className="space-y-2">
@@ -95,7 +95,7 @@ const InstructionsTab = ({
     };
 
     return (
-        <div className="pb-16">
+        <div className="instructions-tab pb-16">
             <h2 className="text-xl font-semibold mb-4">Instructions</h2>
             {steps && steps.length > 0 ? (
                 <div className="space-y-2">
@@ -165,7 +165,7 @@ const InstructionsTab = ({
 
 // Composant pour l'onglet Description
 const DescriptionTab = ({ description }: { description?: string }) => (
-    <div>
+    <div className="description-tab">
         <h2 className="text-xl font-semibold mb-4">Description</h2>
         {description ? (
             <div
@@ -391,7 +391,7 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
     if (!isOpen || !recipe) return null;
 
     return (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-center justify-center">
+        <div className="recipe-modal fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-center justify-center">
             <div
                 className="bg-white w-full h-full md:h-screen max-h-screen rounded-none shadow-xl overflow-hidden flex flex-col"
                 ref={modalRef}
@@ -740,9 +740,12 @@ const TabNavigation = ({ selectedTab, setSelectedTab }: TabNavigationProps): JSX
 const TabButton = ({ isSelected, onClick, label }: TabButtonProps): JSX.Element => (
     <button
         onClick={onClick}
-        className={`py-4 px-4 font-medium text-sm focus:outline-none ${isSelected
-            ? 'border-b-2 border-rose-500 text-rose-500'
-            : 'text-gray-500 hover:text-gray-700'
+        className={`${label.toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')}
+            py-4 px-4 font-medium text-sm focus:outline-none ${isSelected
+                ? 'border-b-2 border-rose-500 text-rose-500'
+                : 'text-gray-500 hover:text-gray-700'
             }`}
     >
         {label}

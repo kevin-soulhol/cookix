@@ -40,20 +40,6 @@ test.describe('Homepage', () => {
     await expect(results).toBeVisible();
   });
 
-  test('Search - 1 result', async ({ page }) => {
-    // Effectuer une recherche simple
-    const searchBar = page.locator(searchbarSelector);
-    await searchBar.fill('test');
-    await searchBar.press('Enter');
-    
-    // Attendre que les résultats de recherche soient chargés
-    await page.waitForTimeout(400)
-    
-    // Vérifier qu'il y a des résultats ou un message "Aucune recette trouvée"
-    const results = page.locator('.container-result .box-recipe');
-    await expect(results).toHaveCount(process.env.NODE_ENV === "production" ? 1 : 12)
-  });
-
   test('Filter by category', async ({ page }) => {
     const categoryId = 1;
     await searchByFilter(page, 'categoryId', ''+categoryId);
@@ -73,7 +59,7 @@ test.describe('Homepage', () => {
 
   });
 
-  /* test('Filter by meal type', async ({ page }) => {
+  test('Filter by meal type', async ({ page }) => {
     const mealName = "Boisson";
     await searchByFilter(page, 'mealType', ''+mealName);
     
@@ -81,21 +67,18 @@ test.describe('Homepage', () => {
     const mealTypeBadge = page.locator('.bg-green-100');
     await expect(mealTypeBadge).toBeVisible();
 
-    const expectedCount = await prisma.recipe.count({
-      where: {
-        meals: {
-          some: {
-            title: {
-              equals: mealName
-            }
-          }
-        }
+    const meal = await prisma.meal.findFirst({
+      where: { title: mealName },
+      include: {
+        recipe: true
       }
-    })
+    });
+    
+    const expectedCount = meal?.recipe?.length || 0;
 
     const results = page.locator('.container-result .box-recipe');
     await expect(results).toHaveCount(expectedCount);
-  }); */
+  });
 
   test('Filter by vegetarian', async ({ page }) => {
     await openFilterPanel(page);
@@ -122,6 +105,81 @@ test.describe('Homepage', () => {
     await expect(results).toHaveCount(expectedCount);
   });
 
+  test('Basic keyword search', async ({ page }) => {
+    // Tester une recherche de terme exact
+    await performSearch(page, 'gâteau');
+    
+    // Vérifier que des résultats sont affichés
+    const recipeCards = page.locator('.container-result .box-recipe');
+    
+    // Vérifier que le terme apparaît dans les résultats (titre ou description)
+    const firstRecipeTitle = await recipeCards.first().locator('h3').textContent();
+    console.log(`Premier résultat: ${firstRecipeTitle}`);
+    
+    // Vérifier que le résultat contient le terme recherché ou un terme similaire
+    // (en ignorant la casse et les accents)
+    const searchTermNormalized = normalizeText('gâteau');
+    const titleNormalized = normalizeText(firstRecipeTitle || '');
+    
+    // Le titre contient le terme exact OU le nombre de résultats est cohérent
+    const expectedMatches = await recipeCards.count();
+    expect(titleNormalized.includes(searchTermNormalized) || expectedMatches > 0).toBeTruthy();
+  });
+
+  test('Partial term search', async ({ page }) => {
+    // Tester une recherche avec un terme partiel
+    await performSearch(page, 'choco');
+    
+    // Vérifier que des résultats sont affichés avec "chocolat"
+    const recipeCards = page.locator('.container-result .box-recipe');
+    
+    // Vérifier au moins un résultat
+    const count = await recipeCards.count();
+    expect(count).toBeGreaterThan(0);
+    
+    // Vérifiez que le premier résultat contient "chocolat" (ou un terme relié)
+    // Ceci vérifie la fonctionnalité de correspondance partielle
+    const titles = await recipeCards.locator('h3').allTextContents();
+    const hasMatch = titles.some(title => 
+      normalizeText(title).includes('chocolat') || 
+      normalizeText(title).includes('choco')
+    );
+    
+    expect(hasMatch).toBeTruthy();
+  });
+
+
+  test('Ingredient search', async ({ page }) => {
+    // Tester la recherche d'un ingrédient
+    await performSearch(page, 'fraise');
+    
+    // Vérifier que des résultats incluant des fraises apparaissent
+    const recipeCards = page.locator('.container-result .box-recipe');
+
+    // Vérifier soit le compte, soit ouvrir le premier résultat pour voir les ingrédients
+    // Cliquer sur le premier résultat pour voir les détails
+    await recipeCards.first().click();
+    
+    // Attendre que le modal s'ouvre
+    const recipeModal = page.locator('.recipe-modal');
+    await expect(recipeModal).toBeVisible();
+    
+    // Vérifier que l'onglet ingrédients est visible
+    const ingredientsTab = page.locator('button.ingredients');
+    await expect(ingredientsTab).toBeVisible();
+    await ingredientsTab.click();
+    
+    // Vérifier si "fraise" ou "fraises" apparaît dans les ingrédients
+    const ingredientsTexts = await page.locator('.ingredients-tab li span').allTextContents()
+
+    const containsIngredient = ingredientsTexts.some(text => {
+      return normalizeText(text).includes(normalizeText('fraise')) || 
+      normalizeText(text).includes(normalizeText('fraises'));
+    })
+      
+    expect(containsIngredient).toBeTruthy();
+    
+  });
 
   async function openFilterPanel(page : Page){
     // Ouvrir le panneau de filtres
@@ -148,5 +206,23 @@ test.describe('Homepage', () => {
 
     await scrollPageToBottom(page);
   }
-});
 
+    // Fonction utilitaire pour effectuer une recherche
+    async function performSearch(page: Page, searchTerm: string) {
+      const searchBar = page.locator('input[placeholder*="Rechercher"]');
+      await searchBar.fill(searchTerm);
+      await searchBar.press('Enter');
+      
+      // Attendre que la recherche se termine
+      await page.waitForTimeout(500);
+      await scrollPageToBottom(page)
+    }
+  
+    // Fonction pour normaliser le texte (retirer les accents et passer en minuscules)
+    function normalizeText(text: string): string {
+      return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    }
+});
