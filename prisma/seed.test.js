@@ -115,6 +115,7 @@ async function seedTestData() {
 seedTestData()
   .catch(e => {
     console.error(e);
+    // eslint-disable-next-line no-undef
     process.exit(1);
   })
   .finally(async () => {

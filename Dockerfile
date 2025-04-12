@@ -8,7 +8,6 @@ WORKDIR /app
 
 # Copier les fichiers de dépendances
 COPY package.json package-lock.json* ./
-COPY prisma ./prisma/
 COPY start.sh ./
 COPY playwright.config.ts /app/
 COPY /tests /app/
@@ -22,8 +21,6 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Générer le client Prisma
-RUN npx prisma generate
 
 RUN npm run build
 

@@ -1,7 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import prisma from './utils/db';
 import { scrollPageToBottom } from './utils/tools';
-import { title } from 'process';
 
 
 
