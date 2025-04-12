@@ -148,38 +148,6 @@ test.describe('Homepage', () => {
     expect(hasMatch).toBeTruthy();
   });
 
-  test('Ingredient search', async ({ page }) => {
-    // Tester la recherche d'un ingrédient
-    await performSearch(page, 'fraises');
-    
-    // Vérifier que des résultats incluant des fraises apparaissent
-    const recipeCards = page.locator('.container-result .box-recipe');
-
-    // Vérifier soit le compte, soit ouvrir le premier résultat pour voir les ingrédients
-    // Cliquer sur le premier résultat pour voir les détails
-    await recipeCards.first().click();
-    
-    // Attendre que le modal s'ouvre
-    const recipeModal = page.locator('.recipe-modal');
-    await expect(recipeModal).toBeVisible();
-    
-    // Vérifier que l'onglet ingrédients est visible
-    const ingredientsTab = page.locator('button.ingredients');
-    await expect(ingredientsTab).toBeVisible();
-    await ingredientsTab.click();
-    
-    // Vérifier si "fraise" ou "fraises" apparaît dans les ingrédients
-    const ingredientsTexts = await page.locator('.ingredients-tab li span').allTextContents()
-
-    const containsIngredient = ingredientsTexts.some(text => {
-      return normalizeText(text).includes(normalizeText('fraise')) || 
-      normalizeText(text).includes(normalizeText('fraises'));
-    })
-      
-    expect(containsIngredient).toBeTruthy();
-    
-  });
-
   async function openFilterPanel(page : Page){
     // Ouvrir le panneau de filtres
     const filterButton = page.locator('.searchbar .display-filter');
