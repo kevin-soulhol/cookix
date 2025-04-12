@@ -8,7 +8,7 @@ export type RecipeType = Recipe & {
   menuItems?: any[];
 }
 
-type RecipeWithRelations = RecipeType & {
+export type RecipeWithRelations = RecipeType & {
   ingredients?: (RecipeIngredient & { ingredient: Ingredient })[];
   steps?: RecipeStep[];
   isFavorite?: boolean;

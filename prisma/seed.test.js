@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function seedTestData() {
+
   // Ajouter les catégories
   const categories = await prisma.category.createMany({
     data: [

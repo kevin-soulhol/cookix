@@ -169,7 +169,7 @@ const DescriptionTab = ({ description }: { description?: string }) => (
         <h2 className="text-xl font-semibold mb-4">Description</h2>
         {description ? (
             <div
-                className="text-m mb-3"
+                className="description-text text-m mb-3"
                 dangerouslySetInnerHTML={{ __html: description }}
             />
         ) : (
@@ -291,10 +291,18 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
 
     // Handlers pour les actions utilisateur
     const handleAddToMenu = () => {
-        menuFetcher.submit(
-            { recipeId: recipeId.toString() },
-            { method: "post", action: "/api/menu" }
-        );
+        if (!isAdded) {
+            menuFetcher.submit(
+                { recipeId: recipeId.toString() },
+                { method: "post", action: "/api/menu" }
+            );
+        } else {
+            menuFetcher.submit(
+                { recipeId: recipeId.toString() },
+                { method: "delete", action: "/api/menu" }
+            );
+        }
+
     };
 
     const handleToggleFavorite = () => {
@@ -505,6 +513,7 @@ interface RecipeMetadataProps {
 interface MetadataItemProps {
     icon: React.ReactNode;
     label: React.ReactNode;
+    classe: string;
 }
 
 interface TabNavigationProps {
@@ -569,7 +578,7 @@ const RecipeHeader = ({
         {/* Bouton de fermeture */}
         <button
             onClick={onClose}
-            className="absolute top-4 right-4 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
+            className="close-modale absolute top-4 right-4 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
             aria-label="Fermer"
         >
             <svg
@@ -605,7 +614,7 @@ const FavoriteButton = ({ inFavorites, onClick, isSubmitting }: FavoriteButtonPr
     <button
         onClick={onClick}
         disabled={isSubmitting}
-        className="absolute top-4 left-4 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
+        className="favorite-button absolute top-4 left-4 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
         aria-label={inFavorites ? "Retirer des favoris" : "Ajouter aux favoris"}
     >
         {isSubmitting ? (
@@ -635,8 +644,8 @@ const FavoriteButton = ({ inFavorites, onClick, isSubmitting }: FavoriteButtonPr
 const MenuButton = ({ isAdded, onClick, isSubmitting }: MenuButtonProps): JSX.Element => (
     <button
         onClick={onClick}
-        disabled={isSubmitting || isAdded}
-        className={`absolute top-4 left-16 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all ${isAdded ? 'border border-green-400 text-green-600' : 'text-gray-700'
+        disabled={isSubmitting}
+        className={`menu-button absolute top-4 left-16 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all ${isAdded ? 'border border-green-400 text-green-600' : 'text-gray-700'
             }`}
         aria-label={isAdded ? "Déjà dans le menu" : "Ajouter au menu"}
     >
@@ -660,10 +669,11 @@ const MenuButton = ({ isAdded, onClick, isSubmitting }: MenuButtonProps): JSX.El
 
 // Métadonnées de la recette
 const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => (
-    <div className="border-b border-gray-200 px-2 py-2">
+    <div className="metadata-container border-b border-gray-200 px-2 py-2">
         <div className="flex flex-wrap justify-around text-xs">
             {recipe.preparationTime && (
                 <MetadataItem
+                    classe="preparationTime"
                     icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />}
                     label={`${recipe.preparationTime} min`}
                 />
@@ -671,6 +681,7 @@ const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => (
 
             {recipe.cookingTime && (
                 <MetadataItem
+                    classe="cookingTime"
                     icon={<>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
@@ -681,6 +692,7 @@ const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => (
 
             {recipe.difficulty && (
                 <MetadataItem
+                    classe="difficulty"
                     icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />}
                     label={recipe.difficulty}
                 />
@@ -688,6 +700,7 @@ const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => (
 
             {recipe.servings && (
                 <MetadataItem
+                    classe="servings"
                     icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />}
                     label={<>
                         <span className="font-medium">{recipe.servings}</span>
@@ -700,13 +713,13 @@ const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => (
 );
 
 // Item métadonnée réutilisable
-const MetadataItem = ({ icon, label }: MetadataItemProps): JSX.Element => (
-    <div className="px-2 py-1 flex items-center">
+const MetadataItem = ({ icon, label, classe }: MetadataItemProps): JSX.Element => (
+    <div className={`${classe} px-2 py-1 flex items-center`}>
         <svg className="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             {icon}
         </svg>
         <span>
-            <span className="font-medium">{label}</span>
+            <span className="metadata-label font-medium">{label}</span>
         </span>
     </div>
 );

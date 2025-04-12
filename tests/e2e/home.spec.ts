@@ -1,6 +1,6 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import prisma from './utils/db';
-import { scrollPageToBottom } from './utils/tools';
+import { openFilterPanel, performSearch, scrollPageToBottom, searchByFilter } from './utils/tools';
 
 
 
@@ -89,6 +89,9 @@ test.describe('Homepage', () => {
     await btnVege.click();
     await expect(btnVege).toBeChecked();
 
+    const badgeVege = page.locator('.onlyvege-tag');
+    await expect(badgeVege).toBeVisible();
+
     // Cliquer sur Appliquer
     const applyButton = page.locator('.filter-panel .valid-panel');
     await applyButton.click();
@@ -148,48 +151,44 @@ test.describe('Homepage', () => {
     expect(hasMatch).toBeTruthy();
   });
 
-  async function openFilterPanel(page : Page){
-    // Ouvrir le panneau de filtres
-    const filterButton = page.locator('.searchbar .display-filter');
-    await filterButton.click();
-
-    // Attendre que le panneau de filtres soit visible
-    const filterPanel = page.locator('.filter-panel');
-    await expect(filterPanel).toBeVisible();
-  }
-
-  async function searchByFilter(page : Page, selectorId : string, value: string){
+  test('Reset filters functionality', async ({ page }) => {
     await openFilterPanel(page);
 
-    const select = page.locator(`.filter-panel select#${selectorId}`);
-    await expect(select).toBeVisible();
-    console.log(value)
+    const btnVege = page.locator(`.isVegeOption`);
+    await expect(btnVege).toBeVisible();
 
-    await select.selectOption(value);
+    await btnVege.click();
 
-    // Cliquer sur Appliquer
-    const applyButton = page.locator('.filter-panel .valid-panel');
-    await applyButton.click();
+    const badgeVege = page.locator('.onlyvege-tag');
+    await expect(badgeVege).toBeVisible();
+    
+    // Enregistrer le nombre de résultats avec les filtres
+    const filteredResults = page.locator('.container-result .box-recipe');
+    const filteredCount = await filteredResults.count();
+    console.log(`Nombre de résultats avec filtres: ${filteredCount}`);
+    
+    // Cliquer sur le bouton "Tout effacer"
+    const resetButton = page.locator('button.cancel-panel');
+    await resetButton.click();
+    
+    await expect(badgeVege).not.toBeVisible();
+    
+    // Vérifier que le nombre de résultats a changé (généralement augmenté)
+    const resetResults = page.locator('.container-result .box-recipe');
+    await page.waitForTimeout(500); // Attendre le chargement des nouveaux résultats
+    
+    const resetCount = await resetResults.count();
+    console.log(`Nombre de résultats après réinitialisation: ${resetCount}`);
+    
+    // Si nous avions des résultats filtrés, nous devrions avoir au moins autant après la réinitialisation
+    expect(resetCount).toBeGreaterThanOrEqual(filteredCount);
+  });
 
-    await scrollPageToBottom(page);
+  // Fonction pour normaliser le texte (retirer les accents et passer en minuscules)
+  function normalizeText(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
-
-    // Fonction utilitaire pour effectuer une recherche
-    async function performSearch(page: Page, searchTerm: string) {
-      const searchBar = page.locator('input[placeholder*="Rechercher"]');
-      await searchBar.fill(searchTerm);
-      await searchBar.press('Enter');
-      
-      // Attendre que la recherche se termine
-      await page.waitForTimeout(500);
-      await scrollPageToBottom(page)
-    }
-  
-    // Fonction pour normaliser le texte (retirer les accents et passer en minuscules)
-    function normalizeText(text: string): string {
-      return text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-    }
 });
