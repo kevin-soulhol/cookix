@@ -45,7 +45,7 @@ test.describe('Homepage', () => {
     await searchByFilter(page, 'categoryId', ''+categoryId);
     
     // Vérifier qu'un badge de filtre est visible
-    const categoryBadge = page.locator('.bg-indigo-100');
+    const categoryBadge = page.locator('.category-tag');
     await expect(categoryBadge).toBeVisible();
     
     const expectedCount = await prisma.recipe.count({
@@ -64,7 +64,7 @@ test.describe('Homepage', () => {
     await searchByFilter(page, 'mealType', ''+mealName);
     
     // Vérifier qu'un badge de filtre est visible (pour les types de repas, c'est généralement une classe bg-green-100)
-    const mealTypeBadge = page.locator('.bg-green-100');
+    const mealTypeBadge = page.locator('.meal-tag');
     await expect(mealTypeBadge).toBeVisible();
 
     const meal = await prisma.meal.findFirst({

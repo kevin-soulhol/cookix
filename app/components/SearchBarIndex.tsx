@@ -130,7 +130,7 @@ export function ActiveFilters({
     return (
         <div className="flex flex-wrap gap-2 mt-2 mb-2">
             {category && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                <span className="category-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                     {categoryOptions.find(c => c.id.toString() === category)?.title || 'Catégorie'}
                     <button
                         type="button"
@@ -145,7 +145,7 @@ export function ActiveFilters({
             )}
 
             {mealType && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="meal-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     {mealType}
                     <button
                         type="button"
@@ -160,7 +160,7 @@ export function ActiveFilters({
             )}
 
             {maxPreparationTime && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                <span className="preparationtime-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                     Max {maxPreparationTime} min
                     <button
                         type="button"
@@ -175,7 +175,7 @@ export function ActiveFilters({
             )}
 
             {onyVegeEnabled && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="onlyvege-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     Végé uniquement
                     <button
                         type="button"
