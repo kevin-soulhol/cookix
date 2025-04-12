@@ -148,10 +148,9 @@ test.describe('Homepage', () => {
     expect(hasMatch).toBeTruthy();
   });
 
-
   test('Ingredient search', async ({ page }) => {
     // Tester la recherche d'un ingrédient
-    await performSearch(page, 'fraise');
+    await performSearch(page, 'fraises');
     
     // Vérifier que des résultats incluant des fraises apparaissent
     const recipeCards = page.locator('.container-result .box-recipe');
