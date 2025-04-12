@@ -15,7 +15,7 @@ type SearchBarProps = {
 
 export default function SearchBar({ value, onChange, onClear, onFilterClick, totalRecipes }: SearchBarProps) {
     return (
-        <div className="sticky top-[4rem] z-20 pb-1 pt-4">
+        <div className="searchbar sticky top-[4rem] z-20 pb-1 pt-4">
             <div className="relative">
                 <input
                     type="text"
@@ -67,7 +67,7 @@ export default function SearchBar({ value, onChange, onClear, onFilterClick, tot
                 </div>
 
                 {/* Badge de nombre de recettes */}
-                <div className="absolute inset-y-0 right-7 pr-3 flex items-center text-xs text-gray-500">
+                <div className="recipe-number absolute inset-y-0 right-7 pr-3 flex items-center text-xs text-gray-500">
                     {totalRecipes} recettes
                 </div>
 
@@ -75,7 +75,7 @@ export default function SearchBar({ value, onChange, onClear, onFilterClick, tot
                 <button
                     type="button"
                     onClick={onFilterClick}
-                    className="absolute inset-y-0 right-0 px-3 flex items-center"
+                    className="display-filter absolute inset-y-0 right-0 px-3 flex items-center"
                     aria-label="Filtrer les recettes"
                 >
                     <svg
@@ -130,7 +130,7 @@ export function ActiveFilters({
     return (
         <div className="flex flex-wrap gap-2 mt-2 mb-2">
             {category && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                <span className="category-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                     {categoryOptions.find(c => c.id.toString() === category)?.title || 'Catégorie'}
                     <button
                         type="button"
@@ -145,7 +145,7 @@ export function ActiveFilters({
             )}
 
             {mealType && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="meal-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     {mealType}
                     <button
                         type="button"
@@ -160,7 +160,7 @@ export function ActiveFilters({
             )}
 
             {maxPreparationTime && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                <span className="preparationtime-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                     Max {maxPreparationTime} min
                     <button
                         type="button"
@@ -175,7 +175,7 @@ export function ActiveFilters({
             )}
 
             {onyVegeEnabled && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="onlyvege-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     Végé uniquement
                     <button
                         type="button"
@@ -203,7 +203,7 @@ export function ActiveFilters({
 // Composant pour l'état vide (aucune recette trouvée)
 export function EmptyState({ onReset }: { onReset: () => void }) {
     return (
-        <div className="text-center py-12 bg-white rounded-lg shadow-md">
+        <div className="container-result-empty text-center py-12 bg-white rounded-lg shadow-md">
             <svg
                 className="mx-auto h-12 w-12 text-gray-400"
                 fill="none"
@@ -237,7 +237,7 @@ export function EmptyState({ onReset }: { onReset: () => void }) {
 // Composant pour l'indicateur de chargement infini
 export function LoadingIndicator() {
     return (
-        <div className="flex flex-col items-center">
+        <div className="loader flex flex-col items-center">
             <svg
                 className="animate-spin h-8 w-8 text-rose-500 mb-2"
                 xmlns="http://www.w3.org/2000/svg"

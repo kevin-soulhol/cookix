@@ -67,7 +67,7 @@ export default function FilterPanel({
     const { category, mealType, maxPreparationTime, randomEnabled, onlyVege } = filterValues;
 
     return (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
+        <div className="filter-panel fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
             onClick={onClose}
         >
             <div
@@ -139,6 +139,7 @@ export default function FilterPanel({
                         label="Seulement les plats végé"
                         text="Activer l'affichage des plats végétariens uniquement"
                         enabled={onlyVege}
+                        classes="isVegeOption"
                         onChange={() => {
                             setOnlyVege(!onlyVege);
                             const form = formRef.current;
@@ -164,14 +165,14 @@ export default function FilterPanel({
                         <button
                             type="button"
                             onClick={onReset}
-                            className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                            className="cancel-panel flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                         >
                             Réinitialiser
                         </button>
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700"
+                            className="valid-panel flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700"
                         >
                             Appliquer
                         </button>
@@ -287,11 +288,13 @@ function Toggle({
     label,
     text,
     enabled,
+    classes,
     onChange
 }: {
     label: string,
     text: string,
     enabled: boolean,
+    classes?: string,
     onChange: () => void
 }) {
     return (
@@ -303,7 +306,7 @@ function Toggle({
                 <button
                     type="button"
                     onClick={onChange}
-                    className={`relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none ${enabled ? 'bg-rose-500' : 'bg-gray-200'
+                    className={`${classes} relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none ${enabled ? 'bg-rose-500' : 'bg-gray-200'
                         }`}
                     role="switch"
                     aria-checked={enabled}
