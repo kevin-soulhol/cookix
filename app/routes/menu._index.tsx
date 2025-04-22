@@ -248,7 +248,7 @@ export default function WeeklyMenu() {
                             { method: "delete", action: "/api/menu" }
                           );
                         }}
-                        className="absolute top-3 right-3 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
+                        className="delete-btn absolute top-3 right-3 bg-white bg-opacity-80 p-2 rounded-full shadow-md hover:bg-opacity-100 transition-all"
                         aria-label="Retirer du menu"
                       >
                         <svg
