@@ -16,7 +16,8 @@ const config: PlaywrightTestConfig = {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'on-first-retry'
+    video: 'on-first-retry',
+    actionTimeout: 3000,
   },
   projects: [
     {

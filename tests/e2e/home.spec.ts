@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import prisma from './utils/db';
-import { openFilterPanel, performSearch, scrollPageToBottom, searchByFilter } from './utils/tools';
+import { cleanLoggged, openFilterPanel, performSearch, scrollPageToBottom, searchByFilter } from './utils/tools';
 
 
 
@@ -8,6 +8,7 @@ test.describe('Homepage', () => {
   const searchbarSelector = 'input[placeholder*="Rechercher"]'
 
   test.beforeEach(async ({ page }) => {
+    await cleanLoggged(page)
     // Accéder à la page d'accueil
     await page.goto('/');
   

@@ -152,3 +152,7 @@ export async function loginViaApi(page: Page) {
     throw await loginResponse.json();
   }
 }
+
+export async function cleanLoggged(page: Page){
+  await page.context().clearCookies()
+}

@@ -234,7 +234,7 @@ export default function WeeklyMenu() {
                 <p className="text-gray-500">Aucune recette ne correspond à votre recherche.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-12">
+              <div className="menu-recipes-container grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-12">
                 {filteredRecipes.map((recipe: RecipeType) => (
                   <div key={recipe.id} className="relative">
                     <BoxRecipe recipe={recipe} readOnly={true} compact={true} />

@@ -1,18 +1,29 @@
-import test, { expect } from "@playwright/test";
-import { loginViaApi } from "./utils/tools";
+import test, { expect, Page } from "@playwright/test";
+import { cleanLoggged, loginViaApi } from "./utils/tools";
 
 test.describe('Box Recipes', () => {
-    test.afterEach(async ({ page }) => {
-    await page.goto('/');
-    const firstIsAddedToMenu = await page.evaluate(() => {
-        return document.querySelectorAll('.box-recipe:nth-child(1) .add-menu-btn.bg-green-100').length
+
+    test.afterEach(async ( { page }) => {
+        await checkNoRecipeAdded(page)
+        await cleanLoggged(page)
     });
 
-    if(firstIsAddedToMenu){
-        await page.goto('/menu');
-        await page.locator('.delete-btn:nth-child(2)').click();
+    async function checkNoRecipeAdded(page : Page){
+        await page.goto('/');
+        const firstIsAddedToMenu = await page.evaluate(() => {
+            return document.querySelectorAll('.box-recipe:nth-child(1) .add-menu-btn.bg-green-100').length
+        });
+
+        if(firstIsAddedToMenu){
+            await page.goto('/menu');
+            const boxes = page.locator('.menu-recipes-container .delete-btn')
+            const count = await boxes.count();
+
+            for (let i = 0; i < count; i++) {
+                await boxes.nth(i).click();
+            }
+        }
     }
-    })
 
     test('can add to menu when logged', async function ({ page }) {
         await loginViaApi(page)
@@ -44,8 +55,8 @@ test.describe('Box Recipes', () => {
         await page.locator('.box-recipe:nth-child(1) .add-menu-btn').click();
         
         await page.goto('/menu');
-        await page.locator('.delete-btn:nth-child(2)').click();
-        await expect(page.locator('.box-recipe')).not.toBeVisible();
+        await page.locator('.menu-recipes-container .delete-btn:nth-child(2)').click();
+        await expect(page.locator('menu-recipes-container .box-recipe')).not.toBeVisible();
     })
 });
 
