@@ -815,6 +815,7 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
     return (
         <li
             ref={itemRef}
+            data-testid={`shopping-item-${item.id}`}
             className={`
                 shopping-item relative overflow-hidden 
                 ${item.isChecked ? "bg-gray-50" : "bg-white"}
@@ -826,6 +827,7 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
             {/* Couche de fond pour l'action de slide */}
             <div
                 className={`absolute inset-y-0 left-0 flex items-center px-4 ${targetMarketplaceInfo.bgColor} transition-opacity duration-100 ${isDragging && slideOffset > 10 ? 'opacity-100' : 'opacity-0'}`}
+                data-testid={`shopping-item-content-${item.id}`}
                 style={{ width: `${MAX_SLIDE_VISUAL}px` }} // La largeur de la zone qui apparaît
                 aria-hidden="true"
             >
@@ -837,7 +839,7 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
             {/* Contenu principal qui glisse */}
             <div
                 ref={contentRef}
-                className={`relative z-10 flex items-center py-3 px-4 bg-inherit transition-transform duration-200 ease-out ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} border-l-4 ${item.marketplace ? 'border-green-500' : 'border-transparent'}`}
+                className={`drag-item relative z-10 flex items-center py-3 px-4 bg-inherit transition-transform duration-200 ease-out ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} border-l-4 ${item.marketplace ? 'border-green-500' : 'border-transparent'}`}
                 style={{ transform: `translateX(${slideOffset}px)` }}
                 onMouseDown={onMouseDown}
                 onMouseMove={onMouseMove}
@@ -855,7 +857,7 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     onClick={() => onToggle(true)} // Par défaut, on applique à tous les éléments similaires
-                    className="flex-shrink-0 mr-3 p-1 -ml-1"
+                    className="checkbox-btn flex-shrink-0 mr-3 p-1 -ml-1"
                 >
                     <span
                         className="w-5 h-5 rounded-full border flex items-center justify-center border-gray-300 bg-white" // Fond blanc pour visibilité
@@ -883,13 +885,13 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
                 {/* Infos de l'item */}
                 <div className="flex flex-col gap-x-4 flex-grow min-w-0 mr-2">
                     <div className="flex items-center">
-                        <span className={`font-medium text-gray-700 truncate flex-shrink-0 ${item.isChecked && "line-through text-gray-500"}`}>
+                        <span className={`name font-medium text-gray-700 truncate flex-shrink-0 ${item.isChecked && "line-through text-gray-500"}`}>
                             {item.ingredient.name}
                         </span>
                     </div>
 
                     {(item.quantity || item.unit) && (
-                        <span className="text-xs text-gray-500 flex-shrink-0">
+                        <span className="quantity text-xs text-gray-500 flex-shrink-0">
                             {item.quantity && <span>{item.quantity}</span>}
                             <span> {item.unit ? item.unit : 'unité.s'}</span>
                         </span>
@@ -933,6 +935,7 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
                 <div className={`flex-shrink-0 transition-opacity duration-150`}>
                     <button
                         type="button"
+                        data-testid={`delete-button-${item.id}`}
                         onClick={() => onRemove(true)} // Par défaut, on supprime tous les éléments similaires
                         className={`text-gray-400 p-1 hover:text-red-500`}
                         aria-label="Supprimer"
