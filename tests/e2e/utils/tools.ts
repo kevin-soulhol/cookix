@@ -153,6 +153,147 @@ export async function loginViaApi(page: Page) {
   }
 }
 
+/**
+ * Finds the user ID for the predefined test user email.
+ * Throws an error if the user is not found.
+ */
+async function getTestUserId(): Promise<number> {
+  const user = await prisma.user.findUnique({
+      where: { email: TEST_USER.email },
+      select: { id: true }, // Only select the ID
+  });
+
+  if (!user) {
+      throw new Error(`Test user with email ${TEST_USER.email} not found in the database.`);
+  }
+  return user.id;
+}
+
+/**
+ * Deletes all shopping list items associated with the test user's primary shopping list.
+ */
+export async function clearShoppingListForTestUser() {
+  try {
+      const userId = await getTestUserId();
+
+      // Find the shopping list associated with the user
+      const shoppingList = await prisma.shoppingList.findFirst({
+          where: { userId: userId },
+          select: { id: true },
+      });
+
+      // If the user has a shopping list, delete its items
+      if (shoppingList) {
+          const { count } = await prisma.shoppingItem.deleteMany({
+              where: { shoppingListId: shoppingList.id },
+          });
+          console.log(`🧹 Cleared ${count} shopping items for user ${TEST_USER.email}`);
+      } else {
+          console.log(`🧹 No shopping list found for user ${TEST_USER.email}, nothing to clear.`);
+      }
+  } catch (error) {
+      console.error(`Error clearing shopping list for ${TEST_USER.email}:`, error);
+      // Rethrow or handle as needed for test stability
+      throw error;
+  }
+}
+
+/**
+ * Deletes all menu items associated with any menus owned by the test user.
+ * (Equivalent to the goal of your original checkNoRecipeAdded)
+ */
+export async function clearMenuItemsForTestUser() {
+  try {
+      const userId = await getTestUserId();
+
+      // Find all menu IDs owned by the test user
+      const menus = await prisma.menu.findMany({
+          where: { userId: userId },
+          select: { id: true },
+      });
+
+      if (menus.length > 0) {
+          const menuIds = menus.map(menu => menu.id);
+
+          // Delete all menu items linked to those menus
+          const { count } = await prisma.menuItem.deleteMany({
+              where: {
+                  menuId: {
+                      in: menuIds,
+                  },
+              },
+          });
+          console.log(`🧹 Cleared ${count} menu items for user ${TEST_USER.email}`);
+      } else {
+          console.log(`🧹 No menus found for user ${TEST_USER.email}, no menu items to clear.`);
+      }
+  } catch (error) {
+      console.error(`Error clearing menu items for ${TEST_USER.email}:`, error);
+      throw error;
+  }
+}
+
+/**
+* Helper function to add a specific item to the test user's shopping list.
+* Useful for setting up specific test states.
+* Returns the created shopping item.
+*/
+export async function addShoppingItemForTestUser(
+  ingredientName: string,
+  quantity: number | null = null,
+  unit: string | null = null,
+  marketplace: boolean = false,
+  recipeId: number | null = null
+): Promise<import('@prisma/client').ShoppingItem> {
+  try {
+      const userId = await getTestUserId();
+
+      // Find or create the shopping list
+      let shoppingList = await prisma.shoppingList.findFirst({
+          where: { userId: userId },
+      });
+      if (!shoppingList) {
+          shoppingList = await prisma.shoppingList.create({
+              data: { userId: userId },
+          });
+           console.log(`🛒 Created shopping list for user ${TEST_USER.email}`);
+      }
+
+      // Find or create the ingredient
+      let ingredient = await prisma.ingredient.findUnique({
+          where: { name: ingredientName },
+      });
+      if (!ingredient) {
+          ingredient = await prisma.ingredient.create({
+              data: { name: ingredientName },
+          });
+           console.log(`🌿 Created ingredient: ${ingredientName}`);
+      }
+
+      // Create the shopping item
+      // Handle potential unique constraint violation if item already exists (e.g., re-adding same manual item)
+      // For simplicity here, we assume it doesn't exist or test logic handles it.
+      // A real-world scenario might use upsert or check existence first.
+      const newItem = await prisma.shoppingItem.create({
+          data: {
+              shoppingListId: shoppingList.id,
+              ingredientId: ingredient.id,
+              recipeId: recipeId, // Link to recipe if provided
+              quantity: quantity,
+              unit: unit,
+              isChecked: false,
+              marketplace: marketplace,
+          },
+      });
+       console.log(`➕ Added shopping item "${ingredientName}" for user ${TEST_USER.email}`);
+      return newItem;
+
+  } catch (error) {
+      console.error(`Error adding shopping item "${ingredientName}" for ${TEST_USER.email}:`, error);
+      throw error;
+  }
+}
+
 export async function cleanLoggged(page: Page){
   await page.context().clearCookies()
 }
