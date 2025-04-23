@@ -688,6 +688,16 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
     const [showRecipes, setShowRecipes] = useState(false);
     const [showItemActions, setShowItemActions] = useState(false);
 
+    // États pour le slide
+    const [slideOffset, setSlideOffset] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const itemRef = useRef<HTMLLIElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null); // Référence pour le contenu qui glisse
+
+    const SLIDE_THRESHOLD = 60; // Pixels à glisser pour déclencher l'action
+    const MAX_SLIDE_VISUAL = 80; // Déplacement visuel maximum autorisé
+
     // Définir les icônes et couleurs pour chaque catégorie
     const marketplaceInfo = item.marketplace
         ? {
@@ -707,9 +717,81 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
             color: "bg-gray-100 text-gray-700 border-gray-300"
         };
 
+    const targetMarketplaceInfo = !item.marketplace
+        ? { // Devient Marché
+            icon: (
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            ),
+            bgColor: "bg-green-100",
+            label: "Vers Marché"
+        }
+        : { // Devient Supermarché
+            icon: (
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+            ),
+            bgColor: "bg-gray-200",
+            label: "Vers Supermarché"
+        };
+
+    // --- Gestionnaires d'événements pour le slide ---
+
+    const handleDragStart = (clientX: number) => {
+        if (contentRef.current) {
+            contentRef.current.style.transition = 'none'; // Désactiver la transition pendant le drag
+        }
+        setIsDragging(true);
+        setStartX(clientX);
+        setSlideOffset(0); // Réinitialiser le décalage au début
+    };
+
+    const handleDragMove = (clientX: number) => {
+        if (!isDragging) return;
+
+        const currentX = clientX;
+        let deltaX = currentX - startX;
+
+        // Autoriser uniquement le slide vers la droite
+        deltaX = Math.max(0, deltaX);
+        // Limiter le déplacement visuel
+        deltaX = Math.min(deltaX, MAX_SLIDE_VISUAL);
+
+        setSlideOffset(deltaX);
+    };
+
+    const handleDragEnd = () => {
+        if (!isDragging) return;
+
+        setIsDragging(false);
+
+        // Réactiver la transition pour le retour
+        if (contentRef.current) {
+            contentRef.current.style.transition = 'transform 0.2s ease-out';
+        }
+
+        if (slideOffset >= SLIDE_THRESHOLD) {
+            // Action déclenchée!
+            console.log("Action toggle marketplace triggered!");
+            onToggleMarketplace(true); // On assume que le slide affecte toujours tous les éléments liés
+        }
+
+        // Remettre l'élément à sa place (animé grâce à la transition)
+        setSlideOffset(0);
+
+        // Nettoyage potentiel (optionnel)
+        setTimeout(() => {
+            if (contentRef.current) {
+                contentRef.current.style.transition = ''; // Remettre la transition par défaut si besoin
+            }
+        }, 200); // après la fin de l'animation de retour
+    };
+
     return (
         <li
-            className={`px-4 relative ${item.marketplace ? 'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-green-500' : ''} ${item.isChecked && "bg-gray-50"}`}
+            className={`shopping-item px-4 relative ${item.marketplace ? 'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-green-500' : ''} ${item.isChecked && "bg-gray-50"}`}
             onTouchStart={() => setShowItemActions(true)}
             onMouseEnter={() => setShowItemActions(true)}
             onMouseLeave={() => setShowItemActions(false)}
@@ -746,16 +828,18 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
 
                 <div className="flex-grow min-w-0 mr-2">
                     <div className="flex items-center">
-                        <span className={`font-medium text-gray-700 truncate ${item.isChecked && "line-through text-gray-500"}`}>
+                        <span className={`font-medium text-gray-700 truncate flex-shrink-0 ${item.isChecked && "line-through text-gray-500"}`}>
                             {item.ingredient.name}
                         </span>
-                        {(item.quantity || item.unit) && (
-                            <span className="ml-1 text-sm text-gray-500 flex-shrink-0">
-                                {item.quantity && <span>{item.quantity}</span>}
-                                {item.unit && <span> {item.unit}</span>}
-                            </span>
-                        )}
+
                     </div>
+
+                    {(item.quantity || item.unit) && (
+                        <span className="text-sm text-gray-500 flex-shrink-0">
+                            {item.quantity && <span>{item.quantity}</span>}
+                            <span> {item.unit ? item.unit : 'unité.s'}</span>
+                        </span>
+                    )}
 
                     {/* Afficher les recettes associées si disponibles */}
                     {showRecipeDetails && item.recipeDetails && item.recipeDetails.length > 0 && (
