@@ -686,7 +686,6 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
     showRecipeDetails = true
 }: ShoppingItemWithMarketplaceProps) => {
     const [showRecipes, setShowRecipes] = useState(false);
-    const [showItemActions, setShowItemActions] = useState(false);
 
     // États pour le slide
     const [slideOffset, setSlideOffset] = useState(0);
@@ -697,25 +696,6 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
 
     const SLIDE_THRESHOLD = 60; // Pixels à glisser pour déclencher l'action
     const MAX_SLIDE_VISUAL = 80; // Déplacement visuel maximum autorisé
-
-    // Définir les icônes et couleurs pour chaque catégorie
-    const marketplaceInfo = item.marketplace
-        ? {
-            icon: (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-            ),
-            color: "bg-green-100 text-green-700 border-green-300"
-        }
-        : {
-            icon: (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-            ),
-            color: "bg-gray-100 text-gray-700 border-gray-300"
-        };
 
     const targetMarketplaceInfo = !item.marketplace
         ? { // Devient Marché
@@ -789,22 +769,96 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
         }, 200); // après la fin de l'animation de retour
     };
 
+    // --- Adapteurs pour les événements souris et tactiles ---
+
+    const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        handleDragStart(e.clientX);
+    };
+
+    const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        handleDragMove(e.clientX);
+    };
+
+    const onMouseUp = () => {
+        handleDragEnd();
+    };
+
+    const onMouseLeave = () => {
+        // Si l'utilisateur quitte l'élément en maintenant le clic, terminer le drag
+        if (isDragging) {
+            handleDragEnd();
+        }
+    };
+
+    const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        // Vérifier qu'il n'y a qu'un seul doigt pour éviter les gestes multi-touch
+        if (e.touches.length === 1) {
+            handleDragStart(e.touches[0].clientX);
+        }
+    };
+
+    const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (e.touches.length === 1) {
+            handleDragMove(e.touches[0].clientX);
+        }
+    };
+
+    const onTouchEnd = () => {
+        handleDragEnd();
+    };
+
+    const onTouchCancel = () => {
+        // Gérer le cas où le système annule le toucher
+        handleDragEnd();
+    };
+
     return (
         <li
-            className={`shopping-item px-4 relative ${item.marketplace ? 'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-green-500' : ''} ${item.isChecked && "bg-gray-50"}`}
-            onTouchStart={() => setShowItemActions(true)}
-            onMouseEnter={() => setShowItemActions(true)}
-            onMouseLeave={() => setShowItemActions(false)}
+            ref={itemRef}
+            className={`
+                shopping-item relative overflow-hidden 
+                ${item.isChecked ? "bg-gray-50" : "bg-white"}
+            `}
+            onMouseLeave={() => {
+                if (isDragging) handleDragEnd();
+            }}
         >
-            <div className="flex items-center py-3">
+            {/* Couche de fond pour l'action de slide */}
+            <div
+                className={`absolute inset-y-0 left-0 flex items-center px-4 ${targetMarketplaceInfo.bgColor} transition-opacity duration-100 ${isDragging && slideOffset > 10 ? 'opacity-100' : 'opacity-0'}`}
+                style={{ width: `${MAX_SLIDE_VISUAL}px` }} // La largeur de la zone qui apparaît
+                aria-hidden="true"
+            >
+                <span className="flex items-center justify-center w-full h-full">
+                    {targetMarketplaceInfo.icon}
+                </span>
+            </div>
+
+            {/* Contenu principal qui glisse */}
+            <div
+                ref={contentRef}
+                className={`relative z-10 flex items-center py-3 px-4 bg-inherit transition-transform duration-200 ease-out ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} border-l-4 ${item.marketplace ? 'border-green-500' : 'border-transparent'}`}
+                style={{ transform: `translateX(${slideOffset}px)` }}
+                onMouseDown={onMouseDown}
+                onMouseMove={onMouseMove}
+                onMouseUp={onMouseUp}
+                onMouseLeave={onMouseLeave} // Important pour terminer le drag si on sort
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onTouchCancel={onTouchCancel}
+            >
                 {/* Bouton de check */}
                 <button
                     type="button"
+                    // Empêcher le bouton de check de déclencher le drag
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                     onClick={() => onToggle(true)} // Par défaut, on applique à tous les éléments similaires
-                    className="flex-shrink-0 mr-3"
+                    className="flex-shrink-0 mr-3 p-1 -ml-1"
                 >
                     <span
-                        className="w-5 h-5 rounded-full border flex items-center justify-center border-gray-300"
+                        className="w-5 h-5 rounded-full border flex items-center justify-center border-gray-300 bg-white" // Fond blanc pour visibilité
                         aria-hidden="true"
                     >
                         {item.isChecked && (
@@ -826,16 +880,16 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
                     </span>
                 </button>
 
-                <div className="flex-grow min-w-0 mr-2">
+                {/* Infos de l'item */}
+                <div className="flex flex-col gap-x-4 flex-grow min-w-0 mr-2">
                     <div className="flex items-center">
                         <span className={`font-medium text-gray-700 truncate flex-shrink-0 ${item.isChecked && "line-through text-gray-500"}`}>
                             {item.ingredient.name}
                         </span>
-
                     </div>
 
                     {(item.quantity || item.unit) && (
-                        <span className="text-sm text-gray-500 flex-shrink-0">
+                        <span className="text-xs text-gray-500 flex-shrink-0">
                             {item.quantity && <span>{item.quantity}</span>}
                             <span> {item.unit ? item.unit : 'unité.s'}</span>
                         </span>
@@ -845,6 +899,9 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
                     {showRecipeDetails && item.recipeDetails && item.recipeDetails.length > 0 && (
                         <div>
                             <button
+                                // Empêcher le bouton de déclencher le drag
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onTouchStart={(e) => e.stopPropagation()}
                                 onClick={() => setShowRecipes(!showRecipes)}
                                 className="text-xs text-rose-500 mt-1 flex items-center"
                             >
@@ -872,42 +929,20 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
                     )}
                 </div>
 
-                {/* Boutons d'action */}
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                    {/* Bouton pour changer la catégorie */}
-                    <button
-                        type="button"
-                        onClick={() => onToggleMarketplace(true)} // Par défaut, on applique à tous les éléments similaires
-                        className={`p-1 rounded-full ${marketplaceInfo.color} hover:opacity-80 transition-colors`}
-                        aria-label={item.marketplace ? "Déplacer vers le supermarché" : "Déplacer vers le marché"}
-                        title={item.marketplace ? "Marché" : "Supermarché"}
-                    >
-                        {marketplaceInfo.icon}
-                    </button>
-
-                    {/* Bouton de suppression */}
+                {/* === BOUTON SUPPRIMER === */}
+                <div className={`flex-shrink-0 transition-opacity duration-150`}>
                     <button
                         type="button"
                         onClick={() => onRemove(true)} // Par défaut, on supprime tous les éléments similaires
-                        className="text-gray-400 p-1 hover:text-red-500"
+                        className={`text-gray-400 p-1 hover:text-red-500`}
                         aria-label="Supprimer"
                     >
-                        <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                     </button>
                 </div>
+                {/* === FIN BOUTON SUPPRIMER === */}
             </div>
         </li>
     );
@@ -959,7 +994,7 @@ const RecipeGroupedView: React.FC<RecipeGroupedViewProps> = ({
                     </div>
 
                     {/* Liste des ingrédients pour cette recette */}
-                    <ul className="divide-y divide-gray-200">
+                    <ul className="divide-y">
                         {group.items.map((item) => (
                             <ShoppingItemWithMarketplace
                                 key={item.id}
@@ -1816,7 +1851,7 @@ export default function ShoppingList() {
                             <div className="mb-8">
                                 <h2 className="text-lg font-semibold mb-3 text-gray-600">Articles cochés</h2>
                                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                                    <ul className="divide-y divide-gray-200">
+                                    <ul className="divide-y">
                                         {categorizedItems.checked.map((item) => (
                                             <ShoppingItemWithMarketplace
                                                 key={item.id}
