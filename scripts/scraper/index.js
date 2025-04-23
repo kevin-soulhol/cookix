@@ -272,7 +272,11 @@ async function scrapeRecipeDetailsAndSave(page, recipe, number, maxRecipe) {
           } else if (label.includes('difficulté')) {
             difficulty = value;
           } else if (label.includes('parts') || label.includes('portion')) {
-            servings = parseInt(value) || null;
+            const match = value.match(/^(\d+)\s+(portion|portions|part|parts)/i)
+            if (match) {
+              const nombre = match[1];
+              servings = parseInt(nombre) || null;
+            }
           }
         }
         
