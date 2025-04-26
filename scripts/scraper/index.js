@@ -1,6 +1,7 @@
 const { chromium } = require('playwright');
 const { PrismaClient, Prisma } = require('@prisma/client');
 const path = require('path');
+const { exec } = require('child_process')
 // eslint-disable-next-line no-undef
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -20,7 +21,7 @@ try {
   process.exit(1);
 }
 
-async function main() {
+async function runScraping() {
   logWithTimestamp('Starting scheduled recipe scraper...');
   
   const browser = await chromium.launch({
@@ -590,34 +591,47 @@ function logWithTimestamp(message, error) {
     `);
 }
 
-// Fonction pour exécuter avec des tentatives
-/*
-async function runWithRetry(fn, maxRetries = 3, initialDelay = 5000) {
-  let lastError = null;
-  let delay = initialDelay;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      logWithTimestamp(`Attempt ${attempt}/${maxRetries} failed: ${error.message}`);
-      
-      if (attempt < maxRetries) {
-        logWithTimestamp(`Retrying in ${delay/1000} seconds...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        delay *= 2; // Délai exponentiel
-      }
-    }
-  }
-  
-  throw lastError;
-}
-  */
 
+// Fonction pour exécuter le script de mise à jour de la saisonnalité
+async function updateSeasonalData() {
+  console.log('Mise à jour des données de saisonnalité des ingrédients...');
+  
+  return new Promise((resolve, reject) => {
+    const seasonalityScriptPath = path.join(__dirname, '..', '..', 'scripts', 'seasonality-updater.js');
+    
+    // Exécuter le script comme un processus enfant
+    exec(`node ${seasonalityScriptPath}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Erreur lors de la mise à jour des données de saisonnalité:', error);
+        console.error(stderr);
+        return reject(error);
+      }
+      
+      console.log(stdout);
+      console.log('Mise à jour des données de saisonnalité terminée.');
+      resolve();
+    });
+  });
+}
+
+async function main() {
+  try {
+    // Exécution du scraping existant
+    await runScraping();
+    
+    // Mise à jour des données de saisonnalité après le scraping
+    await updateSeasonalData();
+    
+    console.log('Processus complet terminé avec succès.');
+  } catch (error) {
+    console.error('Erreur dans le processus principal:', error);
+    process.exit(1);
+  }
+}
 
 main().catch(error => {
   console.error('Unhandled error in main function:', error);
   // eslint-disable-next-line no-undef
   process.exit(1);
 });
+

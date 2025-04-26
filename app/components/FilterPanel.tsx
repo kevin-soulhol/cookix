@@ -17,7 +17,7 @@ export type FilterPanelType = {
     mealTypeOptions: MealAndCategoryTypeOption[];
     preparationTimeMax: number;
     onlyVege: boolean;
-
+    seasonal: boolean;
 }
 
 // Composant pour le panneau de filtres
@@ -33,6 +33,7 @@ type FilterPanelProps = {
         sortDirection: SortDirection;
         randomEnabled: boolean;
         onlyVege: boolean;
+        seasonal: boolean;
     };
     onUpdateFilter: (key: string, value: string | null) => void;
     onReset: () => void;
@@ -45,6 +46,7 @@ type FilterPanelProps = {
     setSortDirection: (value: SortDirection) => void;
     setRandomEnabled: (value: boolean) => void;
     setOnlyVege: (value: boolean) => void;
+    setSeasonal: (value: boolean) => void;
 };
 
 export default function FilterPanel({
@@ -60,11 +62,12 @@ export default function FilterPanel({
     setMealType,
     setMaxPreparationTime,
     setRandomEnabled,
-    setOnlyVege
+    setOnlyVege,
+    setSeasonal
 }: FilterPanelProps) {
     if (!isVisible) return null;
 
-    const { category, mealType, maxPreparationTime, randomEnabled, onlyVege } = filterValues;
+    const { category, mealType, maxPreparationTime, randomEnabled, onlyVege, seasonal } = filterValues;
 
     return (
         <div className="filter-panel fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
@@ -142,6 +145,21 @@ export default function FilterPanel({
                         classes="isVegeOption"
                         onChange={() => {
                             setOnlyVege(!onlyVege);
+                            const form = formRef.current;
+                            if (form !== null && form) {
+                                setTimeout(() => onSubmit(form), 0);
+                            }
+                        }}
+                    />
+
+                    {/* Option de saison */}
+                    <Toggle
+                        label="Fruits et légumes de saison"
+                        text="Afficher uniquement les recettes avec des ingrédients de saison"
+                        enabled={seasonal}
+                        classes="seasonal"
+                        onChange={() => {
+                            setSeasonal(!seasonal);
                             const form = formRef.current;
                             if (form !== null && form) {
                                 setTimeout(() => onSubmit(form), 0);
@@ -322,37 +340,6 @@ function Toggle({
             <p className="mt-1 text-xs text-gray-500">
                 {text}
             </p>
-        </div>
-    );
-}
-
-// Options de tri
-function SortingOptions({
-    value,
-    onChange
-}: {
-    value: string,
-    onChange: (value: string) => void
-}) {
-    return (
-        <div>
-            <label htmlFor="sort" className="block text-sm font-medium text-gray-700 mb-1">
-                Trier par
-            </label>
-            <select
-                id="sort"
-                name="sort"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
-            >
-                <option value="title-asc">Titre (A-Z)</option>
-                <option value="title-desc">Titre (Z-A)</option>
-                <option value="preparationTime-asc">Temps de préparation (croissant)</option>
-                <option value="preparationTime-desc">Temps de préparation (décroissant)</option>
-                <option value="note-desc">Note (décroissant)</option>
-                <option value="note-asc">Note (croissant)</option>
-            </select>
         </div>
     );
 }

@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData, useSubmit, useSearchParams } from "@remix-run/react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import BoxRecipe from "~/components/BoxRecipe";
 import FilterPanel, { FilterPanelType } from "~/components/FilterPanel";
 import Layout from "~/components/Layout";
@@ -20,6 +20,7 @@ export const meta: MetaFunction = () => {
 export async function loader({ request }: LoaderFunctionArgs) {
   // Récupérer les paramètres de filtrage depuis l'URL
   const url = new URL(request.url);
+
   const categoryId = url.searchParams.get("categoryId") || "";
   const mealType = url.searchParams.get("mealType") || "";
   const searchQuery = url.searchParams.get("search") || "";
@@ -28,6 +29,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const sortDirection = url.searchParams.get("sortDirection") || "asc";
   const randomEnabled = url.searchParams.get("random") === "true";
   const onlyVege = url.searchParams.get("onlyVege") === "true";
+  const seasonal = url.searchParams.get("seasonal") === "true";
 
   // Paramètres pour la pagination
   const page = parseInt(url.searchParams.get("page") || "1");
@@ -43,7 +45,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (mealType) apiUrl.searchParams.append("mealType", mealType);
   if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime);
   if (randomEnabled) apiUrl.searchParams.append("random", "true");
-  if (onlyVege) apiUrl.searchParams.append("onlyVege", "true");
+  if (seasonal) apiUrl.searchParams.append("seasonal", "true");
 
   // Ajouter les paramètres de tri et pagination
   apiUrl.searchParams.append("sort", sortBy);
@@ -76,7 +78,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       categoryOptions,
       mealTypeOptions,
       preparationTimeMax: 120,
-      onlyVege
+      onlyVege,
+      seasonal
     }
 
     return json({
@@ -96,13 +99,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
         sortBy,
         sortDirection,
         randomEnabled,
-        onlyVege
+        onlyVege,
+        seasonal
       },
       error: false
     });
   } catch (error) {
     console.error("Erreur lors du chargement des recettes:", error);
-    const filters: FilterPanelType = { categoryOptions: [], mealTypeOptions: [], preparationTimeMax: 120, onlyVege: false }
+    const filters: FilterPanelType = { categoryOptions: [], mealTypeOptions: [], preparationTimeMax: 120, onlyVege: false, seasonal: false }
     return json({
       recipes: [],
       pagination: { currentPage: 1, totalPages: 0, totalRecipes: 0, hasMore: false },
@@ -115,7 +119,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         sortBy: "note",
         sortDirection: "asc",
         randomEnabled: null,
-        onlyVege: null
+        onlyVege: null,
+        seasonal: null
       },
       error: error instanceof Error ? error.message : "Impossible de charger les recettes."
     });
@@ -182,10 +187,13 @@ export default function RecipesIndex() {
     category: appliedFilters.categoryId?.toString() || "",
     mealType: appliedFilters.mealType,
     maxPreparationTime: appliedFilters.maxPreparationTime,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sortBy: appliedFilters.sortBy as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sortDirection: appliedFilters.sortDirection as any,
-    randomEnabled: appliedFilters.randomEnabled,
-    onlyVege: appliedFilters.onlyVege
+    randomEnabled: !!appliedFilters.randomEnabled,
+    onlyVege: !!appliedFilters.onlyVege,
+    seasonal: !!appliedFilters.seasonal
   });
 
   // Utiliser le hook de pagination
@@ -230,6 +238,7 @@ export default function RecipesIndex() {
           category={filterState.category}
           mealType={filterState.mealType}
           maxPreparationTime={filterState.maxPreparationTime}
+          seasonal={filterState.seasonal}
           categoryOptions={filters.categoryOptions}
           onyVegeEnabled={filters.onlyVege}
           onCategoryRemove={() => {
@@ -247,6 +256,10 @@ export default function RecipesIndex() {
           onOnlyVegeRemove={() => {
             filterActions.setOnlyVege(false);
             filterActions.updateFilter("onlyVege", null);
+          }}
+          onSeasonalRemove={() => {
+            filterActions.setSeasonal(false);
+            filterActions.updateFilter("seasonal", null)
           }}
           onResetAll={filterActions.resetFilters}
         />
@@ -293,6 +306,7 @@ export default function RecipesIndex() {
           <input type="hidden" name="sortDirection" value={filterState.sortDirection} />
           <input type="hidden" name="random" value={filterState.randomEnabled.toString()} />
           <input type="hidden" name="onlyVege" value={filterState.onlyVege.toString()} />
+          <input type="hidden" name="seasonal" value={filterState.seasonal.toString()} />
           <input type="hidden" name="page" value="1" />
         </Form>
 
@@ -308,7 +322,8 @@ export default function RecipesIndex() {
             sortBy: filterState.sortBy,
             sortDirection: filterState.sortDirection,
             randomEnabled: filterState.randomEnabled,
-            onlyVege: filterState.onlyVege
+            onlyVege: filterState.onlyVege,
+            seasonal: filterState.seasonal
           }}
           onUpdateFilter={filterActions.updateFilter}
           onReset={filterActions.resetFilters}
@@ -321,6 +336,7 @@ export default function RecipesIndex() {
           setSortDirection={filterActions.setSortDirection}
           setRandomEnabled={filterActions.setRandomEnabled}
           setOnlyVege={filterActions.setOnlyVege}
+          setSeasonal={filterActions.setSeasonal}
         />
       </div>
     </Layout>

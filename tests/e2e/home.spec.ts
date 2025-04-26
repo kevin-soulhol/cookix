@@ -109,6 +109,31 @@ test.describe('Homepage', () => {
     await expect(results).toHaveCount(expectedCount);
   });
 
+  test('Filter by season', async ({ page }) => {
+    await page.clock.install({ time: new Date('2025-04-01T12:00:00') });
+    await openFilterPanel(page);
+
+    const btnSeason = page.locator(`.seasonal`);
+    await expect(btnSeason).toBeVisible();
+
+    await btnSeason.click();
+    await expect(btnSeason).toBeChecked();
+
+    const seasonBadge = page.locator('.seasonal-tag');
+    await expect(seasonBadge).toBeVisible();
+
+    // Cliquer sur Appliquer
+    const applyButton = page.locator('.filter-panel .valid-panel');
+    await applyButton.click();
+
+    const expectedCount = process.env.NODE_ENV === "development" ? 324 : 1;
+
+    await scrollPageToBottom(page);
+
+    const results = page.locator('.container-result .box-recipe');
+    await expect(results).toHaveCount(expectedCount);
+  });
+
   test('Basic keyword search', async ({ page }) => {
     // Tester une recherche de terme exact
     await performSearch(page, 'gâteau');

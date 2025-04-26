@@ -4,7 +4,9 @@ import { getUserId } from "./api.user";
 import { Ingredient, Recipe, RecipeIngredient, RecipeStep } from "@prisma/client";
 
 export type RecipeType = Recipe & {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   favorites?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   menuItems?: any[];
 }
 
@@ -269,6 +271,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset") as string) : 0;
   const random = url.searchParams.get("random") === "true";
   const onlyVege = url.searchParams.get("onlyVege") === "true";
+  const seasonal = url.searchParams.get("seasonal") === "true";
   const diversityLevel = url.searchParams.get("diversity") || "medium";
 
   try {
@@ -278,7 +281,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // Cas 2: Recherche de recettes avec filtres
-    const where: any = buildWhereClause(search, difficulty, categoryId, mealType, maxPreparationTime, onlyVege);
+    const where: any = buildWhereClause(search, difficulty, categoryId, mealType, maxPreparationTime, onlyVege, seasonal);
 
     // Compter le nombre total de recettes (pour la pagination)
     const totalRecipes = await prisma.recipe.count({ where });
@@ -358,7 +361,7 @@ async function getRecipeById(recipeId: number, userId: number | null) {
  * Construit la clause WHERE pour Prisma
  */
 function buildWhereClause(search: string | null, difficulty: string | null, categoryId: string | null,
-  mealType: string | null, maxPreparationTime: string | null, onlyVege: boolean | null): any {
+  mealType: string | null, maxPreparationTime: string | null, onlyVege: boolean | null, seasonal: boolean | null): any {
   const where: any = {};
 
   // Pour la recherche textuelle, utiliser une approche très inclusive
@@ -404,6 +407,27 @@ function buildWhereClause(search: string | null, difficulty: string | null, cate
       some: {
         meal: {
           title: { equals: mealType }
+        }
+      }
+    };
+  }
+
+  //filtre par saisonnalité
+  if (seasonal) {
+    // Obtenir le mois actuel
+    const currentDate = new Date();
+    const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+
+    // Nous voulons les recettes où TOUS les ingrédients sont soit pérennes, soit de saison
+    where.ingredients = {
+      every: {
+        ingredient: {
+          seasonInfo: {
+            OR: [
+              { isPerennial: true }, // Ingrédient pérenne
+              { [currentMonth]: true } // Ingrédient de saison pour le mois actuel
+            ]
+          }
         }
       }
     };

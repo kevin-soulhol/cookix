@@ -21,7 +21,9 @@ ENV NODE_OPTIONS="--max-old-space-size=128"
 
 # Copie du schéma Prisma
 COPY ./prisma ./prisma/
+
 COPY ./scripts/scraper/index.js ./
+COPY ./scripts/scraper/seasonality-updater.js ./
 COPY .env ./
 
 # Installation seulement de Chromium avec la commande node_modules

@@ -9,6 +9,7 @@
     "start": "node server.js",
     "seed": "node prisma/seed.js",
     "scrap:run": "docker compose exec scraper node /app/index.js",
+    "scrap:season": "docker compose exec scraper node /app/seasonality-updater.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "db:setup": "npm run prisma:generate && npm run prisma:migrate",
