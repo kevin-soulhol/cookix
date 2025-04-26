@@ -126,7 +126,7 @@ test.describe('Homepage', () => {
     const applyButton = page.locator('.filter-panel .valid-panel');
     await applyButton.click();
 
-    const expectedCount = process.env.NODE_ENV === "development" ? 324 : 1;
+    const expectedCount = process.env.NODE_ENV === "development" ? 324 : 7;
 
     await scrollPageToBottom(page);
 
