@@ -597,7 +597,7 @@ async function updateSeasonalData() {
   console.log('Mise à jour des données de saisonnalité des ingrédients...');
   
   return new Promise((resolve, reject) => {
-    const seasonalityScriptPath = path.join(__dirname, '..', '..', 'seasonality-updater.js');
+    const seasonalityScriptPath = path.join(__dirname, 'seasonality-updater.js');
     
     // Exécuter le script comme un processus enfant
     exec(`node ${seasonalityScriptPath}`, (error, stdout, stderr) => {
