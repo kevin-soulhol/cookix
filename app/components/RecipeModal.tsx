@@ -21,31 +21,57 @@ interface RecipeModalProps {
     isAuthenticated?: boolean;
 }
 
+type IngredientWithSeason = RecipeIngredient & {
+    ingredient: Ingredient;
+    isInSeason: boolean;
+    isPermanent: boolean;
+    isFruit: boolean;
+    isVegetable: boolean;
+};
+
 type TabType = 'ingredients' | 'instructions' | 'description';
 
 
 // Composant pour l'onglet Ingrédients
-const IngredientsTab = ({ ingredients }: { ingredients?: (RecipeIngredient & { ingredient: Ingredient })[] }) => (
+const IngredientsTab = ({ ingredients }: { ingredients?: IngredientWithSeason[] }) => (
     <div className="ingredients-tab">
         <h2 className="text-xl font-semibold mb-4">Ingrédients</h2>
         {ingredients && ingredients.length > 0 ? (
             <ul className="space-y-2">
                 {ingredients.map((item, index) => (
                     <li key={index} className="flex items-center p-2 border-b border-gray-100 last:border-0">
-                        <svg
-                            className="w-5 h-5 text-rose-500 mr-3 flex-shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M5 13l4 4L19 7"
-                            />
-                        </svg>
+                        {/* Indicateur de saisonnalité */}
+                        {item.isFruit || item.isVegetable ? (
+                            <span className={`mr-2 ${item.isInSeason || item.isPermanent ? 'text-green-500' : 'text-red-500'}`} title={
+                                item.isPermanent ? "Disponible toute l'année" :
+                                    item.isInSeason ? 'De saison' : 'Hors saison'
+                            }>
+                                {item.isFruit ? (
+                                    // Icône de pomme (fruit)
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 448 512"><path d="M448 96c0-35.3-28.7-64-64-64c-6.6 0-13 1-19 2.9c-22.5 7-48.1 14.9-71 9c-75.2-19.1-156.4 11-213.7 68.3S-7.2 250.8 11.9 326c5.8 22.9-2 48.4-9 71C1 403 0 409.4 0 416c0 35.3 28.7 64 64 64c6.6 0 13-1 19.1-2.9c22.5-7 48.1-14.9 71-9c75.2 19.1 156.4-11 213.7-68.3s87.5-138.5 68.3-213.7c-5.8-22.9 2-48.4 9-71c1.9-6 2.9-12.4 2.9-19.1zM212.5 127.4c-54.6 16-101.1 62.5-117.1 117.1C92.9 253 84 257.8 75.5 255.4S62.2 244 64.6 235.5c19.1-65.1 73.7-119.8 138.9-138.9c8.5-2.5 17.4 2.4 19.9 10.9s-2.4 17.4-10.9 19.9z" /></svg>
+                                ) : (
+                                    // Icône de carotte (légume)
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 512 512"><path d="M346.7 6C337.6 17 320 42.3 320 72c0 40 15.3 55.3 40 80s40 40 80 40c29.7 0 55-17.6 66-26.7c4-3.3 6-8.2 6-13.3s-2-10-6-13.2c-11.4-9.1-38.3-26.8-74-26.8c-32 0-40 8-40 8s8-8 8-40c0-35.7-17.7-62.6-26.8-74C370 2 365.1 0 360 0s-10 2-13.3 6zM244.6 136c-40 0-77.1 18.1-101.7 48.2l60.5 60.5c6.2 6.2 6.2 16.4 0 22.6s-16.4 6.2-22.6 0l-55.3-55.3 0 .1L2.2 477.9C-2 487-.1 497.8 7 505s17.9 9 27.1 4.8l134.7-62.4-52.1-52.1c-6.2-6.2-6.2-16.4 0-22.6s16.4-6.2 22.6 0L199.7 433l100.2-46.4c46.4-21.5 76.2-68 76.2-119.2C376 194.8 317.2 136 244.6 136z" /></svg>
+                                )}
+                            </span>
+                        ) : (
+                            // Icône standard pour les ingrédients non fruits/légumes
+                            <svg
+                                className="w-5 h-5 text-rose-500 mr-3 flex-shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                        )}
+
                         <span>
                             {item.quantity && <span className="font-medium">{item.quantity} </span>}
                             {item.unit && <span>{item.unit} de </span>}
@@ -668,49 +694,77 @@ const MenuButton = ({ isAdded, onClick, isSubmitting }: MenuButtonProps): JSX.El
 );
 
 // Métadonnées de la recette
-const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => (
-    <div className="metadata-container border-b border-gray-200 px-2 py-2">
-        <div className="flex flex-wrap justify-around text-xs">
-            {recipe.preparationTime && (
-                <MetadataItem
-                    classe="preparationTime"
-                    icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />}
-                    label={`${recipe.preparationTime} min`}
-                />
-            )}
+const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => {
+    // Calculer si la recette entière est de saison
+    const hasSeasonalInfo = recipe.ingredients && recipe.ingredients.some(i => i.isFruit || i.isVegetable);
+    const allInSeason = hasSeasonalInfo && recipe.ingredients.every(i => i.isInSeason || i.isPermanent);
 
-            {recipe.cookingTime && (
-                <MetadataItem
-                    classe="cookingTime"
-                    icon={<>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
-                    </>}
-                    label={recipe.cookingTime.toString()}
-                />
-            )}
+    return (
+        <div className="metadata-container border-b border-gray-200 px-2 py-2">
+            <div className="flex flex-wrap justify-around text-xs">
+                {recipe.preparationTime && (
+                    <MetadataItem
+                        classe="preparationTime"
+                        icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />}
+                        label={`${recipe.preparationTime} min`}
+                    />
+                )}
 
-            {recipe.difficulty && (
-                <MetadataItem
-                    classe="difficulty"
-                    icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />}
-                    label={recipe.difficulty}
-                />
-            )}
+                {recipe.cookingTime && (
+                    <MetadataItem
+                        classe="cookingTime"
+                        icon={<>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+                        </>}
+                        label={recipe.cookingTime.toString()}
+                    />
+                )}
 
-            {recipe.servings && (
-                <MetadataItem
-                    classe="servings"
-                    icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />}
-                    label={<>
-                        <span className="font-medium">{recipe.servings}</span>
-                        <span className="text-gray-500 ml-1">portion{recipe.servings > 1 ? 's' : ''}</span>
-                    </>}
-                />
-            )}
+                {recipe.difficulty && (
+                    <MetadataItem
+                        classe="difficulty"
+                        icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />}
+                        label={recipe.difficulty}
+                    />
+                )}
+
+                {recipe.servings && (
+                    <MetadataItem
+                        classe="servings"
+                        icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />}
+                        label={<>
+                            <span className="font-medium">{recipe.servings}</span>
+                            <span className="text-gray-500 ml-1">portion{recipe.servings > 1 ? 's' : ''}</span>
+                        </>}
+                    />
+                )}
+
+                {hasSeasonalInfo && (
+                    <div className="px-2 py-1 flex items-center">
+                        {allInSeason ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Recette de saison
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Hors saison
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
-    </div>
-);
+    )
+};
 
 // Item métadonnée réutilisable
 const MetadataItem = ({ icon, label, classe }: MetadataItemProps): JSX.Element => (
