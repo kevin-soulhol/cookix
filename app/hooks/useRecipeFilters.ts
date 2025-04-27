@@ -52,7 +52,6 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
   useEffect(() => {
     if (debouncedSearch !== initialState.search && debouncedSearch !== searchParams.get("search")) {
       const params = new URLSearchParams();
-      console.log("iciiiiiiiii", seasonal)
 
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (category) params.set("categoryId", category);

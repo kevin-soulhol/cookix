@@ -45,6 +45,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (mealType) apiUrl.searchParams.append("mealType", mealType);
   if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime);
   if (randomEnabled) apiUrl.searchParams.append("random", "true");
+  if (onlyVege) apiUrl.searchParams.append("onlyVege", "true");
   if (seasonal) apiUrl.searchParams.append("seasonal", "true");
 
   // Ajouter les paramètres de tri et pagination
@@ -240,7 +241,7 @@ export default function RecipesIndex() {
           maxPreparationTime={filterState.maxPreparationTime}
           seasonal={filterState.seasonal}
           categoryOptions={filters.categoryOptions}
-          onyVegeEnabled={filters.onlyVege}
+          onlyVegeEnabled={filters.onlyVege}
           onCategoryRemove={() => {
             filterActions.setCategory("");
             filterActions.updateFilter("categoryId", "");

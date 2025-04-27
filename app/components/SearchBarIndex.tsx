@@ -104,7 +104,7 @@ type ActiveFiltersProps = {
     mealType: string;
     maxPreparationTime: number | null;
     categoryOptions: MealAndCategoryTypeOption[];
-    onyVegeEnabled: boolean;
+    onlyVegeEnabled: boolean;
     seasonal: boolean;
     onSeasonalRemove: () => void;
     onCategoryRemove: () => void;
@@ -119,7 +119,7 @@ export function ActiveFilters({
     mealType,
     maxPreparationTime,
     categoryOptions,
-    onyVegeEnabled,
+    onlyVegeEnabled,
     seasonal,
     onSeasonalRemove,
     onCategoryRemove,
@@ -129,7 +129,7 @@ export function ActiveFilters({
     onResetAll
 }: ActiveFiltersProps) {
     // Si aucun filtre actif, ne pas afficher ce composant
-    if (!category && !mealType && !maxPreparationTime && !onyVegeEnabled && !seasonal) return null;
+    if (!category && !mealType && !maxPreparationTime && !onlyVegeEnabled && !seasonal) return null;
 
     return (
         <div className="flex flex-wrap gap-2 mt-2 mb-2">
@@ -178,7 +178,7 @@ export function ActiveFilters({
                 </span>
             )}
 
-            {onyVegeEnabled && (
+            {onlyVegeEnabled && (
                 <span className="onlyvege-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     Végé uniquement
                     <button
