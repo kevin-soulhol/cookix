@@ -104,7 +104,9 @@ type ActiveFiltersProps = {
     mealType: string;
     maxPreparationTime: number | null;
     categoryOptions: MealAndCategoryTypeOption[];
-    onyVegeEnabled: boolean;
+    onlyVegeEnabled: boolean;
+    seasonal: boolean;
+    onSeasonalRemove: () => void;
     onCategoryRemove: () => void;
     onMealTypeRemove: () => void;
     onPrepTimeRemove: () => void;
@@ -117,7 +119,9 @@ export function ActiveFilters({
     mealType,
     maxPreparationTime,
     categoryOptions,
-    onyVegeEnabled,
+    onlyVegeEnabled,
+    seasonal,
+    onSeasonalRemove,
     onCategoryRemove,
     onMealTypeRemove,
     onPrepTimeRemove,
@@ -125,7 +129,7 @@ export function ActiveFilters({
     onResetAll
 }: ActiveFiltersProps) {
     // Si aucun filtre actif, ne pas afficher ce composant
-    if (!category && !mealType && !maxPreparationTime && !onyVegeEnabled) return null;
+    if (!category && !mealType && !maxPreparationTime && !onlyVegeEnabled && !seasonal) return null;
 
     return (
         <div className="flex flex-wrap gap-2 mt-2 mb-2">
@@ -174,13 +178,28 @@ export function ActiveFilters({
                 </span>
             )}
 
-            {onyVegeEnabled && (
+            {onlyVegeEnabled && (
                 <span className="onlyvege-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     Végé uniquement
                     <button
                         type="button"
                         onClick={onOnlyVegeRemove}
                         className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-green-400 hover:bg-green-200 hover:text-amber-600"
+                    >
+                        <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
+                            <path d="M8 4l-4 4M4 4l4 4" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                    </button>
+                </span>
+            )}
+
+            {seasonal && (
+                <span className="seasonal-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                    De saison
+                    <button
+                        type="button"
+                        onClick={onSeasonalRemove}
+                        className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-teal-400 hover:bg-teal-200 hover:text-teal-600"
                     >
                         <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
                             <path d="M8 4l-4 4M4 4l4 4" strokeWidth="2" strokeLinecap="round" />

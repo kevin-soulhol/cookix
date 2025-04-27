@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // prisma/seed.test.ts
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
@@ -5,7 +6,7 @@ const prisma = new PrismaClient();
 async function seedTestData() {
 
   // Ajouter les catégories
-  const categories = await prisma.category.createMany({
+  await prisma.category.createMany({
     data: [
       { title: 'Entrées', sourceUrl: 'http://test.com/entrees' },
       { title: 'Plats', sourceUrl: 'http://test.com/plats' },
@@ -82,6 +83,66 @@ async function seedTestData() {
     map[ing.name] = ing.id;
     return map;
   }, {});
+
+  const seasonData = ingredients.map(ing => {
+    // Par défaut, on considère tout pérenne pour simplifier,
+    // sauf l'ingrédient spécifique qu'on va modifier.
+    const data = { // Utiliser 'any' temporairement pour flexibilité
+      ingredientId: ing.id,
+      isPerennial: true, // Default à true
+      january: false, february: false, march: false, april: false, may: false, june: false,
+      july: false, august: false, september: false, october: false, november: false, december: false,
+      isFruit: false, // Peut être affiné si nécessaire
+      isVegetable: false, // Peut être affiné si nécessaire
+    };
+
+    // Cas spécifique : Citron disponible uniquement en Janvier pour le test
+    if (ing.name === 'Citron') {
+      data.isPerennial = false;
+      data.january = true;
+      data.isFruit = true; // Un citron est un fruit
+    }
+
+    // Cas spécifique : Sucre (pérenne)
+    if (ing.name === 'Sucre') {
+       data.isPerennial = true; // Déjà par défaut, mais explicitons
+    }
+
+     // Cas spécifique : Eau gazeuse (pérenne)
+    if (ing.name === 'Eau gazeuse') {
+       data.isPerennial = true; // Déjà par défaut, mais explicitons
+    }
+
+    // Ajoutez d'autres cas spécifiques si nécessaire pour d'autres ingrédients
+    // Exemple : Fraises (plutôt printemps/été)
+    if (ing.name === 'Fraises') {
+        data.isPerennial = false;
+        data.may = true;
+        data.june = true;
+        data.july = true;
+        data.isFruit = true;
+    }
+     // Exemple : Tomates (plutôt été)
+    if (ing.name === 'Tomates') {
+        data.isPerennial = false;
+        data.june = true;
+        data.july = true;
+        data.august = true;
+        data.september = true;
+        data.isFruit = true; // Botaniquement un fruit, souvent utilisé comme légume
+        data.isVegetable = true; // Usage culinaire
+    }
+
+
+    return data;
+  });
+
+  await prisma.ingredientSeason.createMany({
+    data: seasonData,
+    // skipDuplicates: true // Ne fonctionne pas sur une contrainte unique non-PK dans createMany avant Prisma vX.Y
+    // Le nettoyage préalable (deleteMany) évite les erreurs de duplication.
+  });
+  console.log('Données de saisonnalité créées.');
 
   // Définir les recettes avec leurs détails
   const recipeData = [

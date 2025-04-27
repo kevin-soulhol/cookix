@@ -78,6 +78,31 @@ model Ingredient {
   name              String             @unique
   recipeIngredients RecipeIngredient[]
   shoppingItems     ShoppingItem[]
+  seasonInfo        IngredientSeason?
+}
+
+model IngredientSeason {
+  id            Int        @id @default(autoincrement())
+  ingredientId  Int        @unique
+  ingredient    Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  january       Boolean    @default(false)
+  february      Boolean    @default(false)
+  march         Boolean    @default(false)
+  april         Boolean    @default(false)
+  may           Boolean    @default(false)
+  june          Boolean    @default(false)
+  july          Boolean    @default(false)
+  august        Boolean    @default(false)
+  september     Boolean    @default(false)
+  october       Boolean    @default(false)
+  november      Boolean    @default(false)
+  december      Boolean    @default(false)
+  isPerennial   Boolean    @default(false) // Pour les ingrédients disponibles toute l'année
+  isFruit       Boolean    @default(false) // Pour distinguer fruits et légumes
+  isVegetable   Boolean    @default(false)
+  apiIdentifier String? // Identifiant utilisé par l'API (pour faciliter les mises à jour)
+  lastChecked   DateTime? // Dernière vérification auprès de l'API
+  updatedAt     DateTime   @updatedAt
 }
 
 model RecipeIngredient {
