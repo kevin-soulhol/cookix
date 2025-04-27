@@ -315,7 +315,11 @@ async function getRecipeById(recipeId: number, userId: number | null) {
     },
     ingredients: {
       include: {
-        ingredient: true
+        ingredient: {
+          include: {
+            seasonInfo: true
+          }
+        }
       }
     }
   };
@@ -343,11 +347,34 @@ async function getRecipeById(recipeId: number, userId: number | null) {
     return json({ success: false, message: "Recette non trouvée" }, { status: 404 });
   }
 
+  // Obtenir le mois actuel pour déterminer la saisonnalité
+  const currentDate = new Date();
+  const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+
   // Transformer les données pour faciliter leur utilisation côté client
   const transformedRecipe = {
     ...recipe,
     isFavorite: !!recipe.favorites?.length,
     isInMenu: !!(recipe.menuItems?.length && userId),
+    ingredients: recipe.ingredients.map(item => {
+      const seasonInfo = item.ingredient.seasonInfo;
+      const isInSeason = seasonInfo ?
+        (seasonInfo.isPerennial || seasonInfo[currentMonth]) :
+        true; // Par défaut, considérer comme pérenne si pas d'info
+
+      return {
+        ...item,
+        isInSeason,
+        isPermanent: seasonInfo?.isPerennial || false,
+        isFruit: seasonInfo?.isFruit || false,
+        isVegetable: seasonInfo?.isVegetable || false,
+        // Enlever les infos de saisonnalité complètes pour alléger la réponse
+        ingredient: {
+          id: item.ingredient.id,
+          name: item.ingredient.name
+        }
+      };
+    })
   };
 
   // Supprimer les données de relation brutes
