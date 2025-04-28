@@ -8,6 +8,7 @@ import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
 import { getUserId } from "./api.user";
 import AutocompleteUnits from "~/components/AutocompleteUnits";
+import IconVegeFruit from "~/components/IconVegeFruit";
 
 // Types pour les données des ingrédients et listes de courses
 interface Ingredient {
@@ -32,6 +33,12 @@ interface ShoppingItem {
     marketplace: boolean;
     ingredient: {
         name: string;
+        seasonInfo: {
+            isInSeason: boolean;
+            isPermanent: boolean;
+            isFruit: boolean;
+            isVegetable: boolean;
+        }
     };
     recipe?: Recipe;
     // Champs ajoutés après regroupement
@@ -258,14 +265,14 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<Response>
         }
 
         // Récupérer les éléments de la liste
-        const items: ShoppingItem[] = await prisma.shoppingItem.findMany({
+        let items: ShoppingItem[] = await prisma.shoppingItem.findMany({
             where: {
                 shoppingListId: shoppingList.id
             },
             include: {
                 ingredient: {
-                    select: {
-                        name: true
+                    include: {
+                        seasonInfo: true
                     }
                 },
                 recipe: {
@@ -289,6 +296,29 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<Response>
                     { ingredient: { name: 'asc' } }
                 ]
         }) as ShoppingItem[];
+
+        // Obtenir le mois actuel pour déterminer la saisonnalité
+        const currentDate = new Date();
+        const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+
+
+        items = items.map(item => {
+            const seasonInfo = item.ingredient.seasonInfo;
+            const isInSeason = seasonInfo ?
+                (seasonInfo.isPerennial || seasonInfo[currentMonth]) :
+                true; // Par défaut, considérer comme pérenne si pas d'info
+
+            return {
+                ...item,
+                ingredient: {
+                    ...item.ingredient,
+                    isInSeason,
+                    isPermanent: seasonInfo?.isPerennial || false,
+                    isFruit: seasonInfo?.isFruit || false,
+                    isVegetable: seasonInfo?.isVegetable || false,
+                }
+            }
+        })
 
         // Grouper les items selon le mode sélectionné
         const groupedItems = groupByRecipe
@@ -840,6 +870,7 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
             <div
                 ref={contentRef}
                 className={`drag-item relative z-10 flex items-center py-3 px-4 bg-inherit transition-transform duration-200 ease-out ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} border-l-4 ${item.marketplace ? 'border-green-500' : 'border-transparent'}`}
+                data-testidingredient={`shopping-item-ingredient-${item.ingredient.id}`}
                 style={{ transform: `translateX(${slideOffset}px)` }}
                 onMouseDown={onMouseDown}
                 onMouseMove={onMouseMove}
@@ -930,6 +961,8 @@ const ShoppingItemWithMarketplace: React.FC<ShoppingItemWithMarketplaceProps> = 
                         </div>
                     )}
                 </div>
+
+                <IconVegeFruit ingredient={item.ingredient} noCheck={true} />
 
                 {/* === BOUTON SUPPRIMER === */}
                 <div className={`flex-shrink-0 transition-opacity duration-150`}>

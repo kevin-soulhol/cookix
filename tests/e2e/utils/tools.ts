@@ -243,7 +243,8 @@ export async function addShoppingItemForTestUser(
   quantity: number | null = null,
   unit: string | null = null,
   marketplace: boolean = false,
-  recipeId: number | null = null
+  recipeId: number | null = null,
+  otherDataItem: any = {}
 ): Promise<import('@prisma/client').ShoppingItem> {
   try {
       const userId = await getTestUserId();
@@ -265,7 +266,7 @@ export async function addShoppingItemForTestUser(
       });
       if (!ingredient) {
           ingredient = await prisma.ingredient.create({
-              data: { name: ingredientName },
+              data: { name: ingredientName, ...otherDataItem },
           });
            console.log(`🌿 Created ingredient: ${ingredientName}`);
       }

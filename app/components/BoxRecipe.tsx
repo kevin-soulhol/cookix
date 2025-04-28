@@ -81,6 +81,7 @@ export default function BoxRecipe({ recipe, readOnly = false, compact = false }:
         <>
             <div
                 className="box-recipe bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col cursor-pointer hover:shadow-lg transition-shadow relative"
+                data-testid={`box-recipe-${recipe.id}`}
                 onClick={() => openModal()} // Ouvrir le modal au clic
                 role="button"
             >

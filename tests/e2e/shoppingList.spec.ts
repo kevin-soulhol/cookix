@@ -3,8 +3,11 @@ import {
     loginViaApi,
     clearShoppingListForTestUser,
     clearMenuItemsForTestUser, // Optional: If you need menu cleanup too
-    addShoppingItemForTestUser
+    addShoppingItemForTestUser,
+    scrollPageToBottom,
+    performSearch
 } from "./utils/tools";
+import prisma from "./utils/db";
 // It's often better to import the client instance if needed elsewhere,
 // but for cleanup, the specific functions are enough.
 // import prisma from "./utils/db"; // Not strictly needed if only using exported functions
@@ -164,6 +167,33 @@ test.describe('Shopping List Interactions [DB Cleanup]', () => {
         await expect(checkmarkSvgUnchecked).not.toBeVisible(); // Coche SVG non visible
 
         console.log(`Check/uncheck test completed for item ${item.id}.`);
+    });
+
+    test('a fruit or vegetable are on marketplace when i add at menu', async ({ page }) => {
+        const ingredientName = "Fraises"
+        const ingredient = await prisma.ingredient.findFirst({
+            where: {
+                name : ingredientName
+            }
+        })
+        const recipe = await prisma.recipe.findFirst({
+            where: {
+                title: {
+                    contains: ingredientName
+                }
+              },
+        });
+
+        await page.goto('/')
+        await performSearch(page, ingredientName);
+
+
+        await page.locator('.box-recipe:nth-child(1) .add-menu-btn').click();
+        await expect(page.locator('.box-recipe:nth-child(1) .add-menu-btn.bg-green-100')).toBeVisible();
+        
+        await page.goto(SHOPPING_LIST_URL);
+        const itemContent = page.locator(`.drag-item[data-testidingredient="shopping-item-ingredient-${ingredient.id}"].border-green-500`);
+        await expect(itemContent).toBeVisible()
     });
 
 });

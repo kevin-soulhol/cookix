@@ -323,7 +323,11 @@ async function addRecipeToMenu(recipeId: number, userId: number) {
         recipeId: parseInt(recipeId.toString()),
       },
       include: {
-        ingredient: true,
+        ingredient: {
+          include: {
+            seasonInfo: true
+          }
+        },
       },
     });
 
@@ -360,6 +364,7 @@ async function addRecipeToMenu(recipeId: number, userId: number) {
             quantity: recipeIngredient.quantity,
             unit: recipeIngredient.unit,
             isChecked: false,
+            marketplace: recipeIngredient.ingredient.seasonInfo.isFruit || recipeIngredient.ingredient.seasonInfo.isVegetable ? true : false
           },
         });
       }
