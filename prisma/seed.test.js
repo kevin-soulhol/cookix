@@ -235,7 +235,7 @@ async function seedTestData() {
       ]
     },
     {
-      title: 'Smoothie aux fruits rouges',
+      title: 'Smoothie aux fruits rouges fraises',
       description: 'Un smoothie rafraîchissant aux fruits rouges et banane',
       preparationTime: 5,
       cookingTime: '0 min',
