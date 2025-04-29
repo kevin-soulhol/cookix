@@ -1,29 +1,12 @@
-import test, { expect, Page } from "@playwright/test";
-import { cleanLoggged, loginViaApi } from "./utils/tools";
+import test, { expect } from "@playwright/test";
+import { cleanLoggged, clearMenuItemsForTestUser, loginViaApi } from "./utils/tools";
 
 test.describe('Box Recipes', () => {
 
     test.afterEach(async ( { page }) => {
-        await checkNoRecipeAdded(page)
+        await clearMenuItemsForTestUser();
         await cleanLoggged(page)
     });
-
-    async function checkNoRecipeAdded(page : Page){
-        await page.goto('/');
-        const firstIsAddedToMenu = await page.evaluate(() => {
-            return document.querySelectorAll('.box-recipe:nth-child(1) .add-menu-btn.bg-green-100').length
-        });
-
-        if(firstIsAddedToMenu){
-            await page.goto('/menu');
-            const boxes = page.locator('.menu-recipes-container .delete-btn')
-            const count = await boxes.count();
-
-            for (let i = 0; i < count; i++) {
-                await boxes.nth(i).click();
-            }
-        }
-    }
 
     test('can add to menu when logged', async function ({ page }) {
         await loginViaApi(page)
