@@ -1,6 +1,6 @@
-import { IngredientWithSeason } from "./RecipeModal"
+import { IngredientSeasonInfo } from "~/types/shopping-list.types"
 
-export default function IconVegeFruit({ ingredient, noCheck }: { ingredient: IngredientWithSeason, noCheck: boolean }) {
+export default function IconVegeFruit({ ingredient, noCheck }: { ingredient: IngredientSeasonInfo, noCheck: boolean }) {
     return (
         <>
             {ingredient.isFruit || ingredient.isVegetable ? (
