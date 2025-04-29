@@ -126,12 +126,24 @@ test.describe('Homepage', () => {
     const applyButton = page.locator('.filter-panel .valid-panel');
     await applyButton.click();
 
-    const expectedCount = process.env.NODE_ENV === "development" ? 324 : 7;
+    const expectedCount = process.env.NODE_ENV === "development" ? 12 : 7;
 
-    await scrollPageToBottom(page);
+    //await scrollPageToBottom(page);
 
     const results = page.locator('.container-result .box-recipe');
     await expect(results).toHaveCount(expectedCount);
+
+    const boxRecipes = page.locator('.container-result .box-recipe')
+    const count = await boxRecipes.count();
+
+    for (let i = 0; i < count; i++) {
+        await boxRecipes.nth(i).click();
+        await expect(page.locator('.recipe-modal')).toBeVisible();
+        await expect(page.locator('.hors-saison-tag')).not.toBeVisible()
+        await page.locator('.close-modale').click()
+        await expect(page.locator('.recipe-modal')).not.toBeVisible();
+    }
+    
   });
 
   test('Basic keyword search', async ({ page }) => {

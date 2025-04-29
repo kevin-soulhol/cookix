@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 export async function scrollPageToBottom(page : Page, scrollDelay = 300, maxScrollTime = 90000) {
   // Définit une durée maximale pour éviter un défilement infini
   return await page.evaluate(async (delay) => {
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
 
       const startTime = Date.now();
       let lastScrollY = 0;
@@ -115,7 +115,7 @@ async function ensureTestUser() {
 // Fonction pour s'authentifier via l'API
 export async function loginViaApi(page: Page) {
   // S'assurer que l'utilisateur de test existe
-  const user = await ensureTestUser();
+  await ensureTestUser();
   // Faire une requête API directe pour se connecter
   const loginResponse = await page.request.post('http://localhost:3000/api/user', {
     form: {
@@ -244,6 +244,7 @@ export async function addShoppingItemForTestUser(
   unit: string | null = null,
   marketplace: boolean = false,
   recipeId: number | null = null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   otherDataItem: any = {}
 ): Promise<import('@prisma/client').ShoppingItem> {
   try {

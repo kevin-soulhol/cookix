@@ -715,7 +715,7 @@ const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => {
                 {hasSeasonalInfo && (
                     <div className="px-2 py-1 flex items-center">
                         {allInSeason ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span className="de-saison-tag inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                                         d="M5 13l4 4L19 7" />
@@ -723,7 +723,7 @@ const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => {
                                 Recette de saison
                             </span>
                         ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            <span className="hors-saison-tag inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

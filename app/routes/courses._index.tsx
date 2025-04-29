@@ -1553,7 +1553,7 @@ export default function ShoppingList() {
     const otherCount = categorizedItems?.firstMarketplace?.length || 0;
 
     // Compter les éléments cochés par catégorie
-    const checkedItems = categorizedItems.checked || [];
+    const checkedItems = categorizedItems?.checked || [];
     const checkedMarketplaceCount = checkedItems.filter(item => item.marketplace).length;
     const checkedOtherCount = checkedItems.filter(item => !item.marketplace).length;
 
