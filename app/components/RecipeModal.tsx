@@ -8,7 +8,7 @@ import IconVegeFruit from "./IconVegeFruit";
 
 // Type étendu pour les recettes avec des relations et des propriétés additionnelles
 type RecipeWithRelations = Recipe & {
-    ingredients?: (RecipeIngredient & { ingredient: Ingredient })[];
+    ingredients?: IngredientWithSeason[];
     steps?: RecipeStep[];
     isFavorite?: boolean;
     isInMenu?: boolean;
@@ -42,7 +42,7 @@ const IngredientsTab = ({ ingredients }: { ingredients?: IngredientWithSeason[] 
                 {ingredients.map((item, index) => (
                     <li key={index} className="flex items-center p-2 border-b border-gray-100 last:border-0">
                         {/* Indicateur de saisonnalité */}
-                        <IconVegeFruit ingredient={item} />
+                        <IconVegeFruit ingredient={item} noCheck={false} />
 
                         <span>
                             {item.quantity && <span className="font-medium">{item.quantity} </span>}
@@ -669,7 +669,7 @@ const MenuButton = ({ isAdded, onClick, isSubmitting }: MenuButtonProps): JSX.El
 const RecipeMetadata = ({ recipe }: RecipeMetadataProps): JSX.Element => {
     // Calculer si la recette entière est de saison
     const hasSeasonalInfo = recipe.ingredients && recipe.ingredients.some(i => i.isFruit || i.isVegetable);
-    const allInSeason = hasSeasonalInfo && recipe.ingredients.every(i => i.isInSeason || i.isPermanent);
+    const allInSeason = hasSeasonalInfo && recipe.ingredients?.every(i => i.isInSeason || i.isPermanent);
 
     return (
         <div className="metadata-container border-b border-gray-200 px-2 py-2">

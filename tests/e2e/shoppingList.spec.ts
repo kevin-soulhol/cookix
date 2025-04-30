@@ -4,8 +4,8 @@ import {
     clearShoppingListForTestUser,
     clearMenuItemsForTestUser, // Optional: If you need menu cleanup too
     addShoppingItemForTestUser,
-    scrollPageToBottom,
-    performSearch
+    performSearch,
+    getTestUserId
 } from "./utils/tools";
 import prisma from "./utils/db";
 // It's often better to import the client instance if needed elsewhere,
@@ -17,6 +17,27 @@ const SHOPPING_LIST_URL = "/courses";
 // --- Remove UI Helpers ---
 // Remove addItemViaUI and clearShoppingListViaUI as they are replaced by DB functions
 
+async function clearLastIngredientCreated(newItemName){
+    const userId = await getTestUserId();
+
+    const addedIngredient = await prisma.ingredient.findUnique( {
+        where: {
+            name: newItemName
+        }
+    })
+
+    const addedItemInDb = await prisma.shoppingItem.findFirst({
+        where: {
+            shoppingList: { userId: userId },
+            ingredient: { id: addedIngredient.id },
+        },
+        include: { ingredient: true } // Inclure l'ingrédient pour vérifier le nom
+    });
+
+    await prisma.shoppingItem.delete({ where: { id: addedItemInDb.id }});
+    await prisma.ingredient.delete({ where: { id: addedIngredient.id }});
+}
+
 // --- Tests ---
 
 test.describe('Shopping List Interactions [DB Cleanup]', () => {
@@ -24,8 +45,7 @@ test.describe('Shopping List Interactions [DB Cleanup]', () => {
     // Se connecter avant chaque test
     test.beforeEach(async ({ page }) => {
         await loginViaApi(page);
-        // Ensure the list is clean before the test runs (optional, depends on strategy)
-        // await clearShoppingListForTestUser();
+        await clearMenuItemsForTestUser();
     });
 
     // Nettoyer la liste après chaque test using Prisma
@@ -194,6 +214,70 @@ test.describe('Shopping List Interactions [DB Cleanup]', () => {
         await page.goto(SHOPPING_LIST_URL);
         const itemContent = page.locator(`.drag-item[data-testidingredient="shopping-item-ingredient-${ingredient.id}"].border-green-500`);
         await expect(itemContent).toBeVisible()
+    });
+
+    test('should add a new item via the Add Item modal', async ({ page }) => {
+        await page.goto(SHOPPING_LIST_URL);
+
+        const newItemName = "My fake ingredient";
+        const newItemQty = "4";
+        const newItemUnit = "grammes"; // Assurez-vous que cette unité est gérée ou existe dans AutocompleteUnits
+
+        // 1. Repérer et cliquer sur le bouton "+ Ajouter"
+        const addButton = page.locator('button.add-ingredient'); // Utiliser la classe ajoutée
+        await expect(addButton).toBeVisible();
+        await addButton.click();
+
+        // 2. Attendre que la modale apparaisse et repérer les champs
+        const modal = page.locator('.add-ingredient-modal'); // Sélecteur générique pour la modale
+        await expect(modal).toBeVisible();
+        const nameInput = modal.locator('.ingredient-name input'); // Assurez-vous que l'input a un 'name' ou un ID
+        const qtyInput = modal.locator('#quantity');
+        const unitInput = modal.locator('.autocomplete-units input'); // Pour AutocompleteUnits, l'input réel peut être caché, ciblez le composant ou l'input visible s'il y en a un.
+        const submitButton = modal.locator('.add-ingredient-valid');
+
+        await expect(nameInput).toBeVisible();
+        await expect(qtyInput).toBeVisible();
+        await expect(unitInput).toBeVisible(); // Ou le wrapper d'AutocompleteUnits
+        await expect(submitButton).toBeVisible();
+
+        // 3. Remplir le formulaire
+        await nameInput.fill(newItemName);
+        const createItem = page.locator('.create-item')
+        await expect(createItem).toBeVisible()
+        await createItem.click()
+        await qtyInput.fill(newItemQty);
+        // Gérer AutocompleteUnits : taper ou sélectionner une suggestion si applicable
+        await unitInput.fill(newItemUnit);
+        // Si AutocompleteUnits a une liste déroulante, vous devrez peut-être cliquer sur une suggestion:
+        // await unitInput.press('Enter'); // Ou simuler un clic sur une suggestion
+
+        // 4. Soumettre le formulaire et attendre la réponse/mise à jour
+        await Promise.all([
+            page.waitForResponse(response => response.url().includes(SHOPPING_LIST_URL) && response.request().method() === 'POST' && response.request().postData()?.includes('_action=addItem')),
+            submitButton.click(),
+        ]);
+
+        // 5. Attendre que la modale disparaisse (optionnel mais bon pour la robustesse)
+        await expect(modal).not.toBeVisible();
+
+        // 6. Vérifier que le nouvel élément est dans la liste
+        //    Il est difficile de connaître l'ID à l'avance, donc on cherche par texte.
+        //    ATTENTION : Ceci est moins robuste que de chercher par ID.
+        //    Si possible, adaptez votre 'addItem' action pour retourner l'ID du nouvel item
+        //    ou trouvez l'item via Prisma après l'ajout et utilisez son ID.
+        //    Pour l'instant, cherchons par texte :
+        const newItemLocator = page.locator(`.shopping-item:has-text("${newItemName}")`);
+        await expect(newItemLocator).toBeVisible();
+        await expect(newItemLocator).toContainText(newItemName);
+        await expect(newItemLocator).toContainText(`${newItemQty} ${newItemUnit}`);
+
+        // Optionnel: Vérifier la catégorie (par défaut, devrait être non-marketplace)
+        const dragItem = newItemLocator.locator('.drag-item');
+        // Ajustez la classe attendue (indigo ou transparent, selon votre implémentation par défaut)
+        await expect(dragItem).toHaveClass(/border-indigo-500|border-transparent/);
+        await expect(dragItem).not.toHaveClass(/border-green-500/);
+        await clearLastIngredientCreated(newItemName);
     });
 
 });

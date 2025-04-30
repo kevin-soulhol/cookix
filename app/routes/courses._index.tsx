@@ -718,11 +718,40 @@ export default function ShoppingListPage() {
                     <button
                         type="button"
                         onClick={() => setIsAddModalOpen(true)}
-                        className="hidden sm:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                        className="
+                            add-ingredient
+                            inline-flex items-center justify-center             
+                            bg-teal-600 hover:bg-teal-700
+                            text-white font-medium
+                            rounded-full shadow-md                            
+                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500
+                            transition-all duration-150 ease-in-out
+                            
+                            sm:rounded-md  /* Forme sur sm et + */
+                            sm:px-4 sm:py-2 /* Padding sur sm et + */
+
+                            h-10 w-10     /* Taille fixe pour mobile (cercle) */
+                            sm:h-auto sm:w-auto /* Taille auto sur sm et + */
+                        "
+                        aria-label="Ajouter un article" // Important pour l'accessibilité, surtout quand le texte est caché
                     >
-                        {/* Plus Icon */}
-                        <svg className="w-5 h-5 mr-1 -ml-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                        Ajouter
+                        {/* Plus Icon - Toujours visible */}
+                        <svg
+                            className="
+                                w-6 h-6         /* Taille icône mobile */
+                                sm:w-5 sm:h-5   /* Taille icône sm et + */
+                                sm:mr-1 sm:-ml-1 /* Marge icône sur sm et + */
+                            "
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+
+                        {/* Texte "Ajouter" - Caché par défaut, visible sur sm et + */}
+                        <span className="hidden sm:inline">
+                            Ajouter
+                        </span>
                     </button>
                 </div>
 
@@ -844,18 +873,6 @@ export default function ShoppingListPage() {
                             checkedOtherCount={checkedOtherCount}
                         />
                     )}
-                    {/* Add Button Centered for Mobile */}
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-center sm:justify-end">
-                        <button
-                            type="button"
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 sm:hidden" // Only show on small screens
-                            aria-label="Ajouter un article"
-                        >
-                            {/* Plus Icon */}
-                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                        </button>
-                    </div>
                 </div>
 
 

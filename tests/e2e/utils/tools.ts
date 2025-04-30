@@ -157,7 +157,7 @@ export async function loginViaApi(page: Page) {
  * Finds the user ID for the predefined test user email.
  * Throws an error if the user is not found.
  */
-async function getTestUserId(): Promise<number> {
+export async function getTestUserId(): Promise<number> {
   const user = await prisma.user.findUnique({
       where: { email: TEST_USER.email },
       select: { id: true }, // Only select the ID

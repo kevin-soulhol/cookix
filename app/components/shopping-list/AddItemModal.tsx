@@ -43,7 +43,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex flex-col justify-end transition-all duration-300 ease-in-out"
+            className="add-ingredient-modal fixed inset-0 z-50 flex flex-col justify-end transition-all duration-300 ease-in-out"
             role="button"
             tabIndex={0}
             onClick={(e) => {
@@ -80,6 +80,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                                     onSelectSuggestion={selectSuggestion}
                                     setShowSuggestions={setShowSuggestions}
                                     placeholder="Ex: Tomates"
+                                    classes="ingredient-name"
                                 />
                             </div>
 
@@ -128,7 +129,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700"
+                                    className="add-ingredient-valid px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700"
                                 >
                                     Ajouter
                                 </button>

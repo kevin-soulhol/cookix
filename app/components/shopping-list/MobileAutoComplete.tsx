@@ -10,6 +10,7 @@ interface MobileAutoCompleteProps {
     onSelectSuggestion: (suggestion: { id: number | null; name: string }) => void;
     setShowSuggestions: React.Dispatch<React.SetStateAction<boolean>>;
     placeholder?: string;
+    classes?: string;
 }
 
 // Composant d'autocomplétion optimisé pour mobile avec création d'éléments
@@ -19,7 +20,8 @@ export const MobileAutoComplete = ({
     suggestions,
     setShowSuggestions,
     onSelectSuggestion,
-    placeholder
+    placeholder,
+    classes
 }: MobileAutoCompleteProps) => {
     const wrapperRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef(null);
@@ -43,7 +45,7 @@ export const MobileAutoComplete = ({
     };
 
     return (
-        <div className="relative" ref={wrapperRef}>
+        <div className={'relative ' + classes} ref={wrapperRef}>
             <div className="flex items-center border border-gray-300 rounded-md shadow-sm focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-teal-500">
                 <input
                     ref={inputRef}
@@ -73,7 +75,7 @@ export const MobileAutoComplete = ({
                     {/* Option pour créer un nouvel élément si la valeur ne correspond à aucune suggestion */}
                     {value.trim() && !suggestions.some(s => s.name.toLowerCase() === value.toLowerCase()) && (
                         <div
-                            className="p-3 border-b border-gray-100 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 cursor-pointer flex items-center"
+                            className="create-item p-3 border-b border-gray-100 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 cursor-pointer flex items-center"
                             onClick={createNewItem}
                         >
                             <span className="font-medium flex-1">{`Ajouter "${value}"`}</span>
