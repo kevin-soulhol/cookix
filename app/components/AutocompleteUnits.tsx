@@ -70,7 +70,7 @@ export default function AutocompleteUnits({ value, onChange }) {
     );
 
     return (
-        <div className="relative" ref={containerRef}>
+        <div className="autocomplete-units relative" ref={containerRef}>
             <div className="flex items-center border border-gray-300 rounded-md shadow-sm focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-teal-500">
                 <input
                     type="text"
@@ -96,8 +96,8 @@ export default function AutocompleteUnits({ value, onChange }) {
                 <div
                     ref={dropdownRef}
                     className={`absolute left-0 right-0 bg-white shadow-lg rounded-md max-h-44 overflow-y-auto z-20 ${dropdownPosition === 'top'
-                            ? 'bottom-full mb-1' // Positionné au-dessus
-                            : 'top-full mt-1'    // Positionné en-dessous
+                        ? 'bottom-full mb-1' // Positionné au-dessus
+                        : 'top-full mt-1'    // Positionné en-dessous
                         }`}
                 >
                     {unitsFetcher.state === "loading" ? (
