@@ -349,7 +349,7 @@ async function getRecipeById(recipeId: number, userId: number | null) {
 
   // Obtenir le mois actuel pour déterminer la saisonnalité
   const currentDate = new Date();
-  const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+  const currentMonth = process.env.NODE_ENV === "production" ? currentDate.toLocaleString('en-US', { month: 'long' }).toLowerCase() : 'april';
 
   // Transformer les données pour faciliter leur utilisation côté client
   const transformedRecipe = {
@@ -443,7 +443,9 @@ function buildWhereClause(search: string | null, difficulty: string | null, cate
   if (seasonal) {
     // Obtenir le mois actuel
     const currentDate = new Date();
-    const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+    const currentMonth = process.env.NODE_ENV === "production" ? currentDate.toLocaleString('en-US', { month: 'long' }).toLowerCase() : 'april';
+
+
 
     // Nous voulons les recettes où TOUS les ingrédients sont soit pérennes, soit de saison
     where.ingredients = {

@@ -1,9 +1,8 @@
 name: Deploy Cookix Production
 on:
-  workflow_run:
-    workflows: ['E2E Tests']
-    types:
-      - completed
+  push:
+    branches:
+      - master
 
 jobs:
   deploy:
