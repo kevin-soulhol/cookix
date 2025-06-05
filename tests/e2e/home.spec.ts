@@ -110,7 +110,6 @@ test.describe('Homepage', () => {
   });
 
   test('Filter by season', async ({ page }) => {
-    await page.clock.install({ time: new Date('2025-04-01T12:00:00') });
     await openFilterPanel(page);
 
     const btnSeason = page.locator(`.seasonal`);
