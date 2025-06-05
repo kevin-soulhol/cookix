@@ -70,10 +70,14 @@
       "haricot vert": { "june": true, "july": true, "august": true, "september": true, "october": true },
       "poivron": { "june": true, "july": true, "august": true, "september": true },
       "tomate": { "june": true, "july": true, "august": true, "september": true },
+      "tomates cerises rouges": { "july": true, "august": true, "september": true, "october" : true },
+      "tomates cerises jaunes": { "july": true, "august": true, "september": true, "october" : true },
       "gousse d'ail": { "january": true, "february": true, "march": true, "april": true, "may": true, "june": true, "july": true, "august": true, "september": true, "october": true, "november": true, "december": true },
       "gousses d'ail": { "january": true, "february": true, "march": true, "april": true, "may": true, "june": true, "july": true, "august": true, "september": true, "october": true, "november": true, "december": true },
       "mais": { "july": true, "august": true, "september": true },
       "brocoli": { "september": true, "october": true, "november": true },
-      "echalote": { "january": true, "february": true, "march": true, "april": true, "may": true, "june": true, "july": true, "august": true, "september": true, "october": true, "november": true, "december": true }
+      "echalote": { "january": true, "february": true, "march": true, "april": true, "may": true, "june": true, "july": true, "august": true, "september": true, "october": true, "november": true, "december": true },
+      "pommes de terre": { "january": true, "february": true, "march": true, "april": true, "may": true, "june": true, "july": true, "august": true, "september": true, "october": true, "november": true, "december": true },
+      "pommes de terre nouvelles": { "april": true, "may": true, "june": true, "july": true, "august": true }
     }
   }
