@@ -43,7 +43,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
     return (
         <div
-            className="add-ingredient-modal fixed inset-0 z-50 flex flex-col justify-end transition-all duration-300 ease-in-out"
+            className="add-ingredient-modal fixed inset-0 z-50 flex flex-col justify-start transition-all duration-300 ease-in-out"
             role="button"
             tabIndex={0}
             onClick={(e) => {

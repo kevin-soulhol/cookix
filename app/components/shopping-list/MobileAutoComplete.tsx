@@ -86,10 +86,10 @@ export const MobileAutoComplete = ({
                     )}
 
                     {/* Suggestions existantes */}
-                    {suggestions.map((suggestion) => (
+                    {suggestions.map((suggestion, i) => (
                         <div
                             key={suggestion.id}
-                            className="p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
+                            className={`suggest-${i} p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 active:bg-gray-100 cursor-pointer`}
                             onClick={() => {
                                 onSelectSuggestion(suggestion);
                                 setShowSuggestions(false);
