@@ -17,7 +17,7 @@ const SHOPPING_LIST_URL = "/courses";
 // --- Remove UI Helpers ---
 // Remove addItemViaUI and clearShoppingListViaUI as they are replaced by DB functions
 
-async function clearLastIngredientCreated(newItemName){
+async function clearLastIngredientCreated(newItemName : string){
     const userId = await getTestUserId();
 
     const addedIngredient = await prisma.ingredient.findUnique( {
@@ -26,16 +26,20 @@ async function clearLastIngredientCreated(newItemName){
         }
     })
 
-    const addedItemInDb = await prisma.shoppingItem.findFirst({
-        where: {
-            shoppingList: { userId: userId },
-            ingredient: { id: addedIngredient.id },
-        },
-        include: { ingredient: true } // Inclure l'ingrédient pour vérifier le nom
-    });
+    if(addedIngredient){
+        const addedItemInDb = await prisma.shoppingItem.findFirst({
+            where: {
+                shoppingList: { userId: userId },
+                ingredient: { id: addedIngredient.id },
+            },
+            include: { ingredient: true } // Inclure l'ingrédient pour vérifier le nom
+        });
 
-    await prisma.shoppingItem.delete({ where: { id: addedItemInDb.id }});
-    await prisma.ingredient.delete({ where: { id: addedIngredient.id }});
+        if(addedItemInDb){
+            await prisma.shoppingItem.delete({ where: { id: addedItemInDb.id }});
+            await prisma.ingredient.delete({ where: { id: addedIngredient.id }});
+        }
+    }
 }
 
 // --- Tests ---
@@ -249,8 +253,8 @@ test.describe('Shopping List Interactions [DB Cleanup]', () => {
         await qtyInput.fill(newItemQty);
         // Gérer AutocompleteUnits : taper ou sélectionner une suggestion si applicable
         await unitInput.fill(newItemUnit);
-        // Si AutocompleteUnits a une liste déroulante, vous devrez peut-être cliquer sur une suggestion:
-        // await unitInput.press('Enter'); // Ou simuler un clic sur une suggestion
+        await page.locator('.suggest-0').click()
+        //await unitInput.press('Enter');
 
         // 4. Soumettre le formulaire et attendre la réponse/mise à jour
         await Promise.all([

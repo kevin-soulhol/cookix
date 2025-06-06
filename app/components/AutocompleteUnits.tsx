@@ -114,7 +114,7 @@ export default function AutocompleteUnits({ value, onChange }) {
                                         onChange(unit);
                                         setShowDropdown(false);
                                     }}
-                                    className="text-left px-3 py-2 hover:bg-gray-100 rounded-md text-sm"
+                                    className={`suggest-${index} text-left px-3 py-2 hover:bg-gray-100 rounded-md text-sm`}
                                 >
                                     {unit}
                                 </button>
