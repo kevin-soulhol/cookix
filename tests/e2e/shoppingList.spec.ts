@@ -253,7 +253,10 @@ test.describe('Shopping List Interactions [DB Cleanup]', () => {
         await qtyInput.fill(newItemQty);
         // Gérer AutocompleteUnits : taper ou sélectionner une suggestion si applicable
         await unitInput.fill(newItemUnit);
-        await page.locator('.suggest-0').click()
+        const suggest = await page.locator('.suggest-0')
+        if(suggest){
+            await suggest.click()
+        }
         //await unitInput.press('Enter');
 
         // 4. Soumettre le formulaire et attendre la réponse/mise à jour
