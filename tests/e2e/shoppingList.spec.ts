@@ -225,7 +225,7 @@ test.describe('Shopping List Interactions [DB Cleanup]', () => {
 
         const newItemName = "My fake ingredient";
         const newItemQty = "4";
-        const newItemUnit = "grammes"; // Assurez-vous que cette unité est gérée ou existe dans AutocompleteUnits
+        const newItemUnit = "caca"; // Assurez-vous que cette unité est gérée ou existe dans AutocompleteUnits
 
         // 1. Repérer et cliquer sur le bouton "+ Ajouter"
         const addButton = page.locator('button.add-ingredient'); // Utiliser la classe ajoutée
@@ -257,12 +257,11 @@ test.describe('Shopping List Interactions [DB Cleanup]', () => {
         if(await suggest.isVisible()){
             await suggest.click()
         }
-        //await unitInput.press('Enter');
 
         // 4. Soumettre le formulaire et attendre la réponse/mise à jour
         await Promise.all([
             page.waitForResponse(response => response.url().includes(SHOPPING_LIST_URL) && response.request().method() === 'POST' && response.request().postData()?.includes('_action=addItem')),
-            submitButton.click(),
+            await unitInput.press('Enter'),
         ]);
 
         // 5. Attendre que la modale disparaisse (optionnel mais bon pour la robustesse)
