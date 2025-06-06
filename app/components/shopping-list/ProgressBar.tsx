@@ -18,8 +18,8 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     const totalMarketplaceCount = marketplaceCount + checkedMarketplaceCount;
     const totalOtherCount = otherCount + checkedOtherCount;
 
-    const marketplacePercentage = Math.round((checkedMarketplaceCount * 100 / totalMarketplaceCount)) || 0
-    const otherplacePercentage = Math.round((checkedOtherCount * 100 / totalOtherCount)) || 0
+    const marketplacePercentage = Math.round((checkedMarketplaceCount * 100 / marketplaceCount)) || 0
+    const otherplacePercentage = Math.round((checkedOtherCount * 100 / otherCount)) || 0
 
     // Calculer les pourcentages de progression pour chaque catégorie
 
