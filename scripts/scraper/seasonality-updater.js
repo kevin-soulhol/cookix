@@ -99,8 +99,6 @@ async function scrapeSeasonalityData() {
       const monthName = await monthElement.$eval('h2', h2 => h2.textContent.trim().toLowerCase());
       const monthKey = monthMap[monthId] || monthId;
 
-      console.log(`Traitement du mois (Greenpeace): ${monthName} (${monthKey})`);
-
       const isOpen = await monthElement.evaluate(el => el.classList.contains('open'));
       if (!isOpen) {
         try {
@@ -208,8 +206,6 @@ async function scrapeSeasonalityData() {
       }
     } // Fin de la boucle des mois Greenpeace
 
-    console.log("Fusion des données JSON et Greenpeace terminée.");
-
     // --- Vérification Pérenne et Tri (après fusion) ---
     console.log('Calcul du statut pérenne et tri des données...');
     for (const category of ['fruits', 'vegetables']) {
@@ -254,15 +250,12 @@ async function scrapeSeasonalityData() {
     throw error;
   } finally {
      if (browser && browser.isConnected()) {
-        console.log('Fermeture du navigateur...');
         await browser.close();
     }
   }
 }
 
 async function updateDatabase(seasonalData) {
-  console.log('Mise à jour de la base de données...');
-
   const allIngredients = await prisma.ingredient.findMany();
   console.log(`${allIngredients.length} ingrédients trouvés dans la base de données.`);
 
@@ -317,11 +310,14 @@ async function updateDatabase(seasonalData) {
 
             if (existingEntry) {
               // Mettre à jour l'entrée existante
-              await prisma.ingredientSeason.update({
+              const after = await prisma.ingredientSeason.update({
                 where: { id: existingEntry.id },
                 data: seasonDataPayload
               });
+              const hasChanged = JSON.stringify(existingEntry) !== JSON.stringify(after);
+                if(hasChanged){
               updated++;
+              }
             } else {
               // Créer une nouvelle entrée s'il n'y en avait pas
               await prisma.ingredientSeason.create({
@@ -343,7 +339,7 @@ async function updateDatabase(seasonalData) {
         }
       } else {
         // Optionnel: Logguer les ingrédients des sources qui ne sont pas dans la BDD
-        // console.log(`Aucun ingrédient trouvé dans la BDD pour "${name}" [${normalizedName}]`);
+        console.log(`Aucun ingrédient trouvé dans la BDD pour "${name}" [${normalizedName}]`);
       }
     }
   }
