@@ -1,5 +1,119 @@
 [
   {
+    "sourceUrl": "bowls-gourmands/bo-bun-vegan",
+    "title": "Bo bun vegan",
+    "description": "Un grand classique vietnamien revisité en version vegan, avec du tofu mariné et doré, des vermicelles de riz, des crudités croquantes et une sauce savoureuse. Cette recette inclut 20 minutes de repos pour la marinade.",
+    "preparationTime": 20,
+    "cookingTime": "15 min",
+    "servings": 1,
+    "difficulty": "Moyen",
+    "isVege": true,
+    "categoryId": 4,
+    "mealIds": [4],
+    "steps": [
+      "Égoutter le tofu en le pressant entre 2 feuilles de papier absorbant, puis disposer les tranches dans une petite assiette.",
+      "Dans un bol, mélanger l'ail écrasé, le gingembre râpé, la sauce soja et le sucre. Verser la sauce sur le tofu et laisser mariner 10 minutes. Retourner les tranches, puis laisser de nouveau mariner 10 minutes.",
+      "Pendant ce temps, dans un autre bol, mélanger les graines de sésame, la farine et la maïzena.",
+      "Tremper les tranches de tofu dans ce mélange, puis les faire cuire quelques minutes dans une poêle avec un peu d'huile jusqu'à ce que toutes les faces soient bien dorées. Réserver.",
+      "Faire cuire les vermicelles de riz 5 minutes dans une casserole d'eau bouillante. Rincer à l'eau froide et égoutter.",
+      "Râper la carotte et couper le concombre en bâtonnets. Couper grossièrement les feuilles de salade.",
+      "Disposer la salade, les carottes, le concombre et les vermicelles dans un bol. Verser la marinade restante sur les légumes.",
+      "Disposer ensuite le tofu. Parsemer le tout de feuilles de menthe et de coriandre ciselées, ainsi que de cacahuètes grossièrement hachées."
+    ],
+    "ingredients": [
+      { "name": "Tofu", "quantity": 3, "unit": "tranches" },
+      { "name": "Carotte", "quantity": 60, "unit": "g" },
+      { "name": "Concombre", "quantity": 50, "unit": "g" },
+      { "name": "Salade", "quantity": 3, "unit": "feuilles" },
+      { "name": "Ail", "quantity": 1, "unit": "gousse" },
+      { "name": "Gingembre", "quantity": 2, "unit": "cm" },
+      { "name": "Menthe", "quantity": null, "unit": "quelques feuilles" },
+      { "name": "Coriandre", "quantity": null, "unit": "quelques feuilles" },
+      { "name": "Vermicelles de riz", "quantity": 80, "unit": "g" },
+      { "name": "Sauce soja", "quantity": 40, "unit": "ml" },
+      { "name": "Sucre", "quantity": 1, "unit": "c. à s." },
+      { "name": "Graines de sésame", "quantity": 30, "unit": "g" },
+      { "name": "Maïzena", "quantity": 1, "unit": "c. à c." },
+      { "name": "Farine", "quantity": 1.5, "unit": "c. à c." },
+      { "name": "Huile de sésame", "quantity": null, "unit": null },
+      { "name": "Cacahuètes", "quantity": null, "unit": null }
+    ]
+  },
+  {
+    "sourceUrl": "bowls-gourmands/ramen-veggie",
+    "title": "Ramen veggie",
+    "description": "Un bol de ramen réconfortant avec un bouillon riche au miso, des shiitakés, du tofu, et garni d'un œuf mollet et d'oignons frits.",
+    "preparationTime": 20,
+    "cookingTime": "15 min",
+    "servings": 1,
+    "difficulty": "Moyen",
+    "isVege": true,
+    "categoryId": 1,
+    "mealIds": [4],
+    "steps": [
+      "Égoutter le tofu en le pressant entre 2 feuilles de papier absorbant, puis le couper en cubes.",
+      "Porter une casserole d'eau à ébullition, puis y plonger délicatement l'œuf. Compter 6 minutes dès la reprise de l'ébullition. Retirer l'œuf de l'eau, le passer sous l'eau froide et l'écaler délicatement.",
+      "Ôter la première épaisseur de la cébette et l'émincer. Peler et émincer l'ail. Râper le gingembre. Couper les pieds des shiitakés, les nettoyer et les couper en lamelles.",
+      "Dans une casserole légèrement huilée, faire revenir la moitié de la cébette, l'ail et le gingembre pendant 2 minutes à feu moyen. Ajouter les shiitakés et poursuivre la cuisson 2 minutes.",
+      "Ajouter le bouillon de légumes, l'eau, la sauce soja, la pâte de miso et porter le tout à ébullition.",
+      "Mélanger et laisser cuire à feu très doux pendant une dizaine de minutes. Incorporer les ramen et le tofu, puis poursuivre la cuisson 3 minutes à feu moyen.",
+      "Verser la préparation dans un bol. Ajouter l'œuf coupé en deux, saler et poivrer. Parsemer du reste de cébette et d'oignons frits."
+    ],
+    "ingredients": [
+      { "name": "Œuf", "quantity": 1, "unit": null },
+      { "name": "Oignon nouveau", "quantity": 1, "unit": null },
+      { "name": "Ail", "quantity": 1, "unit": "gousse" },
+      { "name": "Gingembre", "quantity": 2, "unit": "cm" },
+      { "name": "Shiitakés", "quantity": 5, "unit": null },
+      { "name": "Coriandre", "quantity": null, "unit": "quelques feuilles" },
+      { "name": "Bouillon de légumes", "quantity": 250, "unit": "ml" },
+      { "name": "Eau", "quantity": 50, "unit": "ml" },
+      { "name": "Sauce soja", "quantity": 1, "unit": "c. à c." },
+      { "name": "Pâte de miso", "quantity": 0.5, "unit": "c. à c." },
+      { "name": "Ramen", "quantity": 80, "unit": "g" },
+      { "name": "Tofu", "quantity": 50, "unit": "g" },
+      { "name": "Oignons frits", "quantity": 1, "unit": "pincée" },
+      { "name": "Huile d'olive", "quantity": null, "unit": null }
+    ]
+  },
+  {
+    "sourceUrl": "bowls-gourmands/soba-veggie",
+    "title": "Soba veggie",
+    "description": "Un plat de nouilles soba froides enrobées d'une sauce savoureuse au tamari et au miel, accompagné de tofu mariné, d'asperges croquantes et d'edamames. Cette recette inclut 20 minutes de repos pour la marinade du tofu.",
+    "preparationTime": 20,
+    "cookingTime": "15 min",
+    "servings": 1,
+    "difficulty": "Facile",
+    "isVege": true,
+    "categoryId": 5,
+    "mealIds": [4],
+    "steps": [
+      "Égoutter le tofu, le couper en 3 tranches et verser dessus 3 cuillères à soupe de tamari. Laisser mariner 20 minutes en retournant le tofu à mi-temps.",
+      "Cuire les soba selon les instructions sur le sachet. Les égoutter, les rincer à l'eau froide et égoutter de nouveau.",
+      "Dans un bol, mélanger 2 cuillères à soupe d'huile de sésame, 2 cuillères à soupe de tamari, le jus de citron et le miel. Plonger les soba dans cette sauce et mélanger.",
+      "Dans une poêle, verser un filet d'huile de sésame et faire cuire le tofu mariné quelques minutes jusqu'à ce que chaque face soit dorée. Poivrer et réserver.",
+      "Peler et émincer l'ail. Tailler le bout des asperges, les couper en deux dans l'épaisseur puis dans la longueur.",
+      "Dans la même poêle, verser un nouveau filet d'huile et faire revenir les asperges et l'ail pendant 3 minutes à feu vif.",
+      "Verser les soba dans un bol, ajouter les asperges, les edamames et le tofu. Ajouter une poignée de graines germées et la cébette émincée.",
+      "Verser le reste de marinade sur le bol et parsemer le tout de graines de sésame."
+    ],
+    "ingredients": [
+      { "name": "Tofu", "quantity": null, "unit": null },
+      { "name": "Jus de citron", "quantity": 1, "unit": "c. à s." },
+      { "name": "Asperges", "quantity": 5, "unit": "petites" },
+      { "name": "Ail", "quantity": 1, "unit": "gousse" },
+      { "name": "Edamames", "quantity": 30, "unit": "g" },
+      { "name": "Graines germées", "quantity": 1, "unit": "petite poignée" },
+      { "name": "Cébette", "quantity": 1, "unit": null },
+      { "name": "Poivre", "quantity": null, "unit": null },
+      { "name": "Soba", "quantity": 100, "unit": "g" },
+      { "name": "Tamari", "quantity": 5, "unit": "c. à s." },
+      { "name": "Miel", "quantity": 2, "unit": "c. à s." },
+      { "name": "Huile de sésame", "quantity": null, "unit": null },
+      { "name": "Graines de sésame", "quantity": null, "unit": "quelques" }
+    ]
+  },
+  {
     "sourceUrl": "petits-plats-genereux/spaghettis-pesto-pois-chiches",
     "title": "Spaghettis au pesto et pois chiches rôtis",
     "description": "Un plat de pâtes végétarien complet et savoureux, avec un pesto maison aux herbes, des pois chiches croustillants et des courgettes poêlées.",
@@ -32,6 +146,96 @@
       { "name": "Pignons de pin", "quantity": 100, "unit": "g" },
       { "name": "Noix de cajou", "quantity": 100, "unit": "g" },
       { "name": "Spaghettis complets", "quantity": 360, "unit": "g" }
+    ]
+  },
+  {
+    "sourceUrl": "amerique/moules-farcies-nouvelle-angleterre",
+    "title": "Moules farcies de Nouvelle-Angleterre",
+    "description": "Des moules cuites au vin blanc, garnies d'une farce savoureuse au bacon et aux herbes, puis gratinées au four.",
+    "preparationTime": 30,
+    "cookingTime": "15 min",
+    "servings": 6,
+    "difficulty": "Moyen",
+    "isVege": false,
+    "categoryId": 10,
+    "mealIds": [2, 3],
+    "steps": [
+      "Faites dorer le bacon à la poêle. Égouttez-le sur du papier absorbant puis hachez-le.",
+      "Versez le vin blanc dans une cocotte. Ajoutez les moules. Couvrez et faites cuire sur feu vif pendant 4 min. Laissez refroidir. Jetez toutes les moules non ouvertes.",
+      "Préchauffez le four à 180 °C (therm. 6). Couvrez un plat à four de gros sel.",
+      "Lavez, effeuillez et hachez les herbes. Dans un bol, mélangez-les avec le bacon, le beurre, le jus et le zeste de citron. Salez et poivrez.",
+      "Retirez l'une des coquilles de chaque moule. Ajoutez une noisette du mélange précédent dessus et placez les coquilles dans le plat en les calant avec le sel.",
+      "Enfournez et laissez cuire 10 min. Servez chaud."
+    ],
+    "ingredients": [
+      { "name": "Moules", "quantity": 1, "unit": "kg" },
+      { "name": "Bacon", "quantity": 2, "unit": "tranches" },
+      { "name": "Vin blanc sec", "quantity": 12, "unit": "cl" },
+      { "name": "Persil plat", "quantity": 1, "unit": "bouquet" },
+      { "name": "Estragon", "quantity": 4, "unit": "branches" },
+      { "name": "Beurre", "quantity": 60, "unit": "g" },
+      { "name": "Citron", "quantity": 0.5, "unit": null },
+      { "name": "Gros sel", "quantity": null, "unit": null },
+      { "name": "Sel", "quantity": null, "unit": null },
+      { "name": "Poivre", "quantity": null, "unit": null }
+    ]
+  },
+  {
+    "sourceUrl": "amerique/noix-saint-jacques-creme-moutarde",
+    "title": "Noix de Saint-Jacques à la crème de moutarde",
+    "description": "Noix de Saint-Jacques poêlées, nappées d'une onctueuse sauce à la crème, moutarde à l'ancienne et une touche de Bourbon.",
+    "preparationTime": 20,
+    "cookingTime": "15 min",
+    "servings": 4,
+    "difficulty": "Facile",
+    "isVege": false,
+    "categoryId": 10,
+    "mealIds": [3, 4],
+    "steps": [
+      "Lavez les noix de Saint-Jacques, coupez-les en 2 si elles sont grosses. Égouttez-les et épongez-les soigneusement.",
+      "Épluchez et ciselez finement l'échalote. Faites-la dorer dans un peu de beurre. Ajoutez le Bourbon. Laissez cuire 1 min, puis ajoutez la moutarde et enfin la crème. Prolongez la cuisson 4 min environ à feu doux, en remuant de temps à autre.",
+      "Dans une poêle, faites sauter les noix de Saint-Jacques au beurre pendant 2 min de chaque côté. Versez la sauce dessus. Prolongez la cuisson de 3 min et servez immédiatement."
+    ],
+    "ingredients": [
+      { "name": "Noix de Saint-Jacques", "quantity": 500, "unit": "g" },
+      { "name": "Échalote", "quantity": 1, "unit": null },
+      { "name": "Beurre", "quantity": 30, "unit": "g" },
+      { "name": "Bourbon Whiskey", "quantity": 1, "unit": "cuill. à soupe" },
+      { "name": "Moutarde à l'ancienne", "quantity": 1, "unit": "cuill. à café" },
+      { "name": "Crème fraîche liquide", "quantity": 15, "unit": "cl" },
+      { "name": "Sel", "quantity": null, "unit": null },
+      { "name": "Poivre", "quantity": null, "unit": null }
+    ]
+  },
+  {
+    "sourceUrl": "amerique/salade-chou-hawaienne",
+    "title": "Salade de chou hawaïenne au sésame",
+    "description": "Une salade croquante et rafraîchissante de chou blanc, oignons rouges, céleri et petits pois, assaisonnée d'une vinaigrette aigre-douce et garnie d'amandes et de sésame toastés.",
+    "preparationTime": 20,
+    "cookingTime": "0 min",
+    "servings": 6,
+    "difficulty": "Facile",
+    "isVege": true,
+    "categoryId": 4,
+    "mealIds": [3, 5],
+    "steps": [
+      "Retirez les feuilles extérieures du chou. Coupez-le en fines lanières en retirant les plus grosses côtes. Épluchez et émincez les oignons. Retirez les fibres du céleri et coupez-le en tranches de 1/2 cm environ.",
+      "Mélangez tous ces ingrédients dans un saladier. Ajoutez les petits pois.",
+      "Préparez la sauce : mélangez dans un bol le vinaigre, le sel et le sucre. Laissez-les se dissoudre puis ajoutez l'huile et le poivre.",
+      "Mélangez. Ajoutez les amandes et les graines de sésame grillées. Versez sur la salade en remuant. Servez frais."
+    ],
+    "ingredients": [
+      { "name": "Chou blanc", "quantity": 1, "unit": "petit" },
+      { "name": "Oignons rouges", "quantity": 1, "unit": "botte" },
+      { "name": "Céleri", "quantity": 1, "unit": "branche" },
+      { "name": "Petits pois cuits", "quantity": 300, "unit": "g" },
+      { "name": "Vinaigre de cidre", "quantity": 2, "unit": "cuill. à soupe" },
+      { "name": "Sucre brun", "quantity": 2, "unit": "cuill. à soupe" },
+      { "name": "Huile", "quantity": 4, "unit": "cuill. à soupe" },
+      { "name": "Amandes effilées toastées", "quantity": 100, "unit": "g" },
+      { "name": "Graines de sésame toastées", "quantity": 4, "unit": "cuill. à soupe" },
+      { "name": "Sel", "quantity": null, "unit": null },
+      { "name": "Poivre", "quantity": null, "unit": null }
     ]
   }
 ]
