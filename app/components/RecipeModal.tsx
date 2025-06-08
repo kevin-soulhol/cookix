@@ -473,7 +473,7 @@ export default function RecipeModal({ recipeId, basicRecipe, isOpen, onClose, is
                 </div>
 
                 {/* Lien source */}
-                {recipe.sourceUrl && <RecipeSource url={recipe.sourceUrl} />}
+                {recipe.sourceUrl && recipe.onRobot && <RecipeSource url={recipe.sourceUrl} />}
             </div>
         </div>
     );

@@ -126,20 +126,41 @@ export default function BoxRecipe({ recipe, compact = false }: BoxRecipeProps) {
                         </div>
                     )}
 
-                    {/* Badge végétarien */}
-                    {recipe.isVege && (
-                        <div className="absolute bottom-2 right-2 bg-green-100 bg-opacity-90 text-green-600 font-semibold text-xs rounded-md px-2 py-1 flex items-center">
-                            <svg
-                                className="w-4 h-4 mr-1"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path fillRule="evenodd" d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                            Végé
-                        </div>
-                    )}
+                    <div className="container-badges absolute bottom-2 right-2 w-full flex justify-end items-center space-x-2">
+                        {/* Badge végétarien */}
+                        {recipe.isVege && (
+                            <div className="bg-green-100 bg-opacity-90 text-green-600 font-semibold text-xs rounded-md px-2 py-1 flex items-center">
+                                <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path fillRule="evenodd" d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                                Végé
+                            </div>
+                        )}
+
+                        {/* Badge No Thermomix (noRobot) */}
+                        {recipe.onRobot === false && (
+                            <div className="bg-red-100 bg-opacity-90 text-red-600 font-semibold text-xs rounded-md px-2 py-1 flex items-center">
+                                <svg
+                                    className="w-4 h-4 mr-1"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path fillRule="evenodd" d="M6.293 9.293a1 1 0 011.414 0L10 11.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                                Non robot
+                            </div>
+                        )}
+                    </div>
+
+
+
+
                 </div>
 
                 {/* Conteneur des boutons d'action */}

@@ -76,7 +76,9 @@ async function seed() {
             difficulty: recipeData.difficulty,
             isVege: recipeData.isVege,
             imageUrl: recipeData.imageUrl,
-            categoryId: category.id,
+            category: {
+              connect: { id: category.id } // Correct, on connecte une relation
+            },
             meals: {
               deleteMany: {}, // Supprime les anciens pas
               create: mealConnectPayload
@@ -117,6 +119,7 @@ async function seed() {
             meals: {
               create: mealConnectPayload
             },
+            onRobot: false,
             steps: {
               create: recipeData.steps.map((instruction, index) => ({
                 stepNumber: index + 1,
