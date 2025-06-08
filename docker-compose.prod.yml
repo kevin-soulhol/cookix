@@ -19,7 +19,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 512M
+          #memory: 512M
     networks:
       - cookix-network
     healthcheck:
@@ -70,7 +70,7 @@ services:
       resources:
         limits:
           cpus: '0.2'
-          memory: 256M
+          #memory: 256M
     networks:
       - cookix-network
 
