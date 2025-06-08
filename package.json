@@ -14,6 +14,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "db:setup": "npm run prisma:generate && npm run prisma:migrate",
+    "db:add":"docker compose exec -ti app node prisma/add_recipes.js",
     "docker:start": "docker compose down && docker compose up --build",
     "dev:logs": "docker compose logs -f",
     "studio": "docker compose exec app npx prisma studio",

@@ -1,0 +1,37 @@
+[
+  {
+    "sourceUrl": "petits-plats-genereux/spaghettis-pesto-pois-chiches",
+    "title": "Spaghettis au pesto et pois chiches rôtis",
+    "description": "Un plat de pâtes végétarien complet et savoureux, avec un pesto maison aux herbes, des pois chiches croustillants et des courgettes poêlées.",
+    "preparationTime": 20,
+    "cookingTime": "35 min",
+    "servings": 4,
+    "difficulty": "Facile",
+    "isVege": true,
+    "categoryId": 5,
+    "mealIds": [4],
+    "steps": [
+      "Préchauffer le four à 200 °C.",
+      "Rincer et sécher les pois chiches. Dans un grand bol, les mélanger avec 4 cuillerées à soupe d'huile d'olive, le cumin, le paprika, le piment de Cayenne et 1 cuillerée à café de sel. Bien mélanger.",
+      "Verser les pois chiches sur une plaque de cuisson recouverte de papier cuisson, puis enfourner pour 25 minutes, en remuant à mi-cuisson.",
+      "Pendant ce temps, placer le persil, le basilic, les pignons de pin, les noix de cajou et 110 ml d'huile d'olive dans un mixeur. Mixer jusqu'à l'obtention d'une consistance homogène et réserver.",
+      "Porter une casserole d'eau salée à ébullition et faire cuire les spaghettis selon le temps indiqué sur le paquet.",
+      "Rincer les courgettes, couper les extrémités, puis les couper en morceaux. Dans une poêle légèrement huilée, faire cuire les morceaux de courgettes pendant environ 8 minutes.",
+      "Égoutter les pâtes puis les remettre dans la casserole. Ajouter le pesto, les courgettes et les pois chiches rôtis. Mélanger le tout avant de servir."
+    ],
+    "ingredients": [
+      { "name": "Persil", "quantity": 100, "unit": "g" },
+      { "name": "Basilic", "quantity": 100, "unit": "g" },
+      { "name": "Courgette", "quantity": 2, "unit": "pièces" },
+      { "name": "Sel", "quantity": null, "unit": null },
+      { "name": "Pois chiches cuits", "quantity": 500, "unit": "g" },
+      { "name": "Huile d'olive", "quantity": 170, "unit": "ml" },
+      { "name": "Cumin", "quantity": 1, "unit": "c. à c." },
+      { "name": "Paprika", "quantity": 1, "unit": "c. à c." },
+      { "name": "Piment de Cayenne en poudre", "quantity": 0.5, "unit": "c. à c." },
+      { "name": "Pignons de pin", "quantity": 100, "unit": "g" },
+      { "name": "Noix de cajou", "quantity": 100, "unit": "g" },
+      { "name": "Spaghettis complets", "quantity": 360, "unit": "g" }
+    ]
+  }
+]
