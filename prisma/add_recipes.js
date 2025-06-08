@@ -27,6 +27,10 @@ async function seed() {
     for (const recipeData of recipesData) {
       console.log(`\nProcessing recipe: ${recipeData.title}`);
 
+      if (!recipeData.imageUrl) {
+        recipeData.imageUrl = await fetchRecipeImage(recipeData.title);
+      }
+
       // On utilise une transaction pour garantir l'intégrité des données pour chaque recette
       await prisma.$transaction(async (tx) => {
         const category = await tx.category.findUnique({ where : { id: recipeData.categoryId}})
@@ -148,6 +152,43 @@ async function seed() {
       console.error('❌ Une erreur est survenue pendant le seeding :', error);
     }
     process.exit(1);
+  }
+}
+
+// --- NOUVELLE FONCTION POUR CHERCHER L'IMAGE ---
+async function fetchRecipeImage(query) {
+  // On vérifie que la clé API est bien présente
+  if (!process.env.PEXELS_API_KEY) {
+    console.warn('  -> ⚠️ PEXELS_API_KEY non définie. Impossible de chercher une image.');
+    return null;
+  }
+
+  try {
+    console.log(`  -> 📸 Recherche d'une image pour "${query}" sur Pexels...`);
+    const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
+      headers: {
+        Authorization: process.env.PEXELS_API_KEY,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur API Pexels: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Si on a des photos, on retourne l'URL de la meilleure qualité
+    if (data.photos && data.photos.length > 0) {
+      const imageUrl = data.photos[0].src.large2x; // ou .original, .large, etc.
+      console.log(`  -> ✨ Image trouvée : ${imageUrl}`);
+      return imageUrl;
+    }
+
+    console.log('  -> 😕 Aucune image trouvée.');
+    return null;
+  } catch (error) {
+    console.error('  -> ❌ Erreur lors de la recherche d\'image sur Pexels :', error);
+    return null;
   }
 }
 
