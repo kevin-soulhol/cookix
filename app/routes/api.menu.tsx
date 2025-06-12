@@ -364,7 +364,7 @@ async function addRecipeToMenu(recipeId: number, userId: number) {
             quantity: recipeIngredient.quantity,
             unit: recipeIngredient.unit,
             isChecked: false,
-            marketplace: recipeIngredient.ingredient.seasonInfo.isFruit || recipeIngredient.ingredient.seasonInfo.isVegetable ? true : false
+            marketplace: recipeIngredient.ingredient.seasonInfo?.isFruit || recipeIngredient.ingredient.seasonInfo?.isVegetable ? true : false
           },
         });
       }
