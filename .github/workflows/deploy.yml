@@ -58,6 +58,9 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}
           DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}
+          DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}
+          GEMINI_API_KEY=${{secrets.GEMINI_API_KEY}}
+          PEXELS_API_KEY=${{secrets.PEXELS_API_KEY}}
           " > .env'
 
       - name: Deploy to production
@@ -74,4 +77,6 @@ jobs:
 
           # Nettoyer les images Docker inutilisées pour libérer de l'espace disque
           docker image prune -f
+          docker system prune -a
+          docker volume prune
           EOF
