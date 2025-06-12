@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Installer les dépendances en utilisant --omit=dev pour exclure les paquets de développement
-RUN npm ci --cache .npm --prefer-offline
+RUN npm ci
 
 # Copier le reste du code source
 COPY . .
