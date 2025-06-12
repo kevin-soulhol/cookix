@@ -24,10 +24,9 @@ function Spinner(props: { text: string }) {
     );
 }
 
-// --- Le Composant Principal ---
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function RecipeImageUploader() {
+export default function RecipesDownloader() {
     const fetcher = useFetcher();
     const menuFetcher = useFetcher();
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -35,6 +34,7 @@ export default function RecipeImageUploader() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isCompressing, setIsCompressing] = useState(false);
     const [recipesProcessed, setRecipesProcessed] = useState(false);
+    const [recipesAdded, setRecipesAdded] = useState<string[]>([]);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const isSubmitting = fetcher.state === 'submitting';
@@ -113,17 +113,26 @@ export default function RecipeImageUploader() {
 
             // ✅ ÉTAPE 2: Poser le verrou immédiatement pour empêcher de re-rentrer ici
             setRecipesProcessed(true);
+            setRecipesAdded([]);
+            const added: string[] = [];
+            const promises = [];
 
             const recipes = fetcher.data.recipes;
             console.log(`Début du traitement de ${recipes.length} recette(s).`);
 
-            for (const recipe of recipes) {
+            Promise.all(recipes.map(async recipe => {
                 console.log('__soumission de :', recipe.title);
-                menuFetcher.submit(
-                    { recipeId: recipe.id.toString(), _action: "addRecipe" },
+
+                added.push(recipe.title);
+                promises.push(menuFetcher.submit(
+                    { recipeId: recipe.id, _action: "addRecipe" },
                     { method: "post", action: "/api/menu" }
-                );
-            }
+                ))
+            }))
+                .then(result => {
+                    console.log(result)
+                })
+            setRecipesAdded(added);
         }
 
         // Si le fetcher d'image est réinitialisé (par exemple, pour un nouvel upload),
@@ -193,7 +202,7 @@ export default function RecipeImageUploader() {
                 {fetcher.data?.error && <p className="text-sm text-red-600">{fetcher.data.error}</p>}
                 {fetcher.data?.success ? (
                     <div className="p-3 text-sm text-green-800 bg-green-100 rounded-lg dark:bg-green-900 dark:text-green-200">
-                        Image envoyée avec succès et ajouter à votre menu
+                        {recipesAdded.join(', ')} {recipesAdded.length === 1 ? 'a' : 'ont'} été ajouté{recipesAdded.length === 1 ? '' : 's'}.
                     </div>
                 ) : (
                     /* --- Bouton de validation --- */
@@ -204,7 +213,7 @@ export default function RecipeImageUploader() {
                             disabled={!compressedFile || isSubmitting}
                             className="w-full flex justify-center items-center px-4 py-2.5 text-base font-semibold text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                         >
-                            Valider et envoyer la photo
+                            Envoyer la recette
                         </button>
                     )
                 )}
