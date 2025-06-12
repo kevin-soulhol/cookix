@@ -739,7 +739,7 @@ export async function action({ request }: ActionFunctionArgs) {
       return await getCategories();
     }
 
-    if (action === "image") {
+    if (action === "uploadImage") {
       const file = formData.get("image");
       if (file) return await addRecipeFromGemini(file as Blob);
     }
@@ -780,26 +780,6 @@ async function getCategories() {
     );
   }
 }
-/**
- * Décrit la structure complète d'un objet recette tel que défini
- * dans les fichiers de données JSON pour le seeding.
- */
-export interface RecipeSeedData {
-  imageUrl?: string;
-  sourceUrl: string;
-  title: string;
-  description: string;
-  preparationTime: number;
-  cookingTime: string;
-  servings: number;
-  difficulty: 'Facile' | 'Moyen' | 'Difficile';
-  isVege: boolean;
-  categoryId: number;
-  mealIds: number[];
-  meals?: number[];
-  steps: string[];
-  ingredients: Ingredient & RecipeIngredient[];
-}
 
 async function addRecipeFromGemini(file: Blob) {
   try {
@@ -812,11 +792,11 @@ async function addRecipeFromGemini(file: Blob) {
       );
     }
 
-    await addJSONRecipes(dataFromGemini);
+    const addedRecipes = await addJSONRecipes(dataFromGemini);
 
 
     return json(
-      { success: true, message: `Nouvelle recette ajoutée`, data: dataFromGemini[0].title },
+      { success: true, message: `Nouvelle recette ajoutée`, recipes: addedRecipes },
     );
 
   } catch (e) {
@@ -1023,42 +1003,62 @@ export async function getJSONToGemini(file: Blob) {
   }
 }
 
+// Définir des types clairs pour vos données d'entrée
+type IngredientSeedData = {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+};
+
+type RecipeSeedData = {
+  sourceUrl: string;
+  title: string;
+  description?: string;
+  preparationTime?: number;
+  cookingTime?: string;
+  servings?: number;
+  difficulty?: string;
+  isVege?: boolean;
+  imageUrl?: string | null;
+  categoryId: number;
+  mealIds?: number[];
+  steps: string[];
+  ingredients: IngredientSeedData[];
+  onRobot?: boolean;
+};
+
+// --- La fonction améliorée ---
 
 async function addJSONRecipes(recipesData: RecipeSeedData[]) {
-  try {
-    for (const recipeData of recipesData) {
+  // On utilise une boucle for...of pour bien gérer l'asynchronisme
+  for (const recipeData of recipesData) {
+    try {
       console.log(`\nProcessing recipe: ${recipeData.title}`);
 
+      // 1. Récupération de l'image si nécessaire
       if (!recipeData.imageUrl) {
         recipeData.imageUrl = await fetchRecipeImage(recipeData.title);
       }
 
-      // On utilise une transaction pour garantir l'intégrité des données pour chaque recette
-      await prisma.$transaction(async (tx) => {
-        const category = await tx.category.findUnique({ where: { id: recipeData.categoryId } })
+      const addedRecipes: Recipe[] = [];
 
-        const mealConnectPayload = await Promise.all(
-          (recipeData.meals || []).map(async (mealId: number) => { // "|| []" pour éviter les erreurs si le tableau est absent
-            const meal = await tx.meal.findUnique({
-              where: { id: mealId },
-            });
-            // On prépare la structure pour la relation many-to-many
-            return { meal: { connect: { id: meal?.id } } };
-          })
-        );
-        if (mealConnectPayload.length > 0) {
-          console.log(`  -> ${mealConnectPayload.length} meals processed.`);
+      // 2. Transaction Prisma pour garantir l'intégrité
+      await prisma.$transaction(async (tx) => {
+        // --- Vérifications de robustesse ---
+        const category = await tx.category.findUnique({ where: { id: recipeData.categoryId } });
+        if (!category) {
+          // On arrête tout de suite avec une erreur claire
+          throw new Error(`La catégorie avec l'ID ${recipeData.categoryId} est introuvable.`);
         }
 
-        // 2. Préparation des données pour les ingrédients
-        // On doit d'abord s'assurer que tous les ingrédients existent
-        // pour ensuite pouvoir les lier à la recette.
+        // --- Gestion des ingrédients (avec normalisation) ---
         const ingredientPayloads = await Promise.all(
           recipeData.ingredients.map(async (ingData) => {
+            const normalizedName = ingData.name.trim();
             const ingredient = await tx.ingredient.upsert({
-              where: { name: ingData.name },
-              update: {}, // Rien à mettre à jour sur l'ingrédient lui-même
-              create: { name: ingData.name },
+              where: { name: normalizedName },
+              update: {},
+              create: { name: normalizedName },
             });
             return {
               ingredientId: ingredient.id,
@@ -1069,91 +1069,73 @@ async function addJSONRecipes(recipesData: RecipeSeedData[]) {
         );
         console.log(`  -> ${ingredientPayloads.length} ingredients processed.`);
 
-        // 3. Upsert de la Recette principale avec ses relations
-        await tx.recipe.upsert({
+        // --- Gestion des repas (avec vérification) ---
+        const mealConnectPayload = (recipeData.mealIds || []).map(mealId => ({
+          meal: { connect: { id: mealId } },
+        }));
+        if (mealConnectPayload.length > 0) {
+          console.log(`  -> ${mealConnectPayload.length} meals processed.`);
+        }
+
+        // --- Création d'un payload de données commun (DRY) ---
+        const recipePayload = {
+          title: recipeData.title,
+          description: recipeData.description,
+          preparationTime: recipeData.preparationTime,
+          cookingTime: recipeData.cookingTime,
+          servings: recipeData.servings,
+          difficulty: recipeData.difficulty,
+          isVege: recipeData.isVege,
+          imageUrl: recipeData.imageUrl,
+          onRobot: recipeData.onRobot || false,
+          steps: {
+            // Dans la partie `update`, il faut d'abord supprimer avant de recréer
+            deleteMany: {},
+            create: recipeData.steps.map((instruction, index) => ({
+              stepNumber: index + 1,
+              instruction: instruction,
+            })),
+          },
+          ingredients: {
+            deleteMany: {},
+            create: ingredientPayloads,
+          },
+          meals: {
+            deleteMany: {},
+            create: mealConnectPayload,
+          },
+        };
+
+        // --- Upsert final, beaucoup plus propre ---
+        addedRecipes.push(await tx.recipe.upsert({
           where: { sourceUrl: recipeData.sourceUrl },
-          // Données à mettre à jour si la recette existe déjà
           update: {
-            title: recipeData.title,
-            description: recipeData.description,
-            preparationTime: recipeData.preparationTime,
-            cookingTime: recipeData.cookingTime,
-            servings: recipeData.servings,
-            difficulty: recipeData.difficulty,
-            isVege: recipeData.isVege,
-            imageUrl: recipeData.imageUrl,
-            category: {
-              connect: { id: category?.id } // Correct, on connecte une relation
-            },
-            meals: {
-              deleteMany: {}, // Supprime les anciens pas
-              create: mealConnectPayload
-            },
-            onRobot: false,
-            // Pour les relations "many", la stratégie est de tout supprimer
-            // puis de tout recréer pour refléter parfaitement le fichier JSON.
-            steps: {
-              deleteMany: {}, // Supprime les anciens pas
-              create: recipeData.steps.map((instruction: string, index: number) => ({
-                stepNumber: index + 1,
-                instruction: instruction,
-              })),
-            },
-            ingredients: {
-              deleteMany: {}, // Supprime les anciens liens d'ingrédients
-              create: ingredientPayloads.map((payload) => ({
-                ingredientId: payload.ingredientId,
-                quantity: payload.quantity,
-                unit: payload.unit,
-              })),
-            },
+            ...recipePayload,
+            category: { connect: { id: category.id } }, // La connexion se fait ici pour l'update
           },
-          // Données à créer si la recette n'existe pas
           create: {
-            sourceUrl: recipeData.sourceUrl,
-            title: recipeData.title,
-            description: recipeData.description,
-            preparationTime: recipeData.preparationTime,
-            cookingTime: recipeData.cookingTime,
-            servings: recipeData.servings,
-            difficulty: recipeData.difficulty,
-            isVege: recipeData.isVege,
-            imageUrl: recipeData.imageUrl,
-            category: {
-              connect: { id: category?.id },
-            },
-            meals: {
-              create: mealConnectPayload
-            },
-            onRobot: false,
-            steps: {
-              create: recipeData.steps.map((instruction: string, index: number) => ({
-                stepNumber: index + 1,
-                instruction: instruction,
-              })),
-            },
-            ingredients: {
-              create: ingredientPayloads.map((payload) => ({
-                ingredientId: payload.ingredientId,
-                quantity: payload.quantity,
-                unit: payload.unit,
-              })),
-            },
+            ...recipePayload,
+            sourceUrl: recipeData.sourceUrl, // sourceUrl n'est que pour la création
+            category: { connect: { id: category.id } },
+            // Pour 'create', on ne peut pas faire deleteMany, on ne garde que 'create'
+            steps: { create: recipePayload.steps.create },
+            ingredients: { create: recipePayload.ingredients.create },
+            meals: { create: recipePayload.meals.create },
           },
-        });
+        }));
+
         console.log(`  -> ✅ Recipe "${recipeData.title}" upserted successfully!`);
       });
+
+      return addedRecipes;
+
+    } catch (error) {
+      // Un bloc catch par recette pour ne pas bloquer tout le script
+      console.error(`❌ Une erreur est survenue lors de l'ajout de la recette "${recipeData.title}":`, error);
     }
-
-    console.log('\n✅ Seeding terminé avec succès !');
-
-  } catch (error) {
-    console.log(`Une erreur est survenue pendant lors de l'ajout de la recette ${recipesData.title} à la base de donnée : ${error}`);
-    return json(
-      { success: false, message: `Une erreur est survenue pendant lors de l'ajout de la recette ${recipesData.title} à la base de donnée` },
-      { status: 500 }
-    );
   }
+
+  console.log('\n✅ Seeding terminé.');
 }
 
 async function fetchRecipeImage(query: string) {

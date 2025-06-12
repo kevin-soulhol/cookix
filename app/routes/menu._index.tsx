@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { json, MetaFunction, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData, useFetcher } from "@remix-run/react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import BoxRecipe, { RecipeType } from "~/components/BoxRecipe";
 import Layout from "~/components/Layout";
 import { TypeMenuItem } from "./api.menu";
+import ImgDownloader from "~/components/ImgDownloader";
 
 
 export const meta: MetaFunction = () => {
@@ -237,7 +239,7 @@ export default function WeeklyMenu() {
               <div className="menu-recipes-container grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-12">
                 {filteredRecipes.map((recipe: RecipeType) => (
                   <div key={recipe.id} className="relative">
-                    <BoxRecipe recipe={recipe} readOnly={true} compact={true} />
+                    <BoxRecipe recipe={recipe} compact={true} />
 
                     {/* Bouton suppression */}
                     {canEdit && (
@@ -280,7 +282,7 @@ export default function WeeklyMenu() {
                 {sharedWithMe?.length > 0 ? (
                   <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <ul className="divide-y divide-gray-200">
-                      {sharedWithMe.map((share) => (
+                      {sharedWithMe.map((share: any) => (
                         <li key={share.id} className="relative hover:bg-gray-50 group">
                           {/* Lien englobant vers le menu */}
                           <Link
@@ -345,7 +347,7 @@ export default function WeeklyMenu() {
                   </div>
                 ) : (
                   <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
-                    Aucun menu n'est partagé avec vous pour le moment.
+                    {`Aucun menu n'est partagé avec vous pour le moment.`}
                   </p>
                 )}
               </div>
@@ -373,7 +375,7 @@ export default function WeeklyMenu() {
                 {pendingInvitations?.length > 0 ? (
                   <div className="bg-white rounded-lg shadow-md overflow-hidden">
                     <ul className="divide-y divide-gray-200">
-                      {pendingInvitations.map((invitation) => (
+                      {pendingInvitations.map((invitation: any) => (
                         <li key={invitation.id} className="p-4 hover:bg-gray-50">
                           <div className="flex items-center justify-between">
                             <div>
@@ -420,7 +422,7 @@ export default function WeeklyMenu() {
                   </div>
                 ) : (
                   <p className="text-gray-500 bg-white p-6 rounded-lg shadow-md text-center">
-                    Vous n'avez aucune invitation en attente.
+                    {`Vous n'avez aucune invitation en attente.`}
                   </p>
                 )}
               </div>
@@ -433,7 +435,7 @@ export default function WeeklyMenu() {
                 <h2 className="text-xl font-semibold mb-4">Menu partagé avec</h2>
                 <div className="bg-white rounded-lg shadow-md p-4">
                   <ul className="divide-y divide-gray-200">
-                    {menuShares.map(share => (
+                    {menuShares.map((share: any) => (
                       <li key={share.id} className="py-3 flex justify-between items-center">
                         <div className="flex items-center">
                           <svg
@@ -464,6 +466,14 @@ export default function WeeklyMenu() {
                 </div>
               </div>
             )}
+
+            {/* Prise de recettes en photo */}
+            <div className="mb-12">
+              <h2 className="text-xl font-semibold mb-4">Ajouter une recette</h2>
+              <ImgDownloader />
+
+
+            </div>
           </>
         )}
       </div>
@@ -510,7 +520,7 @@ export default function WeeklyMenu() {
                   </label>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Les ingrédients seront automatiquement ajoutés à la liste de courses de l'autre utilisateur.
+                  {`Les ingrédients seront automatiquement ajoutés à la liste de courses de l'autre utilisateur.`}
                 </p>
               </div>
 
