@@ -72,11 +72,11 @@ jobs:
           # Arrêter uniquement les conteneurs de l'application (sans arrêter d'autres applications)
           docker compose -f docker-compose.prod.yml down
 
-          # Reconstruire et démarrer les conteneurs en mode production
-          docker compose -f docker-compose.prod.yml up -d --build
-
           # Nettoyer les images Docker inutilisées pour libérer de l'espace disque
           docker image prune -f
           docker system prune -af
           docker volume prune -f
+
+          # Reconstruire et démarrer les conteneurs en mode production
+          docker compose -f docker-compose.prod.yml up -d --build
           EOF

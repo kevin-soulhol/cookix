@@ -5,7 +5,7 @@ import { useState, useCallback } from "react";
 import BoxRecipe, { RecipeType } from "~/components/BoxRecipe";
 import Layout from "~/components/Layout";
 import { TypeMenuItem } from "./api.menu";
-import ImgDownloader from "~/components/ImgDownloader";
+import RecipesDownloader from "~/components/RecipesDownloader";
 
 
 export const meta: MetaFunction = () => {
@@ -470,9 +470,7 @@ export default function WeeklyMenu() {
             {/* Prise de recettes en photo */}
             <div className="mb-12">
               <h2 className="text-xl font-semibold mb-4">Ajouter une recette</h2>
-              <ImgDownloader />
-
-
+              <RecipesDownloader />
             </div>
           </>
         )}
