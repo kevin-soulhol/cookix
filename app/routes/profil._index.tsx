@@ -4,6 +4,7 @@ import { requireUserId } from "~/routes/api.user";
 import { useState, useRef, useEffect } from "react";
 import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
+import ImgDownloader from "~/components/ImgDownloader";
 
 export async function loader({ request }: LoaderFunctionArgs) {
     // S'assurer que l'utilisateur est connecté
@@ -108,6 +109,8 @@ export default function Profile() {
         <Layout>
             <div className="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">Mon profil</h1>
+
+                <ImgDownloader />
 
                 {/* Informations de base */}
                 <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
