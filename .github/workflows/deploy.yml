@@ -77,6 +77,6 @@ jobs:
 
           # Nettoyer les images Docker inutilisées pour libérer de l'espace disque
           docker image prune -f
-          docker system prune -a
-          docker volume prune
+          docker system prune -af
+          docker volume prune -f
           EOF
