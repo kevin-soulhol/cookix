@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { GoogleGenAI } from '@google/genai';
 import { prisma } from "~/utils/db.server";
 import { getUserId } from "./api.user";
 import { Ingredient, Recipe, RecipeIngredient, RecipeStep } from "@prisma/client";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export type RecipeType = Recipe & {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -726,11 +730,18 @@ function santizeData(recipes: RecipeType[], userId: number | null) {
 export async function action({ request }: ActionFunctionArgs) {
   const url = new URL(request.url);
   const path = url.pathname.split('/').pop();
+  const formData = await request.formData()
+  const action = formData.get("_action");
 
   try {
     // Cas: Recherche par catégories
     if (path === "categories") {
       return await getCategories();
+    }
+
+    if (action === "uploadImage") {
+      const file = formData.get("image");
+      if (file) return await addRecipeFromGemini(file as Blob);
     }
 
     // Méthode non prise en charge
@@ -767,5 +778,398 @@ async function getCategories() {
       { success: false, message: "Une erreur est survenue lors de la récupération des catégories" },
       { status: 500 }
     );
+  }
+}
+
+async function addRecipeFromGemini(file: Blob) {
+  try {
+    const dataFromGemini = await getJSONToGemini(file);
+
+    if (!dataFromGemini) {
+      return json(
+        { success: false, message: "Une erreur est survenue lors de la transformation des données", data: dataFromGemini },
+        { status: 500 }
+      );
+    }
+
+    const addedRecipes = await addJSONRecipes(dataFromGemini);
+
+
+    return json(
+      { success: true, message: `Nouvelle recette ajoutée`, recipes: addedRecipes },
+    );
+
+  } catch (e) {
+    return json(
+      { success: false, message: "Une erreur est survenue lors de l'ajout de la recette" },
+      { status: 500 }
+    );
+
+  }
+}
+
+const promptGemini = `
+Votre Rôle :
+Vous êtes un assistant culinaire expert en traitement de données. Votre mission est de convertir avec une précision extrême une ou plusieurs images de pages de recettes en un fichier JSON structuré, en suivant rigoureusement les règles et le schéma définis ci-dessous.
+
+Objectif Principal :
+Analyser l'image fournie, transcrire tout le contenu textuel pertinent, et le transformer en un tableau JSON d'objets Recipe, en appliquant une logique d'inférence pour les champs non explicites.
+
+Règles Générales :
+
+Un Fichier, Plusieurs Recettes : Si l'image contient plusieurs recettes, le JSON final doit être un tableau contenant un objet pour chaque recette.
+
+Omission de imageUrl : Vous ne devez jamais inclure le champ imageUrl dans le JSON de sortie. Il sera géré automatiquement par un autre script.
+
+Inférence Logique : Si un ingrédient est mentionné dans les étapes mais pas dans la liste officielle (ex: "un peu d'huile", "cacahuètes hachées"), vous devez l'ajouter logiquement à la liste des ingrédients.
+
+Ton et Style : Le champ description doit être rédigé dans un style engageant et appétissant. Les étapes doivent être claires et concises.
+
+Schéma JSON et Règles de Remplissage par Champ
+sourceUrl (string)
+
+Règle : Créer un identifiant unique de type "slug".
+
+Format : theme-du-livre/titre-de-la-recette-en-minuscules-et-avec-tirets. Si le thème n'est pas évident, utilisez un mot-clé pertinent (ex: salades, plats-vegetariens).
+
+Exemple : amerique/moules-farcies-nouvelle-angleterre
+
+title (string)
+
+Règle : Transcrire exactement le titre de la recette.
+
+description (string)
+
+Règle : Générer une description concise (1-2 phrases) qui résume le plat de manière attrayante. Ce champ n'est pas une transcription directe.
+
+Exemple : "Un grand classique vietnamien revisité en version vegan, avec du tofu mariné et doré, des crudités croquantes et une sauce savoureuse."
+
+preparationTime (number)
+
+Règle : Transcrire uniquement la valeur numérique du temps de préparation. Ne pas inclure "min".
+
+cookingTime (string)
+
+Règle : Transcrire la valeur et l'unité du temps de cuisson (ex: "15 min", "3 heures"). Si non spécifié, mettre "0 min".
+
+servings (number)
+
+Règle : Transcrire le nombre de personnes/personnes.
+
+difficulty (string)
+
+Règle : Inférence basée sur la complexité de la recette.
+
+Facile : Moins de 5 étapes, techniques de base.
+
+Moyen : 5-8 étapes, ou nécessite plusieurs préparations distinctes (marinade, sauce, etc.).
+
+Difficile : Plus de 8 étapes, techniques complexes, gestion précise des cuissons.
+
+isVege (boolean)
+
+Règle : Mettre true si l'étiquette "VEGGIE" ou "VEGAN" est présente. Sinon, inférer : si la recette ne contient ni viande ni poisson, mettre true. Autrement, false.
+
+categoryId (number)
+
+Règle : Classifier la recette et assigner l'ID correspondant à la catégorie la plus pertinente de la liste ci-dessous.
+
+mealIds (array de numbers)
+
+Règle : Classifier la recette et assigner un tableau contenant les IDs de tous les repas correspondants de la liste ci-dessous.
+
+steps (array de strings)
+
+Règle : Transcrire chaque étape de la préparation. Reformuler légèrement si nécessaire pour la clarté et la concision. S'assurer que chaque élément du tableau est une action logique. Si un temps de repos est indiqué, l'inclure dans la description ou comme une étape.
+
+ingredients (array d'objets)
+
+Règle : Créer un objet pour chaque ingrédient avec la structure { "name": string, "quantity": number | null, "unit": string | null }.
+
+Gestion des quantités :
+
+"1/2" devient 0.5.
+
+"une pincée", "quelques feuilles" : quantity: null, unit: "pincée" ou unit: "quelques feuilles".
+
+Ingrédient sans quantité (ex: "Sel") : quantity: null, unit: null.
+
+Unité implicite (ex: "2 oignons") : quantity: 2, unit: "pièces" ou null.
+
+Données de Référence pour la Classification
+Liste des Catégories (categoryId)
+
+1: Soupes
+
+2: Purées
+
+3: Gratins
+
+4: Salades
+
+5: Pâtes
+
+6: Riz
+
+7: Pains
+
+8: Pizzas
+
+9: Quiches
+
+10: Dips & Sauces
+
+11: Ragoût
+
+12: Terrines
+
+13: Pâtisseries
+
+14: Viennoiseries
+
+15: Flans & Crèmes
+
+16: Confiseries
+
+17: Confitures
+
+18: Glaces
+
+Liste des Repas (mealIds)
+
+1: Petit déjeuner
+
+2: Apéritif
+
+3: Entrée
+
+4: Plat principal
+
+5: Accompagnement
+
+6: Dessert
+
+7: Boisson
+
+Instruction finale : Appliquez l'ensemble de ces règles à l'image que je vais vous fournir. Assurez-vous que la sortie est un JSON valide et complet. Je suis prêt à vous envoyer l'image.
+    `;
+
+export async function getJSONToGemini(file: Blob) {
+  try {
+    // Conversion du fichier en base64
+    console.log("Type réel :", typeof file, file && file.constructor && file.constructor.name);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const base64Image = buffer.toString("base64");
+
+    // Préparation du contenu pour Gemini
+    const contents = [
+      {
+        inlineData: {
+          mimeType: file.type || "image/jpeg",
+          data: base64Image,
+        },
+      },
+      {
+        text: promptGemini,
+      },
+    ];
+
+    // Appel à l'API Gemini
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents,
+      config: {
+        responseMimeType: "application/json",
+        candidateCount: 1,
+        temperature: 0.7,
+      },
+    });
+
+
+    // Vérification et retour du résultat
+    if (response.text) {
+      const result = JSON.parse(response.text);
+      console.log("Données renvoyées par Gemini :", result);
+
+      return result as RecipeSeedData[];
+    } else {
+      console.warn("Aucune donnée texte renvoyée par Gemini.");
+      return false;
+    }
+
+  } catch (error) {
+    console.error("Erreur survenue dans Gemini :", error);
+    return false;
+  }
+}
+
+// Définir des types clairs pour vos données d'entrée
+type IngredientSeedData = {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+};
+
+type RecipeSeedData = {
+  sourceUrl: string;
+  title: string;
+  description?: string;
+  preparationTime?: number;
+  cookingTime?: string;
+  servings?: number;
+  difficulty?: string;
+  isVege?: boolean;
+  imageUrl?: string | null;
+  categoryId: number;
+  mealIds?: number[];
+  steps: string[];
+  ingredients: IngredientSeedData[];
+  onRobot?: boolean;
+};
+
+// --- La fonction améliorée ---
+
+async function addJSONRecipes(recipesData: RecipeSeedData[]) {
+  // On utilise une boucle for...of pour bien gérer l'asynchronisme
+  for (const recipeData of recipesData) {
+    try {
+      console.log(`\nProcessing recipe: ${recipeData.title}`);
+
+      // 1. Récupération de l'image si nécessaire
+      if (!recipeData.imageUrl) {
+        recipeData.imageUrl = await fetchRecipeImage(recipeData.title);
+      }
+
+      const addedRecipes: Recipe[] = [];
+
+      // 2. Transaction Prisma pour garantir l'intégrité
+      await prisma.$transaction(async (tx) => {
+        // --- Vérifications de robustesse ---
+        const category = await tx.category.findUnique({ where: { id: recipeData.categoryId } });
+        if (!category) {
+          // On arrête tout de suite avec une erreur claire
+          throw new Error(`La catégorie avec l'ID ${recipeData.categoryId} est introuvable.`);
+        }
+
+        // --- Gestion des ingrédients (avec normalisation) ---
+        const ingredientPayloads = await Promise.all(
+          recipeData.ingredients.map(async (ingData) => {
+            const normalizedName = ingData.name.trim();
+            const ingredient = await tx.ingredient.upsert({
+              where: { name: normalizedName },
+              update: {},
+              create: { name: normalizedName },
+            });
+            return {
+              ingredientId: ingredient.id,
+              quantity: ingData.quantity,
+              unit: ingData.unit,
+            };
+          })
+        );
+        console.log(`  -> ${ingredientPayloads.length} ingredients processed.`);
+
+        // --- Gestion des repas (avec vérification) ---
+        const mealConnectPayload = (recipeData.mealIds || []).map(mealId => ({
+          meal: { connect: { id: mealId } },
+        }));
+        if (mealConnectPayload.length > 0) {
+          console.log(`  -> ${mealConnectPayload.length} meals processed.`);
+        }
+
+        // --- Création d'un payload de données commun (DRY) ---
+        const recipePayload = {
+          title: recipeData.title,
+          description: recipeData.description,
+          preparationTime: recipeData.preparationTime,
+          cookingTime: recipeData.cookingTime,
+          servings: recipeData.servings,
+          difficulty: recipeData.difficulty,
+          isVege: recipeData.isVege,
+          imageUrl: recipeData.imageUrl,
+          onRobot: recipeData.onRobot || false,
+          steps: {
+            // Dans la partie `update`, il faut d'abord supprimer avant de recréer
+            deleteMany: {},
+            create: recipeData.steps.map((instruction, index) => ({
+              stepNumber: index + 1,
+              instruction: instruction,
+            })),
+          },
+          ingredients: {
+            deleteMany: {},
+            create: ingredientPayloads,
+          },
+          meals: {
+            deleteMany: {},
+            create: mealConnectPayload,
+          },
+        };
+
+        // --- Upsert final, beaucoup plus propre ---
+        addedRecipes.push(await tx.recipe.upsert({
+          where: { sourceUrl: recipeData.sourceUrl },
+          update: {
+            ...recipePayload,
+            category: { connect: { id: category.id } }, // La connexion se fait ici pour l'update
+          },
+          create: {
+            ...recipePayload,
+            sourceUrl: recipeData.sourceUrl, // sourceUrl n'est que pour la création
+            category: { connect: { id: category.id } },
+            // Pour 'create', on ne peut pas faire deleteMany, on ne garde que 'create'
+            steps: { create: recipePayload.steps.create },
+            ingredients: { create: recipePayload.ingredients.create },
+            meals: { create: recipePayload.meals.create },
+          },
+        }));
+
+        console.log(`  -> ✅ Recipe "${recipeData.title}" upserted successfully!`);
+      });
+
+      return addedRecipes;
+
+    } catch (error) {
+      // Un bloc catch par recette pour ne pas bloquer tout le script
+      console.error(`❌ Une erreur est survenue lors de l'ajout de la recette "${recipeData.title}":`, error);
+    }
+  }
+
+  console.log('\n✅ Seeding terminé.');
+}
+
+async function fetchRecipeImage(query: string) {
+  // On vérifie que la clé API est bien présente
+  if (!process.env.PEXELS_API_KEY) {
+    console.warn('  -> ⚠️ PEXELS_API_KEY non définie. Impossible de chercher une image.');
+    return null;
+  }
+
+  try {
+    console.log(`  -> 📸 Recherche d'une image pour "${query}" sur Pexels...`);
+    const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
+      headers: {
+        Authorization: process.env.PEXELS_API_KEY,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur API Pexels: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Si on a des photos, on retourne l'URL de la meilleure qualité
+    if (data.photos && data.photos.length > 0) {
+      const imageUrl = data.photos[0].src.large2x; // ou .original, .large, etc.
+      console.log(`  -> ✨ Image trouvée : ${imageUrl}`);
+      return imageUrl;
+    }
+
+    console.log('  -> 😕 Aucune image trouvée.');
+    return null;
+  } catch (error) {
+    console.error('  -> ❌ Erreur lors de la recherche d\'image sur Pexels :', error);
+    return null;
   }
 }
