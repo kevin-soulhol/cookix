@@ -129,9 +129,11 @@ export default function RecipesDownloader() {
                     { method: "post", action: "/api/menu" }
                 ))
             }))
-                .then(result => {
-                    console.log(result)
+                .then(() => {
+                    setPreviewUrl(null);
+                    setCompressedFile(null);
                 })
+
             setRecipesAdded(added);
         }
 
@@ -202,7 +204,7 @@ export default function RecipesDownloader() {
                 {fetcher.data?.error && <p className="text-sm text-red-600">{fetcher.data.error}</p>}
                 {fetcher.data?.success ? (
                     <div className="p-3 text-sm text-green-800 bg-green-100 rounded-lg dark:bg-green-900 dark:text-green-200">
-                        {recipesAdded.join(', ')} {recipesAdded.length === 1 ? 'a' : 'ont'} été ajouté{recipesAdded.length === 1 ? '' : 's'}.
+                        {recipesAdded.length && recipesAdded.join(', ')} {recipesAdded.length === 1 ? 'a' : 'ont'} été ajouté{recipesAdded.length === 1 ? '' : 's'}.
                     </div>
                 ) : (
                     /* --- Bouton de validation --- */

@@ -793,8 +793,7 @@ async function addRecipeFromGemini(file: Blob) {
     }
 
     const addedRecipes = await addJSONRecipes(dataFromGemini);
-
-
+    console.log('Added recipes : ', addedRecipes)
     return json(
       { success: true, message: `Nouvelle recette ajoutée`, recipes: addedRecipes },
     );
@@ -1030,104 +1029,113 @@ type RecipeSeedData = {
 // --- La fonction améliorée ---
 
 async function addJSONRecipes(recipesData: RecipeSeedData[]) {
+
+  const addedRecipes: Recipe[] = [];
   // On utilise une boucle for...of pour bien gérer l'asynchronisme
   for (const recipeData of recipesData) {
     try {
       console.log(`\nProcessing recipe: ${recipeData.title}`);
 
-      // 1. Récupération de l'image si nécessaire
-      if (!recipeData.imageUrl) {
-        recipeData.imageUrl = await fetchRecipeImage(recipeData.title);
+      const existing = await prisma.recipe.findFirst({
+        where: {
+          title: recipeData.title
+        }
+      })
+
+      if (existing) {
+        addedRecipes.push(existing);
+        console.log(`Recette ${recipeData.title} existe déjà.`)
+      } else {
+        // 1. Récupération de l'image si nécessaire
+        if (!recipeData.imageUrl) {
+          recipeData.imageUrl = await fetchRecipeImage(recipeData.title);
+        }
+
+        // 2. Transaction Prisma pour garantir l'intégrité
+        await prisma.$transaction(async (tx) => {
+          // --- Vérifications de robustesse ---
+          const category = await tx.category.findUnique({ where: { id: recipeData.categoryId } });
+          if (!category) {
+            // On arrête tout de suite avec une erreur claire
+            throw new Error(`La catégorie avec l'ID ${recipeData.categoryId} est introuvable.`);
+          }
+
+          // --- Gestion des ingrédients (avec normalisation) ---
+          const ingredientPayloads = await Promise.all(
+            recipeData.ingredients.map(async (ingData) => {
+              const normalizedName = ingData.name.trim();
+              const ingredient = await tx.ingredient.upsert({
+                where: { name: normalizedName },
+                update: {},
+                create: { name: normalizedName },
+              });
+              return {
+                ingredientId: ingredient.id,
+                quantity: ingData.quantity || 1,
+                unit: ingData.unit,
+              };
+            })
+          );
+          console.log(`  -> ${ingredientPayloads.length} ingredients processed.`);
+
+          // --- Gestion des repas (avec vérification) ---
+          const mealConnectPayload = (recipeData.mealIds || []).map(mealId => ({
+            meal: { connect: { id: mealId } },
+          }));
+          if (mealConnectPayload.length > 0) {
+            console.log(`  -> ${mealConnectPayload.length} meals processed.`);
+          }
+
+          // --- Création d'un payload de données commun (DRY) ---
+          const recipePayload = {
+            title: recipeData.title,
+            description: recipeData.description,
+            preparationTime: recipeData.preparationTime,
+            cookingTime: recipeData.cookingTime,
+            servings: recipeData.servings,
+            difficulty: recipeData.difficulty,
+            isVege: recipeData.isVege,
+            imageUrl: recipeData.imageUrl,
+            onRobot: recipeData.onRobot || false,
+            steps: {
+              // Dans la partie `update`, il faut d'abord supprimer avant de recréer
+              deleteMany: {},
+              create: recipeData.steps.map((instruction, index) => ({
+                stepNumber: index + 1,
+                instruction: instruction,
+              })),
+            },
+            ingredients: {
+              deleteMany: {},
+              create: ingredientPayloads,
+            },
+            meals: {
+              deleteMany: {},
+              create: mealConnectPayload,
+            },
+          };
+
+          // --- Upsert final, beaucoup plus propre ---
+          addedRecipes.push(await tx.recipe.upsert({
+            where: { sourceUrl: recipeData.sourceUrl },
+            update: {
+              ...recipePayload,
+              category: { connect: { id: category.id } }, // La connexion se fait ici pour l'update
+            },
+            create: {
+              ...recipePayload,
+              sourceUrl: recipeData.sourceUrl, // sourceUrl n'est que pour la création
+              category: { connect: { id: category.id } },
+              // Pour 'create', on ne peut pas faire deleteMany, on ne garde que 'create'
+              steps: { create: recipePayload.steps.create },
+              ingredients: { create: recipePayload.ingredients.create },
+              meals: { create: recipePayload.meals.create },
+            },
+          }));
+
+          console.log(`  -> ✅ Recipe "${recipeData.title}" upserted successfully!`);
+        });
       }
-
-      const addedRecipes: Recipe[] = [];
-
-      // 2. Transaction Prisma pour garantir l'intégrité
-      await prisma.$transaction(async (tx) => {
-        // --- Vérifications de robustesse ---
-        const category = await tx.category.findUnique({ where: { id: recipeData.categoryId } });
-        if (!category) {
-          // On arrête tout de suite avec une erreur claire
-          throw new Error(`La catégorie avec l'ID ${recipeData.categoryId} est introuvable.`);
-        }
-
-        // --- Gestion des ingrédients (avec normalisation) ---
-        const ingredientPayloads = await Promise.all(
-          recipeData.ingredients.map(async (ingData) => {
-            const normalizedName = ingData.name.trim();
-            const ingredient = await tx.ingredient.upsert({
-              where: { name: normalizedName },
-              update: {},
-              create: { name: normalizedName },
-            });
-            return {
-              ingredientId: ingredient.id,
-              quantity: ingData.quantity,
-              unit: ingData.unit,
-            };
-          })
-        );
-        console.log(`  -> ${ingredientPayloads.length} ingredients processed.`);
-
-        // --- Gestion des repas (avec vérification) ---
-        const mealConnectPayload = (recipeData.mealIds || []).map(mealId => ({
-          meal: { connect: { id: mealId } },
-        }));
-        if (mealConnectPayload.length > 0) {
-          console.log(`  -> ${mealConnectPayload.length} meals processed.`);
-        }
-
-        // --- Création d'un payload de données commun (DRY) ---
-        const recipePayload = {
-          title: recipeData.title,
-          description: recipeData.description,
-          preparationTime: recipeData.preparationTime,
-          cookingTime: recipeData.cookingTime,
-          servings: recipeData.servings,
-          difficulty: recipeData.difficulty,
-          isVege: recipeData.isVege,
-          imageUrl: recipeData.imageUrl,
-          onRobot: recipeData.onRobot || false,
-          steps: {
-            // Dans la partie `update`, il faut d'abord supprimer avant de recréer
-            deleteMany: {},
-            create: recipeData.steps.map((instruction, index) => ({
-              stepNumber: index + 1,
-              instruction: instruction,
-            })),
-          },
-          ingredients: {
-            deleteMany: {},
-            create: ingredientPayloads,
-          },
-          meals: {
-            deleteMany: {},
-            create: mealConnectPayload,
-          },
-        };
-
-        // --- Upsert final, beaucoup plus propre ---
-        addedRecipes.push(await tx.recipe.upsert({
-          where: { sourceUrl: recipeData.sourceUrl },
-          update: {
-            ...recipePayload,
-            category: { connect: { id: category.id } }, // La connexion se fait ici pour l'update
-          },
-          create: {
-            ...recipePayload,
-            sourceUrl: recipeData.sourceUrl, // sourceUrl n'est que pour la création
-            category: { connect: { id: category.id } },
-            // Pour 'create', on ne peut pas faire deleteMany, on ne garde que 'create'
-            steps: { create: recipePayload.steps.create },
-            ingredients: { create: recipePayload.ingredients.create },
-            meals: { create: recipePayload.meals.create },
-          },
-        }));
-
-        console.log(`  -> ✅ Recipe "${recipeData.title}" upserted successfully!`);
-      });
-
-      return addedRecipes;
 
     } catch (error) {
       // Un bloc catch par recette pour ne pas bloquer tout le script
@@ -1136,6 +1144,7 @@ async function addJSONRecipes(recipesData: RecipeSeedData[]) {
   }
 
   console.log('\n✅ Seeding terminé.');
+  return addedRecipes;
 }
 
 async function fetchRecipeImage(query: string) {
