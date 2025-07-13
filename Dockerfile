@@ -1,54 +1,51 @@
-FROM node:24-alpine3.22 AS base
+# ÉTAPE 1: Base - Utiliser une image Debian-based (Bookworm) qui est compatible avec Playwright
+# Alpine n'est PAS compatible avec les navigateurs comme Chromium.
+FROM node:22-bookworm-slim AS base
 
-# Installer les dépendances nécessaires pour Prisma
-RUN apk add --no-cache openssl
+# Mettre à jour les paquets système pour obtenir les derniers patchs de sécurité
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
-# Configuration de l'environnement de travail
+# Définir l'environnement de travail
 WORKDIR /app
 
-# Copier les fichiers de dépendances
-COPY package.json package-lock.json* ./
-COPY prisma ./prisma/
-COPY start.sh ./
-COPY playwright.config.ts /app/
-COPY /tests /app/
-RUN chmod +x start.sh
+# Définir une variable d'environnement pour que Playwright sache où trouver les navigateurs
+# C'est une bonne pratique pour éviter les soucis de permissions dans des répertoires système.
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers
 
-# Installer les dépendances
+# --- ÉTAPE 2: Installation des Dépendances NPM et Playwright ---
 FROM base AS deps
+
+# Copier les fichiers de définition des dépendances
+COPY package.json package-lock.json* ./
+
+# Installer les dépendances NPM
 RUN npm ci
 
-# Builder l'application
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
+# Installer les dépendances système de Playwright ET le navigateur Chromium
+# On cible uniquement Chromium pour garder l'image la plus légère possible.
+RUN npx playwright install --with-deps chromium
+
+# --- ÉTAPE 3: Build de l'Application Remix ---
+FROM deps AS builder
+
 COPY . .
-# Générer le client Prisma
+
+# Générer le client Prisma (si nécessaire avant le build)
 RUN npx prisma generate
 
+# Construire l'application Remix
 RUN npm run build
 
-# Configuration de l'image finale
-FROM base AS runner
-ENV NODE_ENV=production
+# --- ÉTAPE 4: Image Finale de Production ---
+FROM builder AS runner
 
-# Copier les fichiers construits et les dépendances
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/playwright.config.ts ./
-COPY --from=builder /app/tests ./
-COPY --from=builder /app/prisma ./prisma
-
-COPY --from=builder /app/prisma-migrate.sh ./
+# Les fichiers sont déjà copiés de l'étape `builder`
+# Assurons-nous simplement que les permissions sont bonnes
 RUN chmod +x ./prisma-migrate.sh
-
-# Copie du build d'entrée
-COPY --from=builder /app/start.sh ./
 RUN chmod +x ./start.sh
 
-# Configuration des ports et commandes
-EXPOSE 3000 5555 3306
+# Définir les ports
+EXPOSE 3000
 
-# Commande pour exécuter l'application
+# Commande d'entrée
 ENTRYPOINT ["./start.sh"]

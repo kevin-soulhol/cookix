@@ -798,6 +798,12 @@ export default function ShoppingListPage() {
                                             <h2 className="text-sm font-medium text-indigo-800 mb-2 pl-1">
                                                 Supermarché ({otherUncheckedCount})
                                             </h2>
+                                            <Link
+                                                to={`/sync-chronodrive?listId=${shoppingList.id}`}
+                                                className="flex items-center px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-full hover:bg-blue-700"
+                                            >
+                                                Synchroniser avec Chronodrive
+                                            </Link>
                                             <div className="bg-white rounded-md shadow-sm overflow-hidden">
                                                 <ul className="divide-y divide-gray-200">
                                                     {firstMarketplace.map((item) => (

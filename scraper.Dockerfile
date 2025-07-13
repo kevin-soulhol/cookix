@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.50.0-noble
+FROM mcr.microsoft.com/playwright:v1.51.1-noble
 # Réduire la taille de l'image et l'utilisation des ressources
 RUN apt-get update && \
     apt-get install -y --no-install-recommends cron && \

@@ -835,11 +835,11 @@ Exemple : amerique/moules-farcies-nouvelle-angleterre
 
 title (string)
 
-Règle : Transcrire exactement le titre de la recette.
+Règle : Transcrire exactement le titre de la recette, en minuscule avec une majuscule à la première lettre.
 
 description (string)
 
-Règle : Générer une description concise (1-2 phrases) qui résume le plat de manière attrayante. Ce champ n'est pas une transcription directe.
+Règle : Générer une description concise (1-2 paragraphes) qui résume le plat de manière attrayante. Ce champ n'est pas une transcription directe.
 
 Exemple : "Un grand classique vietnamien revisité en version vegan, avec du tofu mariné et doré, des crudités croquantes et une sauce savoureuse."
 
@@ -1076,7 +1076,14 @@ async function addJSONRecipes(recipesData: RecipeSeedData[]) {
               };
             })
           );
-          console.log(`  -> ${ingredientPayloads.length} ingredients processed.`);
+
+          const uniqueIngredientPayloads = Array.from(
+            new Map(
+              ingredientPayloads.map(item => [item.ingredientId, item])
+            ).values()
+          );
+          console.log(`  -> ${ingredientPayloads.length} ingredients processed (${uniqueIngredientPayloads.length}).`);
+          console.log(uniqueIngredientPayloads)
 
           // --- Gestion des repas (avec vérification) ---
           const mealConnectPayload = (recipeData.mealIds || []).map(mealId => ({
@@ -1107,7 +1114,7 @@ async function addJSONRecipes(recipesData: RecipeSeedData[]) {
             },
             ingredients: {
               deleteMany: {},
-              create: ingredientPayloads,
+              create: uniqueIngredientPayloads,
             },
             meals: {
               deleteMany: {},

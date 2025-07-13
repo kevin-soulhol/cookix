@@ -162,7 +162,6 @@ async function handleLogin(formData: FormData) {
 
     // Vérifier le mot de passe
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
         return json(
             { success: false, errors: { password: "Identifiants incorrects" } },
