@@ -1,5 +1,3 @@
-// app/sessions.server.ts
-
 import { createCookieSessionStorage } from "@remix-run/node";
 
 // Chargez le secret depuis vos variables d'environnement.

@@ -1,13 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/services/ChronodriveAuth.server.ts
 
-import {
-  chromium,
-  type Browser,
-  type Page,
-  type Response as PlaywrightResponse,
-} from "playwright";
+import { chromium, type Browser, type Page } from "playwright";
 import type { Session } from "@remix-run/node";
 import {
+  AddToCartPayload,
   CHRONODRIVE_CONFIG,
   SearchSuggestionsResponse,
 } from "~/types/chronodrive.types";
@@ -16,6 +13,8 @@ const USER_CREDENTIALS = {
   email: process.env.CHRONODRIVE_EMAIL ?? "",
   password: process.env.CHRONODRIVE_PASSWORD ?? "",
 };
+
+type ApiContext = "customer" | "search" | "cart";
 
 /**
  * Un service pour s'authentifier et interagir avec l'API Chronodrive.
@@ -104,6 +103,7 @@ export class ChronodriveAuthService {
 
       if (capturedToken) {
         this.session.set("accessToken", capturedToken);
+        this.session.set("siteMode", "DRIVE");
       } else {
         throw new Error(
           "Le processus de connexion s'est terminé mais aucun token n'a été capturé."
@@ -177,34 +177,112 @@ export class ChronodriveAuthService {
    * Fait un appel authentifié à une API Chronodrive.
    * @param url - L'URL complète de l'endpoint à appeler.
    */
-  private async fetchAuthenticatedApi(url: string): Promise<any> {
+  private async fetchAuthenticatedApi(
+    url: string,
+    contextType: ApiContext,
+    options: RequestInit = {}
+  ): Promise<any> {
     await this.ensureAuthenticated();
     const accessToken = this.session.get("accessToken");
+    const cookieString = this.session.get("cookieString");
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        ...CHRONODRIVE_CONFIG.BASE_HEADERS,
-        Authorization: `Bearer ${accessToken}`,
-        "x-api-key": CHRONODRIVE_CONFIG.API_KEY,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401 && this.session.has("accessToken")) {
-        console.log(
-          "CHRONO_API: Token probablement invalide (401). Invalidating session token."
-        );
-        this.session.unset("accessToken");
-        // Relance une seule fois.
-        //return await this.fetchAuthenticatedApi(url);
+    const getApiKeyForUrl = (targetUrl: string): string => {
+      if (targetUrl.includes("/search") || targetUrl.includes("/suggestions")) {
+        return CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
       }
-      const errorBody = await response.text();
-      throw new Error(
-        `Erreur API Chronodrive: ${response.status} ${response.statusText}\n${errorBody}`
+      if (targetUrl.includes("/cart")) {
+        return CHRONODRIVE_CONFIG.API_KEYS.CART;
+      }
+      if (targetUrl.includes("/customers/me")) {
+        return CHRONODRIVE_CONFIG.API_KEYS.CUSTOMER;
+      }
+      // Par défaut, on peut utiliser une clé générique ou lever une erreur.
+      console.warn(
+        `[API Context] Contexte non détecté pour l'URL ${targetUrl}, utilisation de la clé par défaut (customer).`
       );
+      return CHRONODRIVE_CONFIG.API_KEYS.CUSTOMER;
+    };
+
+    const apiKey = getApiKeyForUrl(url);
+
+    // Construction des headers
+    const headers: Record<string, string> = {
+      ...CHRONODRIVE_CONFIG.BASE_HEADERS,
+      Authorization: `Bearer ${accessToken}`,
+      "x-api-key": apiKey,
+      ...(cookieString && { Cookie: cookieString }),
+      ...options.headers,
+    };
+
+    switch (contextType) {
+      case "search":
+        headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
+        // La recherche nécessite le contexte du magasin
+        console.log(process.env.CHRONODRIVE_SITE_ID);
+        headers["x-chronodrive-site-id"] =
+          process.env.CHRONODRIVE_SITE_ID || "";
+        headers["x-chronodrive-site-mode"] =
+          this.session.get("siteMode") || "DRIVE";
+        break;
+      case "cart":
+        headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.CART;
+        // L'ajout au panier nécessite aussi le contexte du magasin
+        headers["x-chronodrive-site-id"] =
+          process.env.CHRONODRIVE_SITE_ID || "";
+        headers["x-chronodrive-site-mode"] =
+          this.session.get("siteMode") || "DRIVE";
+        break;
+      case "customer":
+        headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.CUSTOMER;
+        // Pas besoin des en-têtes de magasin pour le profil client
+        break;
+      default:
+        throw new Error(`Contexte d'API inconnu: ${contextType}`);
     }
-    return response.json();
+
+    // S'assurer que Content-Type est bien défini pour les requêtes POST/PUT
+    if (options.body && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const fetchOptions: RequestInit = {
+      method: options.method || "GET",
+      headers,
+      body: options.body,
+    };
+
+    try {
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        // Gestion du cas 401 : jeton invalide
+        if (response.status === 401 && this.session.has("accessToken")) {
+          console.warn(
+            "CHRONO_API: Token probablement invalide (401). Suppression du token de session."
+          );
+          this.session.unset("accessToken");
+          // Optionnel : relancer la requête une seule fois ici si souhaité
+          return await this.fetchAuthenticatedApi(url, contextType, options);
+        }
+
+        // Lecture du corps d'erreur pour un message plus utile
+        const errorBody = await response.text();
+        throw new Error(
+          `Erreur API Chronodrive: ${response.status} ${response.statusText}\n${errorBody}`
+        );
+      }
+
+      // Tentative de parsing JSON, sinon retour brut
+      try {
+        return await response.json();
+      } catch {
+        return await response.text();
+      }
+    } catch (error) {
+      // Logging ou reporting d’erreur ici si besoin
+      console.error("Erreur lors de l'appel API :", error);
+      throw error;
+    }
   }
 
   /**
@@ -217,9 +295,38 @@ export class ChronodriveAuthService {
     const url = `${
       CHRONODRIVE_CONFIG.BASE_API_URL
     }/v1/search-suggestions?searchTerm=${encodeURIComponent(query)}`;
-    const response = await this.fetchAuthenticatedApi(url);
-    console.log("________________________");
-    console.log(response);
+    return await this.fetchAuthenticatedApi(url, "search");
+  }
+
+  /**
+   * Ajoute des articles au panier Chronodrive.
+   * @param cartId - L'ID du panier de l'utilisateur.
+   * @param payload - Le corps de la requête contenant les articles.
+   */
+  public async addToCart(payload: AddToCartPayload): Promise<any> {
+    const cartId = await this.getCart();
+    const url = `${CHRONODRIVE_CONFIG.BASE_API_URL}/v1/carts/${cartId}/items`;
+
+    // Cette méthode doit utiliser fetchAuthenticatedApi mais avec la méthode POST
+    await this.ensureAuthenticated();
+
+    const response = await this.fetchAuthenticatedApi(url, "cart", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    console.log("-----------------------------", response);
     return response;
+  }
+
+  private async getCart(): Promise<any> {
+    const url = `${CHRONODRIVE_CONFIG.BASE_API_URL}/v1/customers/me/carts?withCoupons=true`;
+    const response = await this.fetchAuthenticatedApi(url, "customer");
+    return response.content[0].id;
+  }
+
+  public async getCustomerProfile(): Promise<any> {
+    const url = `${CHRONODRIVE_CONFIG.BASE_API_URL}/v1/customers/me`;
+    return await this.fetchAuthenticatedApi(url, "customer");
   }
 }

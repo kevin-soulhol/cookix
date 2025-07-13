@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // --- Configuration ---
 
 // Il est VIVEMENT recommandé de stocker les secrets dans des variables d'environnement.
@@ -10,6 +11,16 @@ export const CHRONODRIVE_CONFIG = {
   CLIENT_ID: "DrJyWDmbpV6yYP8ndN8m",
   API_KEY: process.env.CHRONODRIVE_API_KEY ?? "",
 
+  API_KEYS: {
+    // Clé pour les endpoints liés au compte utilisateur (profil, commandes, etc.)
+    CUSTOMER: process.env.CHRONODRIVE_API_KEY_USER ?? "",
+    // Clé pour les endpoints liés au catalogue (recherche, suggestions, produits)
+    SEARCH: process.env.CHRONODRIVE_API_KEY ?? "",
+    // Clé pour les endpoints liés au panier (carts) - supposez que c'est la même que customer
+    // si vous n'en avez pas trouvé de spécifique.
+    CART: process.env.CHRONODRIVE_API_KEY_CART ?? "",
+  } as const,
+
   // URLs des endpoints
   BASE_IDENTITY_URL: "https://connect.chronodrive.com",
   BASE_API_URL: "https://api.chronodrive.com",
@@ -21,7 +32,6 @@ export const CHRONODRIVE_CONFIG = {
   // Paramètres PKCE statiques (devraient être dynamiques pour une sécurité maximale)
   CODE_CHALLENGE: "OsHjHqTqr8k34UdtniITqp5ZyFq5l680Lbcv5TN2Pmk",
   CODE_CHALLENGE_METHOD: "S256",
-  CODE_VERIFIER: "Vj892m7rKTFoBGCJaW2F499aH7vFig2Mds4-t5MfCog",
 
   // En-têtes de base pour simuler un navigateur
   BASE_HEADERS: {
@@ -93,7 +103,7 @@ export interface ProductSearchResult {
   // Champs optionnels ou qui peuvent être des objets vides
   animation?: Record<string, any>; // Objet avec structure inconnue, peut être vide.
   descriptions?: Record<string, string>; // ex: { "legal": "...", "marketing": "..." }
-  labels?: Record<string, any>;
+  labels: ProductLabels;
 
   // Champs de stock
   stock: "HIGH_STOCK" | "MEDIUM_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
@@ -111,6 +121,10 @@ export interface ProductSearchResult {
   trackingCode: string;
 }
 
+export interface ProductLabels {
+  productLabel: string;
+}
+
 // Réponse de l'API de recherche
 export interface SearchSuggestionsResponse {
   keywords: string[];
@@ -122,23 +136,21 @@ export interface SearchSuggestionsResponse {
  * Représente les informations sur les prix d'un produit.
  */
 export interface ProductPriceInfo {
-  // Le prix final affiché à l'utilisateur.
-  sellingPrice: {
-    amount: number; // en centimes
-    currency: string; // ex: "EUR"
-  };
-  // Le prix à l'unité de mesure (ex: prix au kilo).
-  unitPrice?: {
-    amount: number;
-    currency: string;
-    unit: string; // ex: "KGM" pour kilogramme
-  };
-  // Le prix barré en cas de promotion.
-  strikeThroughPrice?: {
-    amount: number;
-    currency: string;
-  };
-  // Autres champs de prix possibles...
+  // Le prix de vente par défaut de l'article.
+  defaultPrice: number; // ex: 0.95 (directement en euros)
+
+  // Le prix à l'unité de mesure (ex: prix au litre, au kilo).
+  pricePerUnitMeasure: number; // ex: 0.19
+
+  // Le taux de TVA applicable.
+  vatRate: number; // ex: 5.5
+
+  // Les champs suivants sont souvent liés aux promotions ou informations légales.
+  // On les garde optionnels car ils peuvent ne pas toujours être présents.
+  bestBeforeDateRate?: number;
+  variantDiscount?: number;
+  lastPeriodLowestPrice?: number;
+  depositPrice?: number; // Prix de la consigne
 }
 
 /**
@@ -148,7 +160,7 @@ export interface ProductImageInfo {
   // L'URL de l'image principale.
   main: string;
   // D'autres tailles ou vues pourraient être disponibles.
-  thumbnail?: string;
+  thumbnails?: string[];
   large?: string;
 }
 
@@ -179,4 +191,16 @@ export interface ProductFlags {
   isPromo?: boolean;
   isNew?: boolean;
   // ... autres drapeaux
+}
+
+export interface CartItemPayload {
+  clientOrigin: string; // Ex: "WEB|ARBO|..."
+  minimalQuantity?: number; // Optionnel
+  productId: string;
+  quantity: number;
+}
+
+export interface AddToCartPayload {
+  content: CartItemPayload[];
+  optimizedMode: boolean;
 }

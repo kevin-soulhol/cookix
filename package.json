@@ -23,6 +23,7 @@
     "migrate:dev": "docker compose exec app npx prisma migrate dev --name",
     "migrate:reset": "docker compose exec app npx prisma migrate reset",
     "migrate:deploy": "docker compose exec app npx prisma migrate deploy",
+    "migrate:generate": "docker compose exec app npx prisma generate",
     "migrate:export": "docker compose exec db mysqldump -u root -p cookix Recipe >/tmp/dump.sql",
     "test": "playwright test --ui"
   },
@@ -36,7 +37,7 @@
     "browser-image-compression": "^2.0.2",
     "isbot": "^4.1.0",
     "playwright-core": "^1.44.0",
-    "prisma": "^6.5.0",
+    "prisma": "^6.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-swipeable": "^7.0.2",

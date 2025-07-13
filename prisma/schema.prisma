@@ -194,21 +194,39 @@ model ShoppingList {
 }
 
 model ShoppingItem {
-  id             Int          @id @default(autoincrement())
+  id             Int            @id @default(autoincrement())
   shoppingListId Int
   ingredientId   Int
   recipeId       Int?
   quantity       Float?
   unit           String?
-  isChecked      Boolean      @default(false)
-  marketplace    Boolean      @default(false)
-  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id])
-  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
-  recipe         Recipe?      @relation(fields: [recipeId], references: [id])
+  isChecked      Boolean        @default(false)
+  marketplace    Boolean        @default(false)
+  ingredient     Ingredient     @relation(fields: [ingredientId], references: [id])
+  shoppingList   ShoppingList   @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  recipe         Recipe?        @relation(fields: [recipeId], references: [id])
+  syncedProduct  SyncedProduct?
 
   @@unique([shoppingListId, ingredientId, recipeId])
   @@index([ingredientId], map: "ShoppingItem_ingredientId_fkey")
   @@index([recipeId], map: "ShoppingItem_recipeId_fkey")
+}
+
+model SyncedProduct {
+  id Int @id @default(autoincrement())
+
+  shoppingItemId Int          @unique // Chaque ShoppingItem a au plus un SyncedProduct
+  shoppingItem   ShoppingItem @relation(fields: [shoppingItemId], references: [id], onDelete: Cascade)
+
+  // Données de Chronodrive
+  isFound              Boolean @default(false) // Le produit a-t-il été trouvé ?
+  chronodriveProductId String? // L'ID du produit sur Chronodrive
+  productName          String? // Le nom du produit sur Chronodrive
+  imageUrl             String? // L'URL de l'image
+  price                Float? // Le prix en euros
+
+  // Métadonnées
+  syncedAt DateTime @updatedAt // Quand la synchro a-t-elle eu lieu ?
 }
 
 model User {
