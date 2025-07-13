@@ -1,14 +1,42 @@
-# Build stage
-FROM node:24-alpine3.22 AS builder
+# Dockerfile.prod
+
+# ==============================================================================
+# ÉTAPE 1: Base - Image Debian-based pour la compatibilité Playwright
+# ==============================================================================
+FROM node:22-bookworm-slim AS base
+
+# Mettre à jour les paquets système pour les derniers patchs de sécurité
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copier les fichiers de dépendances pour installer les packages
-COPY package*.json ./
-COPY prisma ./prisma/
+# Définir le chemin d'installation des navigateurs Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers
 
-# Installer les dépendances en utilisant --omit=dev pour exclure les paquets de développement
+
+# ==============================================================================
+# ÉTAPE 2: Dépendances - Installation de TOUTES les dépendances (dev incluses)
+# Cette étape est nécessaire pour le build et l'installation de Playwright.
+# ==============================================================================
+FROM base AS deps
+
+COPY package.json package-lock.json* ./
+
+# Installer toutes les dépendances NPM
 RUN npm ci
+
+# Installer les dépendances système de Chromium ET le navigateur lui-même
+RUN npx playwright install --with-deps chromium
+
+
+# ==============================================================================
+# ÉTAPE 3: Builder - Construction de l'application Remix
+# ==============================================================================
+FROM base AS builder
+
+# Copier les dépendances pré-installées
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps ${PLAYWRIGHT_BROWSERS_PATH} ${PLAYWRIGHT_BROWSERS_PATH}
 
 # Copier le reste du code source
 COPY . .
@@ -16,37 +44,41 @@ COPY . .
 # Générer le client Prisma
 RUN npx prisma generate
 
-# Construire l'application
+# Construire l'application pour la production
 RUN NODE_ENV=production npm run build
 
-# Production stage
-FROM builder AS production
+
+# ==============================================================================
+# ÉTAPE 4: Runner - L'image finale, optimisée et légère
+# ==============================================================================
+FROM base AS runner
 
 WORKDIR /app
-
-# Variables d'environnement de production
 ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=256"
 
-# Copier les dépendances et les fichiers de build
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+# Copier les fichiers de dépendances pour installer UNIQUEMENT les dépendances de production
+COPY package.json package-lock.json* ./
+
+# Installer uniquement les dépendances de production.
+# Cela crée un dossier node_modules beaucoup plus petit.
+RUN npm ci --omit=dev
+
+# Copier les artefacts de build de l'étape "builder"
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
+
+# Copier le client Prisma généré
 COPY --from=builder /app/prisma ./prisma
-COPY ./server.js ./server.js
-COPY ./start-prod.sh ./
 
-# Rendre le script exécutable
+# Copier les navigateurs Playwright installés
+COPY --from=builder ${PLAYWRIGHT_BROWSERS_PATH} ${PLAYWRIGHT_BROWSERS_PATH}
+
+# Copier et rendre exécutable le script de démarrage de production
+COPY --from=builder /app/start-prod.sh ./
 RUN chmod +x ./start-prod.sh
-
-# Nettoyage des caches npm
-RUN npm cache clean --force && \
-    rm -rf /tmp/* && \
-    rm -rf /root/.npm/*
 
 # Exposer le port
 EXPOSE 3000
 
-# Commande de démarrage
-CMD ["./start-prod.sh"]
+# Commande de démarrage pour la production
+ENTRYPOINT ["./start-prod.sh"]
