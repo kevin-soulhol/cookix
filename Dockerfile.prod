@@ -49,17 +49,22 @@ RUN NODE_ENV=production npm run build
 # ==============================================================================
 # ÉTAPE 4: Runner - L'image finale, optimisée et légère
 # ==============================================================================
-FROM deps AS runner
+FROM base AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Installer les dépendances système de Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    npx playwright install-deps chromium && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copier les fichiers de dépendances pour installer UNIQUEMENT les dépendances de production
 COPY package.json package-lock.json* ./
 
 # Installer uniquement les dépendances de production.
 # Cela crée un dossier node_modules beaucoup plus petit.
-#RUN npm ci --omit=dev
+RUN npm ci --omit=dev
 
 # Copier les artefacts de build de l'étape "builder"
 COPY --from=builder /app/build ./build
@@ -67,9 +72,10 @@ COPY --from=builder /app/public ./public
 
 # Copier le client Prisma généré
 COPY --from=builder /app/node_modules/.prisma/client ./node_modules/.prisma/client
-
-# Copier le client Prisma généré
 COPY --from=builder /app/prisma ./prisma
+
+# On copie les binaires du navigateur qui ont été téléchargés dans l'étape "deps".
+COPY --from=deps /app/pw-browsers /app/pw-browsers
 
 COPY ./server.js ./server.js
 
