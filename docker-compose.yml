@@ -16,6 +16,7 @@ services:
       - /app/node_modules
       - /app/.cache
       - /app/.prisma
+      - /app/pw-browsers
     command: ./start.sh
     networks:
       - cookix-network

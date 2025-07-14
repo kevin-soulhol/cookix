@@ -1,7 +1,6 @@
 import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData, useOutletContext } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { prisma } from "~/utils/db.server";
 import Layout from "~/components/Layout";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
