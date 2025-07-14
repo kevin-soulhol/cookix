@@ -65,6 +65,9 @@ COPY package.json package-lock.json* ./
 # Cela crée un dossier node_modules beaucoup plus petit.
 RUN npm ci --omit=dev
 
+# Copier le client Prisma généré
+COPY --from=builder /app/node_modules/.prisma/client ./node_modules/.prisma/client
+
 # Copier les artefacts de build de l'étape "builder"
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
