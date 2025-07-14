@@ -14,6 +14,8 @@ const USER_CREDENTIALS = {
   password: process.env.CHRONODRIVE_PASSWORD ?? "",
 };
 
+const CHRONODRIVE_SITE_ID = "1034";
+
 type ApiContext = "customer" | "search" | "cart";
 
 /**
@@ -218,9 +220,8 @@ export class ChronodriveAuthService {
       case "search":
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
         // La recherche nécessite le contexte du magasin
-        console.log(process.env.CHRONODRIVE_SITE_ID);
         headers["x-chronodrive-site-id"] =
-          process.env.CHRONODRIVE_SITE_ID || "";
+          process.env.CHRONODRIVE_SITE_ID || CHRONODRIVE_SITE_ID;
         headers["x-chronodrive-site-mode"] =
           this.session.get("siteMode") || "DRIVE";
         break;
@@ -228,7 +229,7 @@ export class ChronodriveAuthService {
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.CART;
         // L'ajout au panier nécessite aussi le contexte du magasin
         headers["x-chronodrive-site-id"] =
-          process.env.CHRONODRIVE_SITE_ID || "";
+          process.env.CHRONODRIVE_SITE_ID || CHRONODRIVE_SITE_ID;
         headers["x-chronodrive-site-mode"] =
           this.session.get("siteMode") || "DRIVE";
         break;
