@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // app/services/ChronodriveAuth.server.ts
 
-import { chromium, type Browser, type Page } from "playwright";
+import { chromium, type Browser, type Page } from "playwright-core";
 import type { Session } from "@remix-run/node";
 import {
   AddToCartPayload,
