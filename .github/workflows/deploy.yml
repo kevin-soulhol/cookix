@@ -77,24 +77,23 @@ jobs:
             echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
             echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
             echo "PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}" >> .env
-            
-            # Mettre à jour le fichier docker-compose.prod.yml pour utiliser la nouvelle image
-            # On utilise sed pour remplacer la ligne 'image:'
-            # Note: Votre docker-compose.prod.yml doit avoir une ligne 'image:' pour que cela fonctionne.
-            sed -i "s|image: .*|image: ${{ env.IMAGE_NAME }}:${{ github.sha }}|g" docker-compose.prod.yml
 
+            #On définit la variable d'environnement avec le nom et le tag de l'image
+            export DOCKER_IMAGE_TAG="${{ env.IMAGE_NAME }}:${{ github.sha }}"
+
+            # On se connecte au registre (inchangé)
             echo "Connexion au registre de conteneurs de GitHub..."
-            # Le serveur doit se connecter à ghcr.io pour pouvoir tirer l'image privée
             echo "${{ secrets.DOCKER_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-            echo "Mise à jour et redémarrage des services..."
-            # Tirer la nouvelle image spécifiée dans le docker-compose
-            docker compose -f docker-compose.prod.yml pull
-            
-            # Redémarrer les services avec la nouvelle image
-            # --remove-orphans nettoie les anciens conteneurs si des services ont été renommés/supprimés
+            # On tire la nouvelle image spécifiée par la variable d'environnement
+            echo "Mise à jour de l'image de l'application..."
+            docker compose -f docker-compose.prod.yml pull app
+
+            # On redémarre les services. Docker Compose va automatiquement utiliser la nouvelle image pour le service 'app'.
+            echo "Redémarrage des services..."
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
+            # Nettoyage des anciennes images
             echo "Nettoyage des anciennes images Docker..."
             docker image prune -af
           EOF

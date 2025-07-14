@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    image: ghcr.io/kevin-soulhol/cookix-app:initial_tag 
+      image: ${DOCKER_IMAGE_TAG}
     restart: always
     ports:
       - "3000:3000"
