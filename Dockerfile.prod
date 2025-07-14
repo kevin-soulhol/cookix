@@ -65,6 +65,12 @@ COPY package.json package-lock.json* ./
 # Cela crée un dossier node_modules beaucoup plus petit.
 RUN npm ci --omit=dev
 
+# Installer les dépendances système de Playwright
+COPY --from=builder /app/node_modules/playwright/package.json ./node_modules/playwright/package.json
+COPY --from=builder /app/node_modules/playwright-core/package.json ./node_modules/playwright-core/package.json
+# On utilise la commande 'install-deps' pour n'installer QUE les librairies système.
+RUN npx playwright install-deps chromium
+
 # Copier le client Prisma généré
 COPY --from=builder /app/node_modules/.prisma/client ./node_modules/.prisma/client
 
