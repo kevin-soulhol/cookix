@@ -34,11 +34,7 @@ RUN npx playwright install --with-deps chromium
 # ==============================================================================
 # ÉTAPE 3: Builder - Construction de l'application Remix
 # ==============================================================================
-FROM base AS builder
-
-# Copier les dépendances pré-installées
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps ${PLAYWRIGHT_BROWSERS_PATH} ${PLAYWRIGHT_BROWSERS_PATH}
+FROM deps AS builder
 
 # Copier le reste du code source
 COPY . .
@@ -53,7 +49,7 @@ RUN NODE_ENV=production npm run build
 # ==============================================================================
 # ÉTAPE 4: Runner - L'image finale, optimisée et légère
 # ==============================================================================
-FROM base AS runner
+FROM deps AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -76,9 +72,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 
 COPY ./server.js ./server.js
-
-# Copier les navigateurs Playwright installés
-COPY --from=builder ${PLAYWRIGHT_BROWSERS_PATH} ${PLAYWRIGHT_BROWSERS_PATH}
 
 # Copier et rendre exécutable le script de démarrage de production
 COPY --from=builder /app/start-prod.sh ./
