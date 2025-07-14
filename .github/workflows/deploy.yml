@@ -1,82 +1,100 @@
-name: Deploy Cookix Production
+name: Build and Deploy Cookix Production
+
 on:
   push:
     branches:
       - master
 
+# Définit le nom de l'image Docker pour qu'il soit réutilisable
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/cookix-app # ex: ghcr.io/votre-nom/votre-repo
+
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Permission pour pousser l'image sur ghcr.io
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      # Étape 1 : Se connecter au Registre de Conteneurs de GitHub
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: './package-lock.json'
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }} # GITHUB_TOKEN est automatiquement fourni et a les bonnes permissions
 
-      - name: Install dependencies
-        run: npm ci --silent
+      # Étape 2 : Configurer Docker Buildx pour le cache
+      # Cette étape met en place un cache de build Docker, ce qui rendra les builds suivants beaucoup plus rapides.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install scraper dependencies
-        run: |
-          cd scripts/scraper
-          npm ci --silent
-          cd ../..
+      # Étape 3 : Construire l'image Docker et la pousser vers le registre
+      # On utilise le Dockerfile.prod et on tagge l'image avec le SHA du commit pour un versioning précis.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.prod # Spécifie le Dockerfile de production
+          push: true # Pousse l'image après le build
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }} # Tag: ghcr.io/owner/repo:commit_sha
+          cache-from: type=gha # Utilise le cache de GitHub Actions
+          cache-to: type=gha,mode=max
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
+  deploy-to-server:
+    # Ce job ne démarre que si le build a réussi
+    needs: build-and-push
+    runs-on: ubuntu-latest
 
-      - name: Build project
-        run: npm run build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-
+    steps:
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.OVH_SSH_KEY }}
-          known_hosts: 'placeholder'
+          known_hosts: "placeholder"
 
       - name: Add known hosts
         run: ssh-keyscan -H ${{ secrets.OVH_SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy configuration and build files
+      # Étape 4 : Se connecter au serveur et déployer
+      - name: Deploy to production server
         run: |
-          rsync -avz --exclude 'node_modules' --exclude '.git' ./ ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/
+          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'bash -s' << EOF
+            # Naviguer vers le répertoire de l'application
+            cd /var/www/cookix
 
-      - name: Create .env file
-        run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && echo "
-          SESSION_SECRET=${{ secrets.SESSION_SECRET }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}
-          DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}
-          DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}
-          GEMINI_API_KEY=${{secrets.GEMINI_API_KEY}}
-          PEXELS_API_KEY=${{secrets.PEXELS_API_KEY}}
-          " > .env'
+            # Créer le fichier .env avec les secrets
+            # Cette méthode est plus sûre car les secrets ne transitent que via le tunnel SSH
+            echo "SESSION_SECRET=${{ secrets.SESSION_SECRET }}" > .env
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+            echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
+            echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
+            echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+            echo "PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}" >> .env
+            
+            # Mettre à jour le fichier docker-compose.prod.yml pour utiliser la nouvelle image
+            # On utilise sed pour remplacer la ligne 'image:'
+            # Note: Votre docker-compose.prod.yml doit avoir une ligne 'image:' pour que cela fonctionne.
+            sed -i "s|image: .*|image: ${{ env.IMAGE_NAME }}:${{ github.sha }}|g" docker-compose.prod.yml
 
-      - name: Deploy to production
-        run: |
-          ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'cd /var/www/cookix && bash -s' << 'EOF'
-          # Nettoyer les ressources Docker avant le déploiement
-          docker system prune -f --volumes
+            echo "Connexion au registre de conteneurs de GitHub..."
+            # Le serveur doit se connecter à ghcr.io pour pouvoir tirer l'image privée
+            echo "${{ secrets.DOCKER_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-          # Arrêter uniquement les conteneurs de l'application (sans arrêter d'autres applications)
-          docker compose -f docker-compose.prod.yml down
+            echo "Mise à jour et redémarrage des services..."
+            # Tirer la nouvelle image spécifiée dans le docker-compose
+            docker compose -f docker-compose.prod.yml pull
+            
+            # Redémarrer les services avec la nouvelle image
+            # --remove-orphans nettoie les anciens conteneurs si des services ont été renommés/supprimés
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
-          # Nettoyer les images Docker inutilisées pour libérer de l'espace disque
-          docker image prune -f
-          docker system prune -af
-          docker volume prune -f
-
-          # Reconstruire et démarrer les conteneurs en mode production
-          docker compose -f docker-compose.prod.yml up -d --build
+            echo "Nettoyage des anciennes images Docker..."
+            docker image prune -af
           EOF
