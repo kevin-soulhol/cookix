@@ -94,38 +94,11 @@ export class ChronodriveAuthService {
         );
       });
 
-      try {
-        await this.interactWithLoginPage(
-          page,
-          USER_CREDENTIALS.email,
-          USER_CREDENTIALS.password
-        );
-        await tokenPromise; // Attendre que le token soit capturé
-      } catch (interactionError) {
-        console.error(
-          "CHRONO_AUTH: Erreur durant l'interaction ou la capture du token."
-        );
-
-        // Prenez une capture d'écran de la page au moment de l'erreur
-        const screenshotPath = `/tmp/chronodrive-error-${Date.now()}.png`;
-        await page.screenshot({ path: screenshotPath, fullPage: true });
-        console.log(
-          `CHRONO_AUTH: Screenshot de l'erreur sauvegardé dans ${screenshotPath}`
-        );
-
-        // Sauvegardez le HTML de la page
-        const htmlPath = `/tmp/chronodrive-error-${Date.now()}.html`;
-        const htmlContent = await page.content();
-        // Dans un vrai projet, utilisez fs.writeFileSync
-        console.log(
-          `CHRONO_AUTH: Contenu HTML de la page au moment de l'erreur:\n${htmlContent.substring(
-            0,
-            2000
-          )}...`
-        );
-
-        throw interactionError; // Relancer l'erreur originale
-      }
+      await this.interactWithLoginPage(
+        page,
+        USER_CREDENTIALS.email,
+        USER_CREDENTIALS.password
+      );
 
       // Attendre que le token soit capturé
       await tokenPromise;
@@ -261,8 +234,9 @@ export class ChronodriveAuthService {
       body: options.body,
     };
 
+    console.log(fetchOptions);
+
     try {
-      console.log(fetchOptions);
       const response = await fetch(url, fetchOptions);
       console.log(response);
       if (!response.ok) {
@@ -303,6 +277,7 @@ export class ChronodriveAuthService {
     query: string
   ): Promise<SearchSuggestionsResponse> {
     // Adapter le type de retour si nécessaire
+    console.log("______________________ SEARCHING _____________________");
     const url = `${
       CHRONODRIVE_CONFIG.BASE_API_URL
     }/v1/search-suggestions?searchTerm=${encodeURIComponent(query)}`;
@@ -326,7 +301,6 @@ export class ChronodriveAuthService {
       body: JSON.stringify(payload),
     });
 
-    console.log("-----------------------------", response);
     return response;
   }
 
