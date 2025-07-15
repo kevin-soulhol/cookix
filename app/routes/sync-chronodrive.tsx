@@ -21,7 +21,6 @@ export type ShoppingItemWithSync = ShoppingItem & {
 };
 
 export interface SyncLoaderData {
-    listId: number;
     items: ShoppingItemWithSync[];
     error: string | null;
 }
@@ -78,19 +77,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
     if (!userId) return redirect("/login");
 
     const url = new URL(request.url);
-    const listIdStr = url.searchParams.get("listId");
-    if (!listIdStr) {
-        return json<SyncLoaderData>({ listId: 0, items: [], error: "ID de liste manquant." }, { status: 400 });
-    }
-    const listId = parseInt(listIdStr, 10);
-
     const session = await getSession(request.headers.get("Cookie"));
 
     try {
-        // 2. Lecture des données depuis la base de données
+
+
+        const shoppingList = await prisma.shoppingList.findFirst({ where: { userId } });
+
+        if (!shoppingList) {
+            return json<SyncLoaderData>({ items: [], error: "Aucune liste de course pour ce compte." }, { status: 403 });
+        }
+
         const itemsFromDb: ShoppingItemWithSync[] = await prisma.shoppingItem.findMany({
             where: {
-                shoppingListId: listId,
+                shoppingListId: shoppingList.id,
                 shoppingList: { userId }, // Sécurité: on vérifie que la liste appartient à l'utilisateur
                 marketplace: false,
                 isChecked: false
@@ -125,7 +125,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
         // 5. Renvoyer les données si tout est déjà synchronisé
         console.log("SYNC LOADER: Tous les articles sont déjà synchronisés. Affichage des données.");
-        return json<SyncLoaderData>({ listId, items: itemsFromDb, error: null });
+        return json<SyncLoaderData>({ items: itemsFromDb, error: null });
 
     } catch (error) {
         const errorMessage = (error instanceof Error) ? error.message : "Erreur interne du serveur.";
@@ -134,7 +134,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         const headers = new Headers();
         headers.set("Set-Cookie", await commitSession(session)); // On commite la session même en cas d'erreur
 
-        return json<SyncLoaderData>({ listId, items: [], error: errorMessage }, { status: 500, headers });
+        return json<SyncLoaderData>({ items: [], error: errorMessage }, { status: 500, headers });
     }
 }
 

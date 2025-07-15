@@ -799,7 +799,7 @@ export default function ShoppingListPage() {
                                                 Supermarché ({otherUncheckedCount})
 
                                                 <Link
-                                                    to={`/sync-chronodrive?listId=${shoppingList.id}`}
+                                                    to={`/sync-chronodrive`}
                                                     className="float-right px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-full hover:bg-blue-700"
                                                 >
                                                     Synchroniser avec Chronodrive
