@@ -157,7 +157,8 @@ export class ChronodriveAuthService {
     }
 
     await page.waitForSelector("#login");
-    console.log("CHRONO_AUTH: Remplissage du formulaire...");
+    console.log("CHRONO_AUTH: Remplissage du formulaire...", email);
+    console.log(password);
     const emailXPath =
       "/html/body/div[2]/div/div/main/div/div/div/div[2]/div[1]/div/form/fieldset/div[1]/div/div/input";
     await page.locator(`xpath=${emailXPath}`).type(email);
@@ -184,34 +185,19 @@ export class ChronodriveAuthService {
     contextType: ApiContext,
     options: RequestInit = {}
   ): Promise<any> {
-    await this.ensureAuthenticated();
+    if (contextType !== "search") {
+      await this.ensureAuthenticated();
+    }
     const accessToken = this.session.get("accessToken");
     const cookieString = this.session.get("cookieString");
-
-    const getApiKeyForUrl = (targetUrl: string): string => {
-      if (targetUrl.includes("/search") || targetUrl.includes("/suggestions")) {
-        return CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
-      }
-      if (targetUrl.includes("/cart")) {
-        return CHRONODRIVE_CONFIG.API_KEYS.CART;
-      }
-      if (targetUrl.includes("/customers/me")) {
-        return CHRONODRIVE_CONFIG.API_KEYS.CUSTOMER;
-      }
-      // Par défaut, on peut utiliser une clé générique ou lever une erreur.
-      console.warn(
-        `[API Context] Contexte non détecté pour l'URL ${targetUrl}, utilisation de la clé par défaut (customer).`
-      );
-      return CHRONODRIVE_CONFIG.API_KEYS.CUSTOMER;
-    };
-
-    const apiKey = getApiKeyForUrl(url);
 
     // Construction des headers
     const headers: Record<string, string> = {
       ...CHRONODRIVE_CONFIG.BASE_HEADERS,
       Authorization: `Bearer ${accessToken}`,
-      "x-api-key": apiKey,
+      "x-chronodrive-site-id":
+        process.env.CHRONODRIVE_SITE_ID || CHRONODRIVE_SITE_ID,
+      "x-chronodrive-site-mode": this.session.get("siteMode") || "DRIVE",
       ...(cookieString && { Cookie: cookieString }),
       ...options.headers,
     };
@@ -219,23 +205,12 @@ export class ChronodriveAuthService {
     switch (contextType) {
       case "search":
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
-        // La recherche nécessite le contexte du magasin
-        headers["x-chronodrive-site-id"] =
-          process.env.CHRONODRIVE_SITE_ID || CHRONODRIVE_SITE_ID;
-        headers["x-chronodrive-site-mode"] =
-          this.session.get("siteMode") || "DRIVE";
         break;
       case "cart":
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.CART;
-        // L'ajout au panier nécessite aussi le contexte du magasin
-        headers["x-chronodrive-site-id"] =
-          process.env.CHRONODRIVE_SITE_ID || CHRONODRIVE_SITE_ID;
-        headers["x-chronodrive-site-mode"] =
-          this.session.get("siteMode") || "DRIVE";
         break;
       case "customer":
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.CUSTOMER;
-        // Pas besoin des en-têtes de magasin pour le profil client
         break;
       default:
         throw new Error(`Contexte d'API inconnu: ${contextType}`);
