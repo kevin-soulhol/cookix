@@ -228,7 +228,7 @@ export class ChronodriveAuthService {
     // Construction des headers
     const headers: Record<string, string> = {
       ...CHRONODRIVE_CONFIG.BASE_HEADERS,
-      Authorization: `Bearer ${accessToken}`,
+      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       "x-chronodrive-site-id":
         process.env.CHRONODRIVE_SITE_ID || CHRONODRIVE_SITE_ID,
       "x-chronodrive-site-mode": this.session.get("siteMode") || "DRIVE",
@@ -262,8 +262,9 @@ export class ChronodriveAuthService {
     };
 
     try {
+      console.log(fetchOptions);
       const response = await fetch(url, fetchOptions);
-
+      console.log(response);
       if (!response.ok) {
         // Gestion du cas 401 : jeton invalide
         if (response.status === 401 && this.session.has("accessToken")) {
