@@ -94,11 +94,38 @@ export class ChronodriveAuthService {
         );
       });
 
-      await this.interactWithLoginPage(
-        page,
-        USER_CREDENTIALS.email,
-        USER_CREDENTIALS.password
-      );
+      try {
+        await this.interactWithLoginPage(
+          page,
+          USER_CREDENTIALS.email,
+          USER_CREDENTIALS.password
+        );
+        await tokenPromise; // Attendre que le token soit capturé
+      } catch (interactionError) {
+        console.error(
+          "CHRONO_AUTH: Erreur durant l'interaction ou la capture du token."
+        );
+
+        // Prenez une capture d'écran de la page au moment de l'erreur
+        const screenshotPath = `/tmp/chronodrive-error-${Date.now()}.png`;
+        await page.screenshot({ path: screenshotPath, fullPage: true });
+        console.log(
+          `CHRONO_AUTH: Screenshot de l'erreur sauvegardé dans ${screenshotPath}`
+        );
+
+        // Sauvegardez le HTML de la page
+        const htmlPath = `/tmp/chronodrive-error-${Date.now()}.html`;
+        const htmlContent = await page.content();
+        // Dans un vrai projet, utilisez fs.writeFileSync
+        console.log(
+          `CHRONO_AUTH: Contenu HTML de la page au moment de l'erreur:\n${htmlContent.substring(
+            0,
+            2000
+          )}...`
+        );
+
+        throw interactionError; // Relancer l'erreur originale
+      }
 
       // Attendre que le token soit capturé
       await tokenPromise;
@@ -106,6 +133,13 @@ export class ChronodriveAuthService {
       if (capturedToken) {
         this.session.set("accessToken", capturedToken);
         this.session.set("siteMode", "DRIVE");
+
+        const cookies = await context.cookies();
+        const cookieString = cookies
+          .map((c) => `${c.name}=${c.value}`)
+          .join("; ");
+        this.session.set("cookieString", cookieString);
+        console.log("CHRONO_AUTH: Cookies de session sauvegardés.");
       } else {
         throw new Error(
           "Le processus de connexion s'est terminé mais aucun token n'a été capturé."
