@@ -64,6 +64,7 @@ jobs:
       - name: Deploy to production server
         run: |
           ssh ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }} 'bash -s' << EOF
+            set -e
             # Naviguer vers le répertoire de l'application
             cd /var/www/cookix
 
@@ -96,7 +97,7 @@ jobs:
 
             # On redémarre les services. Docker Compose va automatiquement utiliser la nouvelle image pour le service 'app'.
             echo "Redémarrage des services..."
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
             # Nettoyage des anciennes images
             echo "Nettoyage des anciennes images Docker..."
