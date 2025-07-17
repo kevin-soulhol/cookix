@@ -103,36 +103,4 @@ jobs:
             # On redémarre les services. Docker Compose va automatiquement utiliser la nouvelle image pour le service 'app'.
             echo "Redémarrage des services..."
             docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
-            
-            # Démarrer les services avec la nouvelle image.
-            docker compose -f docker-compose.prod.yml pull app
-
-
-
-
-
-
-
-
-
-
-            #On définit la variable d'environnement avec le nom et le tag de l'image
-            export DOCKER_IMAGE_TAG="${{ env.IMAGE_NAME }}:${{ github.sha }}"
-
-            # On se connecte au registre (inchangé)
-            echo "Connexion au registre de conteneurs de GitHub..."
-            echo "${{ secrets.DOCKER_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-
-            # On tire la nouvelle image spécifiée par la variable d'environnement
-            echo "Mise à jour de l'image de l'application..."
-            docker compose -f docker-compose.prod.yml pull app
-
-            # On redémarre les services. Docker Compose va automatiquement utiliser la nouvelle image pour le service 'app'.
-            echo "Redémarrage des services..."
-            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
-
-            # Nettoyage des anciennes images
-            echo "Nettoyage des anciennes images Docker..."
-            docker image prune -af
-          EOF
           EOF
