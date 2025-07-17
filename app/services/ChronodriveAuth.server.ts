@@ -211,7 +211,7 @@ export class ChronodriveAuthService {
 
     switch (contextType) {
       case "search":
-        //headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
+        headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
         break;
       case "cart":
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.CART;
