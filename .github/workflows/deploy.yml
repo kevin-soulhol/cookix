@@ -51,6 +51,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Sync docker-compose file to server
+        run: |
+          # Utilise scp pour copier uniquement le fichier docker-compose de production
+          scp ./docker-compose.prod.yml ${{ secrets.OVH_SERVER_USER }}@${{ secrets.OVH_SERVER_HOST }}:/var/www/cookix/docker-compose.prod.yml
+
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
