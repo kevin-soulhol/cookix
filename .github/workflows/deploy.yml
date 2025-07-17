@@ -95,6 +95,7 @@ jobs:
 
             # Nettoyage préventif des anciennes images pour faire de la place.
             docker image prune -af
+            docker system prune -f --volumes
 
             # On tire la nouvelle image spécifiée par la variable d'environnement
             echo "Mise à jour de l'image de l'application..."
