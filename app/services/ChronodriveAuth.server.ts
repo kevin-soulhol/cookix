@@ -211,7 +211,7 @@ export class ChronodriveAuthService {
 
     switch (contextType) {
       case "search":
-        headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
+        //headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
         break;
       case "cart":
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.CART;
@@ -231,7 +231,7 @@ export class ChronodriveAuthService {
     const fetchOptions: RequestInit = {
       method: options.method || "GET",
       headers,
-      body: options.body,
+      ...(options.body && { body: options.body }),
     };
 
     console.log(fetchOptions);
