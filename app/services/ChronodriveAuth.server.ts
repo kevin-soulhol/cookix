@@ -209,6 +209,11 @@ export class ChronodriveAuthService {
       ...options.headers,
     };
 
+    console.log(
+      "_____________________ NEW : ",
+      CHRONODRIVE_CONFIG.API_KEYS.SEARCH
+    );
+
     switch (contextType) {
       case "search":
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
