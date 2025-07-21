@@ -107,10 +107,24 @@ export class ChronodriveAuthService {
         this.session.set("accessToken", capturedToken);
         this.session.set("siteMode", "DRIVE");
 
+        const IMPORTANT_COOKIE_PREFIXES = [
+          "incap_ses", // Semble être un cookie de session de sécurité
+          "visid_incap", // Semble être un identifiant de visiteur de sécurité
+          "jcoPageCount", // Peut-être utilisé par leur application
+          // Ajoutez d'autres noms si vous en identifiez comme étant essentiels.
+        ];
+
         const cookies = await context.cookies();
-        const cookieString = cookies
+        const essentialCookies = cookies.filter((cookie) =>
+          IMPORTANT_COOKIE_PREFIXES.some((prefix) =>
+            cookie.name.startsWith(prefix)
+          )
+        );
+
+        const cookieString = essentialCookies
           .map((c) => `${c.name}=${c.value}`)
           .join("; ");
+
         this.session.set("cookieString", cookieString);
         console.log("CHRONO_AUTH: Cookies de session sauvegardés.");
       } else {
@@ -164,8 +178,7 @@ export class ChronodriveAuthService {
     }
 
     await page.waitForSelector("#login");
-    console.log("CHRONO_AUTH: Remplissage du formulaire...", email);
-    console.log(password);
+    console.log("CHRONO_AUTH: Remplissage du formulaire...");
     const emailXPath =
       "/html/body/div[2]/div/div/main/div/div/div/div[2]/div[1]/div/form/fieldset/div[1]/div/div/input";
     await page.locator(`xpath=${emailXPath}`).type(email);
@@ -209,11 +222,6 @@ export class ChronodriveAuthService {
       ...options.headers,
     };
 
-    console.log(
-      "_____________________ NEW : ",
-      CHRONODRIVE_CONFIG.API_KEYS.SEARCH
-    );
-
     switch (contextType) {
       case "search":
         headers["x-api-key"] = CHRONODRIVE_CONFIG.API_KEYS.SEARCH;
@@ -238,8 +246,6 @@ export class ChronodriveAuthService {
       headers,
       ...(options.body && { body: options.body }),
     };
-
-    console.log(fetchOptions);
 
     try {
       const response = await fetch(url, fetchOptions);
@@ -282,7 +288,6 @@ export class ChronodriveAuthService {
     query: string
   ): Promise<SearchSuggestionsResponse> {
     // Adapter le type de retour si nécessaire
-    console.log("______________________ SEARCHING _____________________");
     const url = `${
       CHRONODRIVE_CONFIG.BASE_API_URL
     }/v1/search-suggestions?searchTerm=${encodeURIComponent(query)}`;
