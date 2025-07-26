@@ -84,6 +84,7 @@ export class ChronodriveAuthService {
             }
           }
         });
+
         // Ajouter un timeout à la promesse pour éviter qu'elle n'attende indéfiniment
         setTimeout(
           () =>

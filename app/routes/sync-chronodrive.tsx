@@ -7,6 +7,7 @@ import { getUserId } from "./api.user";
 import Layout from "~/components/Layout";
 import { prisma } from "~/utils/db.server";
 import { commitSession, getSession } from "~/session.server";
+import { useEffect } from "react";
 
 // --- Types pour cette page ---
 export interface SyncResult {
@@ -180,8 +181,10 @@ export async function action({ request }: ActionFunctionArgs) {
             const headers = new Headers();
             headers.set("Set-Cookie", await commitSession(session));
 
-            // On redirige l'utilisateur vers son panier sur le site de Chronodrive
-            return redirect("https://www.chronodrive.com/cartdetail", { headers });
+            return json(
+                { success: true, redirectUrl: "https://www.chronodrive.com/cartdetail" },
+                { headers }
+            );
         }
 
         default:
@@ -212,6 +215,12 @@ export default function SyncChronodrivePage() {
 
     const foundItems = items.filter(r => r.syncedProduct.isFound);
 
+    useEffect(() => {
+        if (addToCartFetcher.state === 'idle' && addToCartFetcher.data?.redirectUrl) {
+            window.location.href = addToCartFetcher.data.redirectUrl;
+        }
+    }, [addToCartFetcher.state, addToCartFetcher.data]);
+
     return (
         <Layout pageTitle="Synchronisation Chronodrive">
             <div className="max-w-4xl mx-auto px-4 py-8">
@@ -241,7 +250,7 @@ export default function SyncChronodrivePage() {
                             {addToCartFetcher.state !== 'idle' ? 'Ajout en cours...' : `Ajouter ${foundItems.length} articles au panier`}
                         </button>
                     </Form>
-                    <a href="https://www.chronodrive.com/cartdetail" target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-100 shadow">
+                    <a href="https://www.chronodrive.com/cartdetail" rel="noopener noreferrer" className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-100 shadow">
                         Voir le panier Chronodrive
                     </a>
                 </div>
