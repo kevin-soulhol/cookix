@@ -12,6 +12,7 @@ interface FilterState {
   sortDirection: SortDirection;
   randomEnabled: boolean;
   onlyVege: boolean;
+  forBaby: boolean;
   seasonal: boolean;
 }
 
@@ -24,63 +25,94 @@ interface FilterActions {
   setSortDirection: (value: SortDirection) => void;
   setRandomEnabled: (value: boolean) => void;
   setOnlyVege: (value: boolean) => void;
+  setForBaby: (value: boolean) => void;
   setSeasonal: (value: boolean) => void;
   clearSearch: () => void;
   resetFilters: () => void;
   updateFilter: (key: string, value: string | null) => void;
 }
 
-export function useRecipeFilters(initialState: FilterState): [FilterState, FilterActions] {
+export function useRecipeFilters(
+  initialState: FilterState
+): [FilterState, FilterActions] {
   // États pour les filtres
   const [search, setSearch] = useState(initialState.search);
   const [category, setCategory] = useState(initialState.category);
   const [mealType, setMealType] = useState(initialState.mealType);
-  const [maxPreparationTime, setMaxPreparationTime] = useState<number | null>(initialState.maxPreparationTime);
+  const [maxPreparationTime, setMaxPreparationTime] = useState<number | null>(
+    initialState.maxPreparationTime
+  );
   const [sortBy, setSortBy] = useState<SortOption>(initialState.sortBy);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(initialState.sortDirection);
-  const [randomEnabled, setRandomEnabled] = useState(initialState.randomEnabled);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    initialState.sortDirection
+  );
+  const [randomEnabled, setRandomEnabled] = useState(
+    initialState.randomEnabled
+  );
   const [onlyVege, setOnlyVege] = useState(initialState.onlyVege);
+  const [forBaby, setForBaby] = useState(initialState.forBaby);
   const [seasonal, setSeasonal] = useState(initialState.seasonal);
-  
-  
+
   // Debounce la recherche
   const debouncedSearch = useDebounce(search, 400);
-  
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Gérer la mise à jour des paramètres d'URL quand la recherche change
   useEffect(() => {
-    if (debouncedSearch !== initialState.search && debouncedSearch !== searchParams.get("search")) {
+    if (
+      debouncedSearch !== initialState.search &&
+      debouncedSearch !== searchParams.get("search")
+    ) {
       const params = new URLSearchParams();
 
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (category) params.set("categoryId", category);
       if (mealType) params.set("mealType", mealType);
-      if (maxPreparationTime) params.set("maxPreparationTime", maxPreparationTime.toString());
+      if (maxPreparationTime)
+        params.set("maxPreparationTime", maxPreparationTime.toString());
       params.set("sortBy", sortBy);
       params.set("sortDirection", sortDirection);
       params.set("random", randomEnabled ? "true" : "false");
       params.set("onlyVege", onlyVege ? "true" : "false");
+      params.set("forBaby", forBaby ? "true" : "false");
       params.set("seasonal", seasonal ? "true" : "false");
       params.set("page", "1");
 
       setSearchParams(params);
     }
-  }, [debouncedSearch, initialState.search, category, mealType, maxPreparationTime, seasonal, sortBy, sortDirection, randomEnabled, onlyVege, setSearchParams, searchParams]);
+  }, [
+    debouncedSearch,
+    initialState.search,
+    category,
+    mealType,
+    maxPreparationTime,
+    seasonal,
+    sortBy,
+    sortDirection,
+    randomEnabled,
+    onlyVege,
+    forBaby,
+    setSearchParams,
+    searchParams,
+  ]);
 
   // Fonctions pour modifier les filtres
-  const updateFilter = useCallback((key: string, value: string | null) => {
-    const params = new URLSearchParams(searchParams);
+  const updateFilter = useCallback(
+    (key: string, value: string | null) => {
+      const params = new URLSearchParams(searchParams);
 
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
 
-    params.set("page", "1");
-    setSearchParams(params);
-  }, [searchParams, setSearchParams]);
+      params.set("page", "1");
+      setSearchParams(params);
+    },
+    [searchParams, setSearchParams]
+  );
 
   const resetFilters = useCallback(() => {
     setSearch("");
@@ -91,13 +123,14 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
     setSortDirection("asc");
     setRandomEnabled(false);
     setOnlyVege(false);
+    setForBaby(false);
     setSeasonal(false);
 
     setSearchParams({
       sortBy: "note",
       sortDirection: "asc",
       random: "false",
-      page: "1"
+      page: "1",
     });
   }, [setSearchParams]);
 
@@ -115,7 +148,8 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
     sortDirection,
     randomEnabled,
     onlyVege,
-    seasonal
+    forBaby,
+    seasonal,
   };
 
   const actions: FilterActions = {
@@ -127,6 +161,7 @@ export function useRecipeFilters(initialState: FilterState): [FilterState, Filte
     setSortDirection,
     setRandomEnabled,
     setOnlyVege,
+    setForBaby,
     setSeasonal,
     clearSearch,
     resetFilters,

@@ -17,6 +17,7 @@ export type FilterPanelType = {
     mealTypeOptions: MealAndCategoryTypeOption[];
     preparationTimeMax: number;
     onlyVege: boolean;
+    forBaby: boolean;
     seasonal: boolean;
 }
 
@@ -33,6 +34,7 @@ type FilterPanelProps = {
         sortDirection: SortDirection;
         randomEnabled: boolean;
         onlyVege: boolean;
+        forBaby: boolean;
         seasonal: boolean;
     };
     onUpdateFilter: (key: string, value: string | null) => void;
@@ -46,6 +48,7 @@ type FilterPanelProps = {
     setSortDirection: (value: SortDirection) => void;
     setRandomEnabled: (value: boolean) => void;
     setOnlyVege: (value: boolean) => void;
+    setForBaby: (value: boolean) => void;
     setSeasonal: (value: boolean) => void;
 };
 
@@ -63,11 +66,12 @@ export default function FilterPanel({
     setMaxPreparationTime,
     setRandomEnabled,
     setOnlyVege,
+    setForBaby,
     setSeasonal
 }: FilterPanelProps) {
     if (!isVisible) return null;
 
-    const { category, mealType, maxPreparationTime, randomEnabled, onlyVege, seasonal } = filterValues;
+    const { category, mealType, maxPreparationTime, randomEnabled, onlyVege, forBaby, seasonal } = filterValues;
 
     return (
         <div className="filter-panel fixed inset-0 bg-gray-500 bg-opacity-75 z-50 flex items-end"
@@ -151,6 +155,23 @@ export default function FilterPanel({
                             }
                         }}
                     />
+
+                    {/* Option pour Bébé */}
+                    <Toggle
+                        label="Seulement les plats pour bébé"
+                        text="Activer l'affichage des plats adaptés aux bébés seulement"
+                        enabled={forBaby}
+                        classes="isBabyFoodOption"
+                        onChange={() => {
+                            setForBaby(!forBaby);
+                            const form = formRef.current;
+                            if (form !== null && form) {
+                                setTimeout(() => onSubmit(form), 0);
+                            }
+                        }}
+                    />
+
+
 
                     {/* Option de saison */}
                     <Toggle

@@ -275,6 +275,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const offset = url.searchParams.get("offset") ? parseInt(url.searchParams.get("offset") as string) : 0;
   const random = url.searchParams.get("random") === "true";
   const onlyVege = url.searchParams.get("onlyVege") === "true";
+  const forBaby = url.searchParams.get("forBaby") === "true";
   const seasonal = url.searchParams.get("seasonal") === "true";
   const diversityLevel = url.searchParams.get("diversity") || "medium";
 
@@ -285,7 +286,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
 
     // Cas 2: Recherche de recettes avec filtres
-    const where: any = buildWhereClause(search, difficulty, categoryId, mealType, maxPreparationTime, onlyVege, seasonal);
+    const where: any = buildWhereClause(search, difficulty, categoryId, mealType, maxPreparationTime, onlyVege, forBaby, seasonal);
 
     // Compter le nombre total de recettes (pour la pagination)
     const totalRecipes = await prisma.recipe.count({ where });
@@ -392,7 +393,7 @@ async function getRecipeById(recipeId: number, userId: number | null) {
  * Construit la clause WHERE pour Prisma
  */
 function buildWhereClause(search: string | null, difficulty: string | null, categoryId: string | null,
-  mealType: string | null, maxPreparationTime: string | null, onlyVege: boolean | null, seasonal: boolean | null): any {
+  mealType: string | null, maxPreparationTime: string | null, onlyVege: boolean | null, forBaby: boolean | null, seasonal: boolean | null): any {
   const where: any = {};
 
   // Pour la recherche textuelle, utiliser une approche très inclusive
@@ -425,6 +426,11 @@ function buildWhereClause(search: string | null, difficulty: string | null, cate
   // Filtre par difficulté
   if (onlyVege) {
     where.isVege = true;
+  }
+
+  // Filtre par difficulté
+  if (forBaby) {
+    where.isBabyFood = true;
   }
 
   // Filtre par catégorie
@@ -576,7 +582,6 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
     // Le tri avancé sera appliqué après
     orderBy = { note: 'desc' };
   }
-
   const recipes = await prisma.recipe.findMany({
     where,
     orderBy,
@@ -598,6 +603,7 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
       updatedAt: true,
       voteNumber: true,
       isVege: true,
+      isBabyFood: true,
       ...(userId ? {
         favorites: {
           where: { userId },
@@ -612,6 +618,7 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
       } : {})
     }
   });
+  console.log(recipes)
 
   // Appliquer la randomisation si demandée
   let sortedRecipes = recipes;
@@ -721,7 +728,17 @@ function santizeData(recipes: RecipeType[], userId: number | null) {
     menuItems: undefined,
     ingredients: undefined, // Ne pas renvoyer les ingrédients détaillés dans les résultats de recherche
     searchScore: undefined,
+    sourceUrl: isValidUrl(recipe.sourceUrl) && recipe.sourceUrl
   }));
+}
+
+function isValidUrl(string: string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 /**
@@ -868,6 +885,10 @@ Difficile : Plus de 8 étapes, techniques complexes, gestion précise des cuisso
 isVege (boolean)
 
 Règle : Mettre true si l'étiquette "VEGGIE" ou "VEGAN" est présente. Sinon, inférer : si la recette ne contient ni viande ni poisson, mettre true. Autrement, false.
+
+isBabyFood (boolean)
+
+Règle : Mettre true si la recette fait référence à un bébé, ou qu'elle est adaptée à un bébé. Autrement, false.
 
 categoryId (number)
 
@@ -1018,6 +1039,7 @@ type RecipeSeedData = {
   servings?: number;
   difficulty?: string;
   isVege?: boolean;
+  isBabyFood?: boolean;
   imageUrl?: string | null;
   categoryId: number;
   mealIds?: number[];
@@ -1102,6 +1124,7 @@ async function addJSONRecipes(recipesData: RecipeSeedData[]) {
             servings: recipeData.servings,
             difficulty: recipeData.difficulty,
             isVege: recipeData.isVege,
+            isBabyFood: recipeData.isBabyFood,
             imageUrl: recipeData.imageUrl,
             onRobot: recipeData.onRobot || false,
             steps: {
