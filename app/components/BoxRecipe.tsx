@@ -156,6 +156,13 @@ export default function BoxRecipe({ recipe, compact = false }: BoxRecipeProps) {
                                 A l'ancienne
                             </div>
                         )}
+
+                        {/* Badge for Baby */}
+                        {recipe.isBabyFood === true && (
+                            <div className="bg-blue-100 bg-opacity-90 text-blue-600 font-semibold text-xs rounded-md px-2 py-1 flex items-center">
+                                Pour le bébé
+                            </div>
+                        )}
                     </div>
 
 

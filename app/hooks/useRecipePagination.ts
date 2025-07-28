@@ -26,13 +26,12 @@ export function useRecipePagination({
 }: PaginationOptions): PaginationState {
   const navigation = useNavigation();
   const moreFetcher = useFetcher();
-  
+
   const [recipes, setRecipes] = useState<RecipeType[]>(initialRecipes);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreRecipes, setHasMoreRecipes] = useState(hasMore);
   const isFirstRender = useRef(true);
-  
 
   // Effet pour mettre à jour les recettes quand les données sont chargées
   useEffect(() => {
@@ -40,7 +39,7 @@ export function useRecipePagination({
       isFirstRender.current = false;
       return;
     }
-    
+
     if (navigation.state === "idle") {
       if (initialPage === 1) {
         setRecipes(initialRecipes);
@@ -49,7 +48,7 @@ export function useRecipePagination({
   }, [initialRecipes, navigation.state, initialPage]);
 
   useEffect(() => {
-    if (navigation.state === 'idle') {
+    if (navigation.state === "idle") {
       setHasMoreRecipes(hasMore);
     }
   }, [navigation.state, hasMore]);
@@ -62,11 +61,11 @@ export function useRecipePagination({
 
     setIsLoadingMore(true);
     const nextPage = currentPage + 1;
-    
+
     // Utiliser le fetcher intégré de Remix
     const params = new URLSearchParams(searchParams);
     params.set("page", nextPage.toString());
-    
+
     moreFetcher.load(`/?index&${params.toString()}`);
   }, [currentPage, hasMoreRecipes, isLoadingMore, moreFetcher, searchParams]);
 
@@ -74,18 +73,23 @@ export function useRecipePagination({
   useEffect(() => {
     if (moreFetcher.state === "idle" && isLoadingMore && moreFetcher.data) {
       const data = moreFetcher.data;
-      
-      if (data?.pagination && 'hasMore' in data.pagination) {
+
+      if (data?.pagination && "hasMore" in data.pagination) {
         setHasMoreRecipes(data.pagination.hasMore);
       }
 
-      if (data !== undefined && data?.recipes && Array.isArray(data.recipes) && data.recipes.length > 0) {
-        setRecipes(prev => [...prev, ...data.recipes]);
-        setCurrentPage(prev => prev + 1);
+      if (
+        data !== undefined &&
+        data?.recipes &&
+        Array.isArray(data.recipes) &&
+        data.recipes.length > 0
+      ) {
+        setRecipes((prev) => [...prev, ...data.recipes]);
+        setCurrentPage((prev) => prev + 1);
       } else {
         setHasMoreRecipes(false);
       }
-      
+
       setIsLoadingMore(false);
     }
   }, [moreFetcher.state, moreFetcher.data, isLoadingMore]);
@@ -101,9 +105,10 @@ export function useRecipePagination({
   return {
     currentPage,
     recipes,
-    isLoading: navigation.state === "loading" || navigation.state === "submitting",
+    isLoading:
+      navigation.state === "loading" || navigation.state === "submitting",
     isLoadingMore,
     hasMoreRecipes,
-    loadMoreRecipes
+    loadMoreRecipes,
   };
 }
