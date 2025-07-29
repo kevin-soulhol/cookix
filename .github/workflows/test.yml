@@ -1,0 +1,95 @@
+name: E2E Tests
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "./package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Create .env file
+        run: |
+          echo "SESSION_SECRET=${{ secrets.SESSION_SECRET }}" > .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
+          # Utiliser db comme hostname pour les connexions dans Docker
+          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
+          echo "DATABASE_URL_TEST=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}" >> .env
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Check Docker Compose configuration
+        run: cat docker-compose.yml
+
+      - name: Build and start Docker containers
+        run: docker compose up -d --build
+
+      - name: Check service status
+        run: |
+          sleep 20  # Attendre un peu que les services démarrent
+          docker compose ps
+          docker compose logs db
+          docker compose logs app
+
+      - name: Verify Docker network
+        run: |
+          # Vérifier que les conteneurs peuvent se voir entre eux
+          docker compose exec -T app ping -c 2 db || true
+
+      - name: Setup test environment in the container
+        run: |
+          # Installer Playwright dans le conteneur
+          docker compose exec -T app sh -c "cd /app && npm install -D @playwright/test"
+
+          docker compose cp playwright.config.ts app:/app/playwright.config.ts
+
+      - name: Setup db seed
+        run: |
+          # Exécuter les migrations sur la base de test
+          docker compose exec -ti app npx prisma migrate deploy
+
+          # Exécuter le seed de test
+          docker compose exec -ti app node prisma/seed.test.js
+
+      - name: Run tests
+        id: run_tests
+        run: |
+          npx playwright test --reporter=html --output=test-results/report.json --project=chromium || echo "test_exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-reports
+          path: test-results/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down
+
+      - name: Check test results
+        if: steps.run_tests.outputs.test_exit_code != '0'
+        run: |
+          echo "Des tests ont échoué. Consultez les artifacts pour plus de détails."
+          exit 1
