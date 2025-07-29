@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/cookix-app # ex: ghcr.io/votre-nom/votre-repo
+
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
@@ -33,7 +36,14 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
           echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
-          # ... Ajoutez les secrets CHRONODRIVE ...
+          echo "CHRONODRIVE_EMAIL=${{ secrets.CHRONODRIVE_EMAIL }}" >> .env
+          echo "CHRONODRIVE_PASSWORD=${{ secrets.CHRONODRIVE_PASSWORD }}" >> .env
+          echo "CHRONODRIVE_API_KEY=${{ secrets.CHRONODRIVE_API_KEY }}" >> .env
+          echo "CHRONODRIVE_API_KEY_CART=${{ secrets.CHRONODRIVE_API_KEY_CART }}" >> .env
+          echo "CHRONODRIVE_API_KEY_USER=${{ secrets.CHRONODRIVE_API_KEY_USER }}" >> .env
+
+          #On définit la variable d'environnement avec le nom et le tag de l'image
+          export DOCKER_IMAGE_TAG="${{ env.IMAGE_NAME }}:${{ github.sha }}"
 
       # Étape 2 : Lancer l'environnement de test (uniquement les services nécessaires)
       - name: Build and Start Docker Environment
