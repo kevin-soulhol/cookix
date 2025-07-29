@@ -1,4 +1,5 @@
 name: E2E Tests
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -6,6 +7,7 @@ on:
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,81 +17,70 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-path: "./package-lock.json"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright
+      - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Create .env file
+      # Étape 1 : Créer le fichier .env (il sera utilisé par docker-compose)
+      - name: Create .env file for testing
         run: |
           echo "SESSION_SECRET=${{ secrets.SESSION_SECRET }}" > .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
-          # Utiliser db comme hostname pour les connexions dans Docker
           echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
-          echo "DATABASE_URL_TEST=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}" >> .env
+          # ... Ajoutez les secrets CHRONODRIVE ...
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      - name: Check Docker Compose configuration
-        run: cat docker-compose.yml
-
-      - name: Build and start Docker containers
-        run: docker compose up -d --build
-
-      - name: Check service status
+      # Étape 2 : Lancer l'environnement de test (uniquement les services nécessaires)
+      - name: Build and Start Docker Environment
         run: |
-          sleep 20  # Attendre un peu que les services démarrent
-          docker compose ps
-          docker compose logs db
-          docker compose logs app
+          # On ne démarre que les services 'app' et 'db', en ignorant 'scraper'.
+          # On utilise le docker-compose de production.
+          docker compose -f docker-compose.prod.yml up -d --build app db
 
-      - name: Verify Docker network
+      # Étape 3 : Préparer la base de données EN UTILISANT DOCKER EXEC
+      - name: Setup Database for Tests
         run: |
-          # Vérifier que les conteneurs peuvent se voir entre eux
-          docker compose exec -T app ping -c 2 db || true
+          echo "--> Waiting for database container to be ready..."
+          # Boucle robuste pour attendre que la BDD soit saine.
+          until [ "$(docker inspect -f {{.State.Health.Status}} cookix-db-1)" = "healthy" ]; do
+              echo "Database is unavailable - sleeping"
+              sleep 2
+          done
+          echo "--> Database is ready."
 
-      - name: Setup test environment in the container
-        run: |
-          # Installer Playwright dans le conteneur
-          docker compose exec -T app sh -c "cd /app && npm install -D @playwright/test"
+          # On exécute les commandes Prisma A L'INTERIEUR du conteneur 'app'.
+          # Cela résout le problème du port non exposé.
+          echo "--> Running migrations inside the container..."
+          docker compose exec -T app npx prisma migrate deploy
 
-          docker compose cp playwright.config.ts app:/app/playwright.config.ts
+          echo "--> Seeding test data inside the container..."
+          docker compose exec -T app node prisma/seed.test.js
 
-      - name: Setup db seed
-        run: |
-          # Exécuter les migrations sur la base de test
-          docker compose exec -ti app npx prisma migrate deploy
+      # Étape 4 : Lancer les tests Playwright (inchangé)
+      - name: Run Playwright Tests
+        run: npx playwright test
+        env:
+          # Les tests s'exécutent sur le runner et ciblent l'application via le port exposé.
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
 
-          # Exécuter le seed de test
-          docker compose exec -ti app node prisma/seed.test.js
-
-      - name: Run tests
-        id: run_tests
-        run: |
-          npx playwright test --reporter=html --output=test-results/report.json --project=chromium || echo "test_exit_code=$?" >> $GITHUB_OUTPUT
-        continue-on-error: true
-
-      - name: Upload test logs
-        if: always()
+      # Étape 5 & 6 (Rapports et Nettoyage)
+      - name: Upload Playwright Report
+        if: always() # 'always()' garantit que cette étape s'exécute même si les tests échouent
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-reports
-          path: test-results/
+          name: playwright-report
+          path: playwright-report/
           retention-days: 7
 
-      - name: Cleanup
+      - name: Cleanup Docker Environment
         if: always()
-        run: docker compose down
-
-      - name: Check test results
-        if: steps.run_tests.outputs.test_exit_code != '0'
         run: |
-          echo "Des tests ont échoué. Consultez les artifacts pour plus de détails."
-          exit 1
+          echo "--> Stopping services and cleaning up..."
+          # La clé est ici : `-v` supprime les volumes anonymes ET nommés associés au compose.
+          # Cela garantit que `cookix_db_data` est détruit, pour un test propre la prochaine fois.
+          docker compose -f docker-compose.prod.yml down -v --remove-orphans
