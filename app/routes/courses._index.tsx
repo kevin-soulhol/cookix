@@ -104,13 +104,13 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<Response>
                 ingredient: { include: { seasonInfo: true } }, // Include seasonInfo here
                 recipe: { select: { id: true, title: true, imageUrl: true } },
             },
-            orderBy: [ // Consistent base sorting helps grouping
+            orderBy: [
                 { isChecked: 'asc' },
                 { marketplace: 'asc' }, // Group by store preference
-                { recipeId: 'asc' },    // Then group by recipe (relevant for recipe view)
-                { ingredient: { name: 'asc' } }, // Finally by ingredient name
+                { ingredient: { name: 'asc' } },
+                { recipeId: 'asc' } // Then group by recipe (relevant for recipe view)
             ],
-        }) as ShoppingItem[]; // Cast needed if Prisma types don't perfectly match
+        }) as unknown as ShoppingItem[]; // Cast needed if Prisma types don't perfectly match
 
         // 3. Enhance items with calculated seasonality
         const enhancedItems = rawItems.map(item => ({

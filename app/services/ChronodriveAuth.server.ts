@@ -250,7 +250,7 @@ export class ChronodriveAuthService {
 
     try {
       const response = await fetch(url, fetchOptions);
-      console.log(response);
+
       if (!response.ok) {
         // Gestion du cas 401 : jeton invalide
         if (response.status === 401 && this.session.has("accessToken")) {

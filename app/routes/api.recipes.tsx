@@ -51,7 +51,7 @@ function calculateStringSimilarity(str1: string, str2: string): number {
   const words2 = s2.split(/\s+/);
 
   let matchCount = 0;
-  let totalWords = words1.length;
+  const totalWords = words1.length;
 
   for (const word1 of words1) {
     if (word1.length < 3) continue; // Ignorer les mots très courts
@@ -345,7 +345,7 @@ async function getRecipeById(recipeId: number, userId: number | null) {
   const recipe = await prisma.recipe.findUnique({
     where: { id: recipeId },
     include: includeObj
-  });
+  }) as RecipeWithRelations;
 
   if (!recipe) {
     return json({ success: false, message: "Recette non trouvée" }, { status: 404 });
@@ -360,7 +360,8 @@ async function getRecipeById(recipeId: number, userId: number | null) {
     ...recipe,
     isFavorite: !!recipe.favorites?.length,
     isInMenu: !!(recipe.menuItems?.length && userId),
-    ingredients: recipe.ingredients.map(item => {
+    ingredients: recipe.ingredients?.map(item => {
+      // @ts-expect-error error with Prisma schema
       const seasonInfo = item.ingredient.seasonInfo;
       const isInSeason = seasonInfo ?
         (seasonInfo.isPerennial || seasonInfo[currentMonth]) :
@@ -407,9 +408,9 @@ function buildWhereClause(search: string | null, difficulty: string | null, cate
       // Utiliser OR pour être plus inclusif
       where.OR = [
         // Rechercher dans le titre avec expressions régulières si possible
-        { title: { contains: search.toLowerCase() } },
+        { title: { contains: searchPattern.toLowerCase() } },
         // Rechercher dans la description
-        { description: { contains: search.toLowerCase() } },
+        { description: { contains: searchPattern.toLowerCase() } },
         // Rechercher chaque terme séparément pour plus de flexibilité
         ...searchTerms.map(term => ({ title: { contains: term } })),
         ...searchTerms.map(term => ({ description: { contains: term } }))
@@ -527,14 +528,17 @@ async function getRecipesBySearch(where: any, search: string, userId: number | n
 
   const NOTE_IMPORTANCE = 100;
   notedRecipes = notedRecipes.map(recipe => {
+    // @ts-expect-error noteScore dont exist cause based on recipe type
     const totalScore = recipe.searchScore + (recipe.noteScore * NOTE_IMPORTANCE);
     return { ...recipe, totalScore: totalScore }
   })
 
   // Trier les recettes par score de pertinence décroissant
+  // @ts-expect-error totalScore dont exist cause based on recipe type
   notedRecipes.sort((a, b) => b.totalScore - a.totalScore);
 
   const minScore = Math.max(5, searchTerms.length * 3);
+  // @ts-expect-error totalScore dont exist cause based on recipe type
   const filteredRecipes = notedRecipes.filter(recipe => recipe.totalScore >= minScore);
 
 
@@ -598,6 +602,7 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
       updatedAt: true,
       voteNumber: true,
       isVege: true,
+      onRobot: true,
       ...(userId ? {
         favorites: {
           where: { userId },
