@@ -28,6 +28,7 @@ export type IngredientWithSeason = RecipeIngredient & {
     isPermanent: boolean;
     isFruit: boolean;
     isVegetable: boolean;
+    isBabyFood: boolean;
 };
 
 type TabType = 'ingredients' | 'instructions' | 'description';

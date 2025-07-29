@@ -29,6 +29,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const sortDirection = url.searchParams.get("sortDirection") || "asc";
   const randomEnabled = url.searchParams.get("random") === "true";
   const onlyVege = url.searchParams.get("onlyVege") === "true";
+  const forBaby = url.searchParams.get("forBaby") === "true";
   const seasonal = url.searchParams.get("seasonal") === "true";
 
   // Paramètres pour la pagination
@@ -46,6 +47,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (maxPreparationTime) apiUrl.searchParams.append("maxPreparationTime", maxPreparationTime);
   if (randomEnabled) apiUrl.searchParams.append("random", "true");
   if (onlyVege) apiUrl.searchParams.append("onlyVege", "true");
+  if (forBaby) apiUrl.searchParams.append("forBaby", "true");
   if (seasonal) apiUrl.searchParams.append("seasonal", "true");
 
   // Ajouter les paramètres de tri et pagination
@@ -80,6 +82,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       mealTypeOptions,
       preparationTimeMax: 120,
       onlyVege,
+      forBaby,
       seasonal
     }
 
@@ -101,13 +104,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
         sortDirection,
         randomEnabled,
         onlyVege,
+        forBaby,
         seasonal
       },
       error: false
     });
   } catch (error) {
     console.error("Erreur lors du chargement des recettes:", error);
-    const filters: FilterPanelType = { categoryOptions: [], mealTypeOptions: [], preparationTimeMax: 120, onlyVege: false, seasonal: false }
+    const filters: FilterPanelType = { categoryOptions: [], mealTypeOptions: [], preparationTimeMax: 120, onlyVege: false, forBaby: false, seasonal: false }
     return json({
       recipes: [],
       pagination: { currentPage: 1, totalPages: 0, totalRecipes: 0, hasMore: false },
@@ -121,6 +125,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         sortDirection: "asc",
         randomEnabled: null,
         onlyVege: null,
+        forBaby: null,
         seasonal: null
       },
       error: error instanceof Error ? error.message : "Impossible de charger les recettes."
@@ -194,6 +199,7 @@ export default function RecipesIndex() {
     sortDirection: appliedFilters.sortDirection as any,
     randomEnabled: !!appliedFilters.randomEnabled,
     onlyVege: !!appliedFilters.onlyVege,
+    forBaby: !!appliedFilters.forBaby,
     seasonal: !!appliedFilters.seasonal
   });
 
@@ -242,6 +248,7 @@ export default function RecipesIndex() {
           seasonal={filterState.seasonal}
           categoryOptions={filters.categoryOptions}
           onlyVegeEnabled={filters.onlyVege}
+          forBabyEnabled={filters.forBaby}
           onCategoryRemove={() => {
             filterActions.setCategory("");
             filterActions.updateFilter("categoryId", "");
@@ -257,6 +264,10 @@ export default function RecipesIndex() {
           onOnlyVegeRemove={() => {
             filterActions.setOnlyVege(false);
             filterActions.updateFilter("onlyVege", null);
+          }}
+          onForBabyRemove={() => {
+            filterActions.setForBaby(false);
+            filterActions.updateFilter("forBaby", null);
           }}
           onSeasonalRemove={() => {
             filterActions.setSeasonal(false);
@@ -307,6 +318,7 @@ export default function RecipesIndex() {
           <input type="hidden" name="sortDirection" value={filterState.sortDirection} />
           <input type="hidden" name="random" value={filterState.randomEnabled.toString()} />
           <input type="hidden" name="onlyVege" value={filterState.onlyVege.toString()} />
+          <input type="hidden" name="forBaby" value={filterState.forBaby.toString()} />
           <input type="hidden" name="seasonal" value={filterState.seasonal.toString()} />
           <input type="hidden" name="page" value="1" />
         </Form>
@@ -324,6 +336,7 @@ export default function RecipesIndex() {
             sortDirection: filterState.sortDirection,
             randomEnabled: filterState.randomEnabled,
             onlyVege: filterState.onlyVege,
+            forBaby: filterState.forBaby,
             seasonal: filterState.seasonal
           }}
           onUpdateFilter={filterActions.updateFilter}
@@ -337,6 +350,7 @@ export default function RecipesIndex() {
           setSortDirection={filterActions.setSortDirection}
           setRandomEnabled={filterActions.setRandomEnabled}
           setOnlyVege={filterActions.setOnlyVege}
+          setForBaby={filterActions.setForBaby}
           setSeasonal={filterActions.setSeasonal}
         />
       </div>

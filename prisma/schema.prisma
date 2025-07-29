@@ -18,6 +18,7 @@ model Recipe {
   servings        Int?
   difficulty      String?
   isVege          Boolean            @default(false)
+  isBabyFood      Boolean            @default(false)
   onRobot         Boolean?
   note            Decimal?           @db.Decimal(3, 2)
   voteNumber      Int?               @default(0)

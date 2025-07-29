@@ -105,12 +105,14 @@ type ActiveFiltersProps = {
     maxPreparationTime: number | null;
     categoryOptions: MealAndCategoryTypeOption[];
     onlyVegeEnabled: boolean;
+    forBabyEnabled: boolean;
     seasonal: boolean;
     onSeasonalRemove: () => void;
     onCategoryRemove: () => void;
     onMealTypeRemove: () => void;
     onPrepTimeRemove: () => void;
     onOnlyVegeRemove: () => void;
+    onForBabyRemove: () => void;
     onResetAll: () => void;
 };
 
@@ -120,16 +122,18 @@ export function ActiveFilters({
     maxPreparationTime,
     categoryOptions,
     onlyVegeEnabled,
+    forBabyEnabled,
     seasonal,
     onSeasonalRemove,
     onCategoryRemove,
     onMealTypeRemove,
     onPrepTimeRemove,
     onOnlyVegeRemove,
+    onForBabyRemove,
     onResetAll
 }: ActiveFiltersProps) {
     // Si aucun filtre actif, ne pas afficher ce composant
-    if (!category && !mealType && !maxPreparationTime && !onlyVegeEnabled && !seasonal) return null;
+    if (!category && !mealType && !maxPreparationTime && !onlyVegeEnabled && !forBabyEnabled && !seasonal) return null;
 
     return (
         <div className="flex flex-wrap gap-2 mt-2 mb-2">
@@ -184,6 +188,21 @@ export function ActiveFilters({
                     <button
                         type="button"
                         onClick={onOnlyVegeRemove}
+                        className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-green-400 hover:bg-green-200 hover:text-amber-600"
+                    >
+                        <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
+                            <path d="M8 4l-4 4M4 4l4 4" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                    </button>
+                </span>
+            )}
+
+            {forBabyEnabled && (
+                <span className="forbaby-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Pour bébé
+                    <button
+                        type="button"
+                        onClick={onForBabyRemove}
                         className="ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-green-400 hover:bg-green-200 hover:text-amber-600"
                     >
                         <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor">
