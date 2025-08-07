@@ -1,7 +1,7 @@
 import { json, ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/utils/db.server";
 import { RecipeType } from "~/components/BoxRecipe";
-import { getUserId } from "./api.user";
+import { getUserId } from "~/utils/auth.server";
 
 export type TypeMenuItem = {
   id: number;

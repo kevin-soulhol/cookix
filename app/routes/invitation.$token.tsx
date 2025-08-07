@@ -1,7 +1,7 @@
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { getUserId } from "./api.user";
+import { getUserId } from "~/utils/auth.server";
 import { prisma } from "~/utils/db.server";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {

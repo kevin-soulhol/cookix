@@ -1,7 +1,7 @@
 import { json, ActionFunctionArgs } from "@remix-run/node";
 import { prisma } from "~/utils/db.server";
-import { getUserId } from "./api.user";
 import { v4 as uuidv4 } from "uuid"; // Il faudra installer ce package
+import { getUserId } from "~/utils/auth.server";
 
 export async function action({ request }: ActionFunctionArgs) {
     const userId = await getUserId(request);

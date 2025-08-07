@@ -124,8 +124,7 @@ export default function Layout({ children, showHomeLink = false, pageTitle, opti
                   >
                     Mon profil
                   </Link>
-                  <Form method="post" action="/api/user">
-                    <input type="hidden" name="_action" value="logout" />
+                  <Form method="post" action="/logout">
                     <button
                       type="submit"
                       className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-100"
