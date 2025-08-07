@@ -1,9 +1,9 @@
 services:
   app:
+    image: ${DOCKER_IMAGE_TAG}
     build:
       context: .
       dockerfile: Dockerfile.prod
-      image: ${DOCKER_IMAGE_TAG}
     restart: always
     ports:
       - "3000:3000"
