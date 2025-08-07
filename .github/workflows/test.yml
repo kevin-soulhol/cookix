@@ -110,7 +110,7 @@ jobs:
           retention-days: 7
 
       - name: Show Docker Logs on Failure
-        if: failure() # Ne s'exécute que si une étape précédente a échoué
+        if: always()
         run: |
           echo "--> Tests failed. Displaying container logs for debugging..."
           docker compose -f docker-compose.prod.yml logs --no-color app

@@ -128,7 +128,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         forBaby: null,
         seasonal: null
       },
-      error: error instanceof Error ? error.message : "Impossible de charger les recettes.",
+      error: "Impossible de charger les recettes.",
       trace: error
     });
   }
