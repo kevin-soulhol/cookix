@@ -310,9 +310,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json(
       {
         // Ajoutons la clé "error" à la réponse principale pour que ce soit cohérent avec ce que vous avez vu
-        error: error,
+        error: errorMessage,
         success: false,
-        message: errorMessage // Gardons `message` pour la rétrocompatibilité
+        message: errorMessage, // Gardons `message` pour la rétrocompatibilité
+        trace: error
       },
       // Retourner 500 n'est peut-être pas idéal pour le débogage, mais gardons-le pour l'instant
       { status: 500 }
