@@ -301,8 +301,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   } catch (error) {
     console.error("Erreur lors de la récupération des recettes:", error);
+
+    // En mode production, on veut une erreur générique
+    const errorMessage = process.env.NODE_ENV === 'production'
+      ? "Une erreur est survenue lors de la récupération des recettes"
+      : (error as Error).message; // En dev/test, on veut le vrai message d'erreur
+
     return json(
-      { success: false, message: "Une erreur est survenue lors de la récupération des recettes" },
+      {
+        // Ajoutons la clé "error" à la réponse principale pour que ce soit cohérent avec ce que vous avez vu
+        error: errorMessage,
+        success: false,
+        message: errorMessage // Gardons `message` pour la rétrocompatibilité
+      },
+      // Retourner 500 n'est peut-être pas idéal pour le débogage, mais gardons-le pour l'instant
       { status: 500 }
     );
   }
