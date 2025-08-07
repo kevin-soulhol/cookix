@@ -84,9 +84,15 @@ jobs:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           DATABASE_URL_TEST: "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}"
 
+      - name: Check for Playwright report files (DEBUG)
+        if: always()
+        run: |
+          echo "Listing files to see if the report was generated:"
+          ls -R
+
       # Étape 5 & 6 (Rapports et Nettoyage)
       - name: Upload Playwright Report
-        if: always() # 'always()' garantit que cette étape s'exécute même si les tests échouent
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
