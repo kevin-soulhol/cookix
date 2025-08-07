@@ -1,3 +1,5 @@
+# Fichier: .github/workflows/test.yml
+
 name: E2E Tests
 
 on:
@@ -5,105 +7,79 @@ on:
     types: [opened, synchronize, reopened]
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/cookix-app # ex: ghcr.io/votre-nom/votre-repo
+  # Variable globale pour le nom et le tag de l'image Docker
+  IMAGE_TAG: ghcr.io/${{ github.repository_owner }}/cookix-app:${{ github.sha }}
 
 jobs:
   e2e-tests:
+    name: "Run E2E Tests with Docker Compose"
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: "① Checkout Code"
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: "② Setup Node.js & Cache"
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
 
-      - name: Install dependencies
+      - name: "③ Install Dependencies"
         run: npm ci
 
-      - name: Install Playwright Browsers
+      - name: "④ Install Playwright Browsers"
         run: npx playwright install --with-deps chromium
 
-      # Étape 1 : Créer le fichier .env (il sera utilisé par docker-compose)
-      - name: Create .env file for testing
+      # Utilisation d'une action pour créer le .env. C'est plus propre.
+      - name: "⑤ Create .env file for Docker Compose"
+        uses: oNaiPs/secrets-to-env-action@v1.4
+        with:
+          # On liste tous les secrets nécessaires à docker-compose et à l'application
+          secrets: |
+            SESSION_SECRET=${{ secrets.SESSION_SECRET }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}
+            DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}
+            CHRONODRIVE_EMAIL=${{ secrets.CHRONODRIVE_EMAIL }}
+            CHRONODRIVE_PASSWORD=${{ secrets.CHRONODRIVE_PASSWORD }}
+            CHRONODRIVE_API_KEY=${{ secrets.CHRONODRIVE_API_KEY }}
+            CHRONODRIVE_API_KEY_CART=${{ secrets.CHRONODRIVE_API_KEY_CART }}
+            CHRONODRIVE_API_KEY_USER=${{ secrets.CHRONODRIVE_API_KEY_USER }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}
+
+            # On injecte aussi le tag de l'image pour que docker-compose puisse l'utiliser
+            DOCKER_IMAGE_TAG=${{ env.IMAGE_TAG }}
+
+      # On combine le build et le démarrage, comme le fait docker-compose
+      - name: "⑥ Build and Start Docker Environment"
         run: |
-          echo "SESSION_SECRET=${{ secrets.SESSION_SECRET }}" > .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
-          echo "DATABASE_URL_TEST=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
-          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
-          echo "CHRONODRIVE_EMAIL=${{ secrets.CHRONODRIVE_EMAIL }}" >> .env
-          echo "CHRONODRIVE_PASSWORD=${{ secrets.CHRONODRIVE_PASSWORD }}" >> .env
-          echo "CHRONODRIVE_API_KEY=${{ secrets.CHRONODRIVE_API_KEY }}" >> .env
-          echo "CHRONODRIVE_API_KEY_CART=${{ secrets.CHRONODRIVE_API_KEY_CART }}" >> .env
-          echo "CHRONODRIVE_API_KEY_USER=${{ secrets.CHRONODRIVE_API_KEY_USER }}" >> .env
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
-          echo "PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}" >> .env
-          echo "CHRONODRIVE_EMAIL=${{ secrets.CHRONODRIVE_EMAIL }}" >> .env
-          echo "CHRONODRIVE_PASSWORD=${{ secrets.CHRONODRIVE_PASSWORD }}" >> .env
-          echo "CHRONODRIVE_API_KEY=${{ secrets.CHRONODRIVE_API_KEY }}" >> .env
-          echo "CHRONODRIVE_API_KEY_CART=${{ secrets.CHRONODRIVE_API_KEY_CART }}" >> .env
-          echo "CHRONODRIVE_API_KEY_USER=${{ secrets.CHRONODRIVE_API_KEY_USER }}" >> .env
+          echo "Building and starting 'app' and 'db' services..."
+          # L'option --wait s'assure que les conteneurs sont "healthy" avant de continuer
+          docker compose -f docker-compose.prod.yml up -d --build --wait app db
 
-      - name: Set Docker Image Tag
-        run: echo "DOCKER_IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
-
-      # Étape 2 : Lancer l'environnement de test (uniquement les services nécessaires)
-      - name: Build and Start Docker Environment
+      - name: "⑦ Setup Database (Migrations & Seed)"
         run: |
-          # On ne démarre que les services 'app' et 'db', en ignorant 'scraper'.
-          # On utilise le docker-compose de production.
-          docker compose -f docker-compose.prod.yml up -d --build app db
+          echo "Running database migrations and seeding..."
+          # Plus besoin de passer la variable DATABASE_URL, car elle est dans le .env
+          # que le conteneur a déjà chargé au démarrage.
+          docker compose -f docker-compose.prod.yml exec -T app npx prisma migrate deploy
+          docker compose -f docker-compose.prod.yml exec -T app node prisma/seed.test.js
 
-      # Étape 3 : Préparer la base de données EN UTILISANT DOCKER EXEC
-      - name: Setup Database for Tests
-        run: |
-          echo "--> Waiting for database container to be ready..."
-          # Boucle robuste pour attendre que la BDD soit saine.
-          # Le nom du conteneur est souvent préfixé par le nom du projet, soyons plus robustes.
-          DB_CONTAINER_NAME=$(docker compose -f docker-compose.prod.yml ps -q db)
-          until [ "$(docker inspect -f {{.State.Health.Status}} $DB_CONTAINER_NAME)" = "healthy" ]; do
-              echo "Database is unavailable - sleeping"
-              sleep 2
-          done
-          echo "--> Database is ready."
-
-          # On définit une variable locale pour l'URL pour la clarté.
-          # Cette URL est destinée à être utilisée A L'INTERIEUR du réseau Docker.
-          # Elle utilise 'db:3306', le nom du service Docker.
-          DATABASE_URL_FOR_CONTAINER="mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}"
-
-          # On exécute les commandes Prisma en passant explicitement la variable DATABASE_URL.
-          echo "--> Running migrations inside the container..."
-          docker compose exec -T -e DATABASE_URL=$DATABASE_URL_FOR_CONTAINER app npx prisma migrate deploy
-
-          echo "--> Seeding test data inside the container..."
-          docker compose exec -T -e DATABASE_URL=$DATABASE_URL_FOR_CONTAINER app node prisma/seed.test.js
-
-      # Étape 4 : Lancer les tests Playwright (inchangé)
-      - name: Run Playwright Tests
-        run: |
-          echo "Waiting 5 seconds for services to fully stabilize..."
-          sleep 5
-          npx playwright test || true
-          echo "--> Exécution des tests terminée. Vérification des fichiers générés..."
-          ls -R
+      - name: "⑧ Run Playwright Tests"
+        # continue-on-error est la méthode propre pour gérer les échecs de tests
+        continue-on-error: true
+        id: playwright_tests
+        run: npx playwright test
         env:
-          # Les tests s'exécutent sur le runner et ciblent l'application via le port exposé.
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
-          DATABASE_URL_TEST: "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}"
+          # L'URL pour les tests sur le runner doit utiliser localhost
+          DATABASE_URL_TEST: mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}
 
-      - name: "Debug: Display Environment Variables"
-        if: always()
-        run: env | sort
-
-      # Étape 5 & 6 (Rapports et Nettoyage)
-      - name: Upload Playwright Report
+      - name: "⑨ Publish Test Report"
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -111,16 +87,18 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-      - name: Show Docker Logs on Failure
-        if: always()
+      - name: "⑩ Show Logs & Cleanup on Failure"
+        # Cette étape ne s'exécute qu'en cas d'échec des tests
+        if: steps.playwright_tests.outcome == 'failure'
         run: |
-          echo "--> Tests failed. Displaying container logs for debugging..."
-          docker compose -f docker-compose.prod.yml logs --no-color app
+          echo "::error::E2E tests failed. Displaying container logs:"
+          docker compose -f docker-compose.prod.yml logs --no-color
+          echo "Cleaning up Docker environment..."
+          docker compose -f docker-compose.prod.yml down -v --remove-orphans
 
-      - name: Cleanup Docker Environment
-        if: always()
+      - name: "⑩ Cleanup on Success"
+        # Cette étape ne s'exécute qu'en cas de succès
+        if: steps.playwright_tests.outcome == 'success'
         run: |
-          echo "--> Stopping services and cleaning up..."
-          # La clé est ici : `-v` supprime les volumes anonymes ET nommés associés au compose.
-          # Cela garantit que `cookix_db_data` est détruit, pour un test propre la prochaine fois.
+          echo "E2E tests passed. Cleaning up Docker environment..."
           docker compose -f docker-compose.prod.yml down -v --remove-orphans
