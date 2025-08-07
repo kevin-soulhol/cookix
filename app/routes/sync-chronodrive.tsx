@@ -200,7 +200,6 @@ export async function action({ request }: ActionFunctionArgs) {
 type LoaderData = { items: ShoppingItemWithSync[], error?: string };
 
 export default function SyncChronodrivePage() {
-    // J'ai modifié le type ici pour qu'il corresponde à ce que j'ai défini plus haut
     const { items, error } = useLoaderData<LoaderData>();
     const globalAddToCartFetcher = useFetcher();
 
@@ -249,19 +248,16 @@ export default function SyncChronodrivePage() {
                 )}
 
                 {/* Actions globales */}
-                <div className="flex justify-center items-center space-x-4 p-4 mb-6 bg-gray-50 rounded-lg shadow">
-                    <Form onSubmit={(e) => { e.preventDefault(); handleGlobalAddToCart(); }}>
+                <div className="p-4 mb-6 bg-gray-50 rounded-lg shadow">
+                    <Form onSubmit={(e) => { e.preventDefault(); handleGlobalAddToCart(); }} className="flex justify-center">
                         <button
                             type="submit"
                             disabled={globalAddToCartFetcher.state !== 'idle' || foundItems.length === 0}
-                            className="px-6 py-3 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-700 shadow-lg disabled:bg-gray-400 transition-colors"
+                            className="px-6 py-3 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-700 shadow-lg disabled:bg-gray-400 transition-colors text-center"
                         >
                             {globalAddToCartFetcher.state !== 'idle' ? 'Ajout en cours...' : `Ajouter les ${foundItems.length} articles trouvés`}
                         </button>
                     </Form>
-                    <a href="https://www.chronodrive.com/cartdetail" target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-100 shadow">
-                        Voir le panier Chronodrive
-                    </a>
                 </div>
 
                 {/* @ts-expect-error noteScore dont exist cause based on recipe type */}
@@ -277,6 +273,18 @@ export default function SyncChronodrivePage() {
                             <SyncedItemRow key={item.id} item={item} />
                         ))}
                     </div>
+                </div>
+
+                {/* Bouton pour voir son panier */}
+                <div className="mt-12 text-center">
+                    <a
+                        href="https://www.chronodrive.com/cartdetail"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-6 py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-100 shadow"
+                    >
+                        Voir le panier Chronodrive
+                    </a>
                 </div>
             </div>
         </Layout>
@@ -310,7 +318,7 @@ function SyncedItemRow({ item }: { item: ShoppingItemWithSync }) {
     };
 
     return (
-        <div className={`p-3 flex items-center gap-4 transition-opacity ${isSyncing || isAddingToCart ? 'opacity-50 bg-gray-50' : ''}`}>
+        <div className={`p-3 flex items-center gap-3 transition-opacity ${isSyncing || isAddingToCart ? 'opacity-50 bg-gray-50' : ''}`}>
             {/* Image du produit */}
             {syncedProduct && syncedProduct.isFound ? (
                 <img
@@ -324,50 +332,54 @@ function SyncedItemRow({ item }: { item: ShoppingItemWithSync }) {
                 </div>
             )}
 
-            {/* Informations et Actions */}
-            <div className="flex-grow">
-                <p className="font-bold text-sm text-gray-500">{item.ingredient.name}</p>
+            {/* Informations (Titre / Sous-titre) */}
+            {/* CHANGEMENT : Ajout de min-w-0 pour permettre au texte de passer à la ligne sur mobile sans déborder */}
+            <div className="flex-grow min-w-0">
+                <p className="font-bold text-sm text-gray-800 truncate">{item.ingredient.name}</p>
                 {syncedProduct && syncedProduct.isFound ? (
-                    <p className="text-sm text-blue-800">{syncedProduct.productName}</p>
+                    <p className="text-sm text-blue-800 truncate">{syncedProduct.productName}</p>
                 ) : (
-                    <p className="text-sm text-gray-500 italic">Aucune correspondance trouvée</p>
+                    <p className="text-sm text-gray-500 italic">Aucune correspondance</p>
                 )}
             </div>
 
-            {/* Prix et Boutons */}
-            {syncedProduct && syncedProduct.isFound ? (
-                <div className="flex items-center gap-4 flex-shrink-0">
-                    <span className="font-bold text-lg text-gray-900 w-20 text-right">
-                        {(syncedProduct.price ?? 0).toFixed(2)}€
-                    </span>
+            {/* Actions (Prix, Ajouter, Rafraîchir) */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+                {syncedProduct && syncedProduct.isFound ? (
+                    // CHANGEMENT : Conteneur pour le prix et le bouton "Ajouter" qui devient une colonne sur mobile
+                    <div className="flex flex-col items-end sm:flex-row sm:items-center sm:gap-3">
+                        <span className="font-bold text-lg text-gray-900">
+                            {(syncedProduct.price ?? 0).toFixed(2)}€
+                        </span>
 
-                    {/* NOUVEAU BOUTON AJOUTER AU PANIER */}
-                    <addToCartFetcher.Form method="post" onSubmit={handleSingleAddToCart}>
-                        <button
-                            type="submit"
-                            disabled={isAddingToCart}
-                            className="px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
-                        >
-                            {isAddingToCart ? 'Ajout...' : 'Ajouter'}
-                        </button>
-                    </addToCartFetcher.Form>
-                </div>
-            ) : (
-                <div className="w-20 text-right"></div> // Espace vide pour aligner
-            )}
+                        <addToCartFetcher.Form method="post" onSubmit={handleSingleAddToCart}>
+                            <button
+                                type="submit"
+                                disabled={isAddingToCart}
+                                className="px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
+                            >
+                                {isAddingToCart ? '...' : 'Ajouter'}
+                            </button>
+                        </addToCartFetcher.Form>
+                    </div>
+                ) : (
+                    // Espace vide pour l'alignement quand l'article n'est pas trouvé
+                    <div className="w-24 hidden sm:block"></div>
+                )}
 
-            {/* Bouton Rafraîchir */}
-            <syncFetcher.Form method="post" className="flex-shrink-0">
-                <input type="hidden" name="_action" value="syncSingleItem" />
-                <input type="hidden" name="shoppingItemId" value={item.id} />
-                <input type="hidden" name="ingredientName" value={item.ingredient.name} />
-                <button type="submit" disabled={isSyncing} title="Rafraîchir la correspondance" className="p-1 text-gray-400 hover:text-blue-600 disabled:text-gray-300">
-                    {isSyncing
-                        ? <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        : <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" /></svg>
-                    }
-                </button>
-            </syncFetcher.Form>
+                {/* Bouton Rafraîchir */}
+                <syncFetcher.Form method="post">
+                    <input type="hidden" name="_action" value="syncSingleItem" />
+                    <input type="hidden" name="shoppingItemId" value={item.id} />
+                    <input type="hidden" name="ingredientName" value={item.ingredient.name} />
+                    <button type="submit" disabled={isSyncing} title="Rafraîchir la correspondance" className="p-1 text-gray-400 hover:text-blue-600 disabled:text-gray-300">
+                        {isSyncing
+                            ? <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            : <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" /></svg>
+                        }
+                    </button>
+                </syncFetcher.Form>
+            </div>
         </div>
     );
 }
