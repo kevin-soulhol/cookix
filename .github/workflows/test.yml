@@ -36,6 +36,7 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}" >> .env
           echo "DATABASE_URL_TEST=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
+          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}" >> .env
           echo "CHRONODRIVE_EMAIL=${{ secrets.CHRONODRIVE_EMAIL }}" >> .env
           echo "CHRONODRIVE_PASSWORD=${{ secrets.CHRONODRIVE_PASSWORD }}" >> .env
           echo "CHRONODRIVE_API_KEY=${{ secrets.CHRONODRIVE_API_KEY }}" >> .env
@@ -51,6 +52,7 @@ jobs:
 
       - name: Set Docker Image Tag
         run: echo "DOCKER_IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
+
       # Étape 2 : Lancer l'environnement de test (uniquement les services nécessaires)
       - name: Build and Start Docker Environment
         run: |
