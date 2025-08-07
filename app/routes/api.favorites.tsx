@@ -1,6 +1,6 @@
 import { ActionFunctionArgs, json } from "@remix-run/node";
+import { getUserId } from "~/utils/auth.server";
 import { prisma } from "~/utils/db.server";
-import { getUserId } from "./api.user";
 
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await getUserId(request);

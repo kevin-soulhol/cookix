@@ -3,7 +3,6 @@ import { json, redirect, type MetaFunction, type ActionFunctionArgs, type Loader
 import { Link, useLoaderData, useFetcher, useSearchParams } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import { prisma } from "~/utils/db.server";
-import { getUserId } from "./api.user"; // Assuming api.user.ts exports getUserId
 import {
     groupShoppingItemsByIngredient,
     groupShoppingItemsByRecipe,
@@ -28,6 +27,7 @@ import { ShoppingItemWithMarketplace } from "~/components/shopping-list/Shopping
 import { AddItemModal } from "~/components/shopping-list/AddItemModal";
 import { ShareModal } from "~/components/shopping-list/ShareModal";
 import { ClearCheckedDialog } from "~/components/shopping-list/ClearCheckedDialog";
+import { getUserId } from "~/utils/auth.server";
 
 // --- Meta Function ---
 export const meta: MetaFunction = () => {

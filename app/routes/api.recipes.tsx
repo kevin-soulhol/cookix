@@ -2,8 +2,8 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
 import { GoogleGenAI } from '@google/genai';
 import { prisma } from "~/utils/db.server";
-import { getUserId } from "./api.user";
 import { Ingredient, Recipe, RecipeIngredient, RecipeStep } from "@prisma/client";
+import { getUserId } from "~/utils/auth.server";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -608,6 +608,7 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
       voteNumber: true,
       isVege: true,
       onRobot: true,
+      // @ts-expect-error error with Prisma schema
       isBabyFood: true,
       ...(userId ? {
         favorites: {
@@ -623,7 +624,6 @@ async function getRecipesByFilters(where: any, sort: string, dir: string, random
       } : {})
     }
   });
-  console.log(recipes)
 
   // Appliquer la randomisation si demandée
   let sortedRecipes = recipes;

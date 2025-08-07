@@ -9,10 +9,10 @@ import {
 } from "@remix-run/react";
 import { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { getUserId } from "~/routes/api.user";
 import { prisma } from "~/utils/db.server";
 
 import tailwindStyles from "./tailwind.css";
+import { getUserId } from "./utils/auth.server";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: tailwindStyles },
@@ -33,6 +33,7 @@ export const links: LinksFunction = () => [
 
 // Chargement de l'état d'authentification dans la racine de l'application
 export async function loader({ request }: LoaderFunctionArgs) {
+  console.log("Headers dans root.tsx loader:", request.headers);
   const userId = await getUserId(request);
 
   if (!userId) {
