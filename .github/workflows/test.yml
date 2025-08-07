@@ -78,17 +78,17 @@ jobs:
 
       # Étape 4 : Lancer les tests Playwright (inchangé)
       - name: Run Playwright Tests
-        run: npx playwright test
+        run: |
+          echo "Waiting 5 seconds for services to fully stabilize..."
+          sleep 5
+          npx playwright test
         env:
           # Les tests s'exécutent sur le runner et ciblent l'application via le port exposé.
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           DATABASE_URL_TEST: "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}"
 
-      - name: Check for Playwright report files (DEBUG)
-        if: always()
-        run: |
-          echo "Listing files to see if the report was generated:"
-          ls -R
+      - name: "Debug: Display Environment Variables"
+        run: env | sort
 
       # Étape 5 & 6 (Rapports et Nettoyage)
       - name: Upload Playwright Report
