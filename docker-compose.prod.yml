@@ -1,9 +1,9 @@
 services:
   app:
+    image: ${DOCKER_IMAGE_TAG}
     build:
       context: .
       dockerfile: Dockerfile.prod
-      image: ${DOCKER_IMAGE_TAG}
     restart: always
     ports:
       - "3000:3000"
@@ -17,7 +17,7 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - DB_NAME=$DOCKER_IMAGE_TAG{DB_NAME}
     deploy:
       resources:
         limits:
@@ -37,6 +37,8 @@ services:
     restart: always
     env_file:
       - ./.env
+    ports:
+      - "3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
