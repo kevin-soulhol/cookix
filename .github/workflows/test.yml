@@ -56,19 +56,25 @@ jobs:
         run: |
           echo "--> Waiting for database container to be ready..."
           # Boucle robuste pour attendre que la BDD soit saine.
-          until [ "$(docker inspect -f {{.State.Health.Status}} cookix-db-1)" = "healthy" ]; do
+          # Le nom du conteneur est souvent préfixé par le nom du projet, soyons plus robustes.
+          DB_CONTAINER_NAME=$(docker compose -f docker-compose.prod.yml ps -q db)
+          until [ "$(docker inspect -f {{.State.Health.Status}} $DB_CONTAINER_NAME)" = "healthy" ]; do
               echo "Database is unavailable - sleeping"
               sleep 2
           done
           echo "--> Database is ready."
 
-          # On exécute les commandes Prisma A L'INTERIEUR du conteneur 'app'.
-          # Cela résout le problème du port non exposé.
+          # On définit une variable locale pour l'URL pour la clarté.
+          # Cette URL est destinée à être utilisée A L'INTERIEUR du réseau Docker.
+          # Elle utilise 'db:3306', le nom du service Docker.
+          DATABASE_URL_FOR_CONTAINER="mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}"
+
+          # On exécute les commandes Prisma en passant explicitement la variable DATABASE_URL.
           echo "--> Running migrations inside the container..."
-          docker compose exec -T app npx prisma migrate deploy
+          docker compose exec -T -e DATABASE_URL=$DATABASE_URL_FOR_CONTAINER app npx prisma migrate deploy
 
           echo "--> Seeding test data inside the container..."
-          docker compose exec -T app node prisma/seed.test.js
+          docker compose exec -T -e DATABASE_URL=$DATABASE_URL_FOR_CONTAINER app node prisma/seed.test.js
 
       # Étape 4 : Lancer les tests Playwright (inchangé)
       - name: Run Playwright Tests
