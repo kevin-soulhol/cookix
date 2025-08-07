@@ -9,6 +9,7 @@ const config: PlaywrightTestConfig = {
   testDir: "./tests/e2e",
   timeout: 30000,
   //globalSetup: path.join(__dirname, 'tests/global-setup.ts'),
+  reporter: "html",
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,

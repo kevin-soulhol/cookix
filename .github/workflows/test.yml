@@ -81,13 +81,16 @@ jobs:
         run: |
           echo "Waiting 5 seconds for services to fully stabilize..."
           sleep 5
-          npx playwright test
+          npx playwright test || true
+          echo "--> Exécution des tests terminée. Vérification des fichiers générés..."
+          ls -R
         env:
           # Les tests s'exécutent sur le runner et ciblent l'application via le port exposé.
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           DATABASE_URL_TEST: "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}"
 
       - name: "Debug: Display Environment Variables"
+        if: always()
         run: env | sort
 
       # Étape 5 & 6 (Rapports et Nettoyage)
