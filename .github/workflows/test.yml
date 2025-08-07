@@ -43,7 +43,7 @@ jobs:
           echo "CHRONODRIVE_API_KEY_USER=${{ secrets.CHRONODRIVE_API_KEY_USER }}" >> .env
 
       - name: Set Docker Image Tag
-        run: echo "DOCKER_IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV"
+        run: echo "DOCKER_IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
       # Étape 2 : Lancer l'environnement de test (uniquement les services nécessaires)
       - name: Build and Start Docker Environment
         run: |
