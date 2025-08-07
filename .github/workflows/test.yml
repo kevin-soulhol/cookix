@@ -31,28 +31,24 @@ jobs:
       - name: "④ Install Playwright Browsers"
         run: npx playwright install --with-deps chromium
 
-      # Utilisation d'une action pour créer le .env. C'est plus propre.
       - name: "⑤ Create .env file for Docker Compose"
-        uses: oNaiPs/secrets-to-env-action@v1.4
-        with:
-          # On liste tous les secrets nécessaires à docker-compose et à l'application
-          secrets: |
-            SESSION_SECRET=${{ secrets.SESSION_SECRET }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}
-            DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}
-            CHRONODRIVE_EMAIL=${{ secrets.CHRONODRIVE_EMAIL }}
-            CHRONODRIVE_PASSWORD=${{ secrets.CHRONODRIVE_PASSWORD }}
-            CHRONODRIVE_API_KEY=${{ secrets.CHRONODRIVE_API_KEY }}
-            CHRONODRIVE_API_KEY_CART=${{ secrets.CHRONODRIVE_API_KEY_CART }}
-            CHRONODRIVE_API_KEY_USER=${{ secrets.CHRONODRIVE_API_KEY_USER }}
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}
-
-            # On injecte aussi le tag de l'image pour que docker-compose puisse l'utiliser
-            DOCKER_IMAGE_TAG=${{ env.IMAGE_TAG }}
+        run: |
+          cat <<EOF > .env
+          SESSION_SECRET=${{ secrets.SESSION_SECRET }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          ROOT_PASSWORD=${{ secrets.ROOT_PASSWORD }}
+          DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:3306/${{ secrets.DB_NAME }}
+          CHRONODRIVE_EMAIL=${{ secrets.CHRONODRIVE_EMAIL }}
+          CHRONODRIVE_PASSWORD=${{ secrets.CHRONODRIVE_PASSWORD }}
+          CHRONODRIVE_API_KEY=${{ secrets.CHRONODRIVE_API_KEY }}
+          CHRONODRIVE_API_KEY_CART=${{ secrets.CHRONODRIVE_API_KEY_CART }}
+          CHRONODRIVE_API_KEY_USER=${{ secrets.CHRONODRIVE_API_KEY_USER }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}
+          DOCKER_IMAGE_TAG=${{ env.IMAGE_TAG }}
+          EOF
 
       # On combine le build et le démarrage, comme le fait docker-compose
       - name: "⑥ Build and Start Docker Environment"
