@@ -310,7 +310,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json(
       {
         // Ajoutons la clé "error" à la réponse principale pour que ce soit cohérent avec ce que vous avez vu
-        error: errorMessage,
+        error: error,
         success: false,
         message: errorMessage // Gardons `message` pour la rétrocompatibilité
       },
