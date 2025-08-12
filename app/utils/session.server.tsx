@@ -13,7 +13,7 @@ if (!sessionSecret) {
 
 // Configuration du stockage de la session.
 // Nous utilisons un cookie pour stocker les données de session.
-export const { getSession, commitSession, destroySession } =
+const { getSession, commitSession, destroySession } =
   createCookieSessionStorage({
     cookie: {
       // Le nom du cookie stocké dans le navigateur.
@@ -31,3 +31,5 @@ export const { getSession, commitSession, destroySession } =
       maxAge: 60 * 60 * 24 * 7,
     },
   });
+
+export { getSession, commitSession, destroySession };

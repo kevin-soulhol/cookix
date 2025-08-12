@@ -5,11 +5,11 @@ import { ChronodriveAuthService } from "~/services/ChronodriveAuth.server";
 import type { AddToCartPayload, CartItemPayload, ProductSearchResult } from "~/types/chronodrive.types";
 // @ts-expect-error schema prisma dont generate correctly
 import type { ShoppingItem, SyncedProduct } from "@prisma/client";
-import { getUserId } from "./api.user";
 import Layout from "~/components/Layout";
 import { prisma } from "~/utils/db.server";
-import { commitSession, getSession } from "~/session.server";
+import { commitSession, getSession } from "~/utils/session.server";
 import { useEffect } from "react";
+import { getUserId } from "~/utils/auth.server";
 
 // --- Types pour cette page ---
 export interface SyncResult {

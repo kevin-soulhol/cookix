@@ -30,13 +30,8 @@ export default function AuthButton({ isAuthenticated, user }: AuthButtonProps) {
 
     // Gérer la déconnexion
     const handleLogout = () => {
-        fetcher.submit(
-            { _action: "logout" },
-            { method: "post", action: "/api/user" }
-        );
+        fetcher.submit({}, { method: "post", action: "/logout" });
         setIsDropdownOpen(false);
-        // Redirection vers la page d'accueil après déconnexion
-        //navigate("/");
     };
 
     // Si non connecté, afficher le bouton de connexion
